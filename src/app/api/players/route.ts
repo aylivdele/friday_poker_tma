@@ -13,8 +13,9 @@ export async function POST(req: NextRequest) {
   ).players.findOne({ telegramId })
   if (!player) {
     player = {
+      ...await req.json() as Partial<Player>,
       telegramId,
-      createdAt: new Date(),
+      createdAt: Date.now(),
     }
 
     const result = await (await getDb()).players.insertOne(player)
@@ -28,23 +29,23 @@ export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const searchString = searchParams.get('search')
   const groupId = searchParams.get('groupId')
-
+  let players: Player[]
   if (searchString) {
-    const players = await (await getDb()).players.find({
+    players = await (await getDb()).players.find({
       $or: [
         { firstName: { $regex: searchString, $options: 'i' } },
         { username: { $regex: searchString, $options: 'i' } },
       ],
     }).toArray()
-    return NextResponse.json(players)
   }
-
-  if (groupId) {
-    const players = await (await getDb()).groups.findOne({ _id: new ObjectId(groupId) }).then(async (group) => {
+  else if (groupId) {
+    players = await (await getDb()).groups.findOne({ _id: new ObjectId(groupId) }).then(async (group) => {
       return (await getDb()).players.find({ _id: { $in: group?.members } }).toArray()
     })
-    return NextResponse.json(players)
+  }
+  else {
+    players = await (await getDb()).players.find({}).limit(5).toArray()
   }
 
-  return (await getDb()).players.find({}).limit(5).toArray()
+  return NextResponse.json(players)
 }

@@ -7,7 +7,7 @@ export interface Player {
   username?: string
   firstName?: string
   lastName?: string
-  createdAt: Date
+  createdAt: number
 }
 
 /* ===== Group ===== */
@@ -16,7 +16,7 @@ export interface Group {
   name: string
   ownerId: ObjectId
   members: ObjectId[]
-  createdAt: Date
+  createdAt: number
 }
 
 /* ===== Game ===== */
@@ -39,12 +39,21 @@ export interface Game {
   results?: GameResult[]
   createdAt: Date
   finishedAt?: Date
+  seasonId?: ObjectId
+}
+
+export interface Season {
+  _id?: ObjectId
+  groupId: ObjectId
+  title: string
+  gameIds: ObjectId[]
 }
 
 export interface MongoCollections {
   players: Collection<Player>
   groups: Collection<Group>
   games: Collection<Game>
+  seasons: Collection<Season>
 }
 
 export type ExtendedDb = Db & MongoCollections

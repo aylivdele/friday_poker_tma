@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     name,
     ownerId,
     members: [ownerId],
-    createdAt: new Date(),
+    createdAt: Date.now(),
   }
 
   const result = await (await getDb()).groups.insertOne(newGroup)
