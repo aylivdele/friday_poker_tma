@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server'
+import type { Game } from '@/types/types'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { nonNull } from '../helpers'
+import { deserealizeBody, nonNull } from '../helpers'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -20,20 +21,18 @@ export async function GET(request: NextRequest) {
     games = (await getDb()).games.find({ groupId: new ObjectId(groupId) })
   }
   else {
-    games = (await getDb()).games.find({})
+    games = (await getDb()).games.find({}).limit(15)
   }
-  return NextResponse.json(games)
+  return NextResponse.json(await games.toArray())
 }
 
 export async function POST(request: NextRequest) {
-  const newGame = { createdAt: Date.now(), title: '', isFinished: false, players: [], ...await request.json() }
-  if (nonNull(newGame.seasonId)) {
-    newGame.seasonId = new ObjectId(newGame.seasonId)
-  }
-  if (nonNull(newGame.groupId)) {
-    newGame.groupId = new ObjectId(newGame.groupId)
+  const newGame = { createdAt: Date.now(), title: '', isFinished: false, players: [], ...await deserealizeBody<Partial<Game>>(request, 'game') }
+  if (!newGame.groupId) {
+    return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
   }
 
+  // @ts-expect-error group id is not undefined
   const result = await (await getDb()).games.insertOne(newGame)
   if (nonNull(newGame.seasonId) && nonNull(result.insertedId)) {
     (await getDb()).seasons.updateOne(

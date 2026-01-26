@@ -16,7 +16,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const { id } = params
-  const user = await (await getDb()).players.findOne({ telegramId: getTelegramId(request) })
+  let telegramId
+  try {
+    telegramId = getTelegramId(request)
+  }
+  catch (error) {
+    return NextResponse.json({ error }, { status: 403 })
+  }
+  const user = await (await getDb()).players.findOne({ telegramId: telegramId })
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 401 })
   }

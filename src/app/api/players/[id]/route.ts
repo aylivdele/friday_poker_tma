@@ -3,6 +3,7 @@ import type { Player } from '@/types/types'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
+import { deserealizeBody } from '../../helpers'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const player = await (await getDb()).players.findOne({ _id: new ObjectId(params.id) })
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const newPlayerData = await request.json() as Player
+  const newPlayerData = await deserealizeBody<Partial<Player>>(request, 'player')
   newPlayerData._id = new ObjectId(params.id)
   const result = await (await getDb()).players.updateOne(
     { _id: new ObjectId(params.id) },

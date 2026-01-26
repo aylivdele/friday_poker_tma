@@ -1,7 +1,9 @@
 import type { NextRequest } from 'next/server'
+import type { Game } from '@/types/types'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
+import { deserealizeBody } from '../../helpers'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const games = await (await getDb()).games.findOne({ _id: new ObjectId(params.id) })
@@ -14,7 +16,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   if (!game) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
   }
-  const updatedGame = { ...game, ...await req.json(), _id: id }
+  const updatedGame = { ...game, ...await deserealizeBody<Partial<Game>>(req, 'game'), _id: id }
   await (await getDb()).games.updateOne({ _id: id }, { $set: updatedGame })
   return NextResponse.json(updatedGame)
 }

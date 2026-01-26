@@ -6,7 +6,13 @@ import { getDb } from '@/core/db'
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const { id } = params
-  const telegramId = getTelegramId(request)
+  let telegramId
+  try {
+    telegramId = getTelegramId(request)
+  }
+  catch (error) {
+    return NextResponse.json({ error }, { status: 403 })
+  }
 
   const db = await getDb()
   const group = await db.groups.findOne({ _id: new ObjectId(id) })

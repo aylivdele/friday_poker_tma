@@ -3,6 +3,7 @@ import type { Player, Season } from '@/types/types'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
+import { deserealizeBody } from '../../helpers'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const season = await (await getDb()).seasons.findOne({ _id: new ObjectId(params.id) })
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const newSeasonData = await request.json() as Season
+  const newSeasonData = await deserealizeBody<Partial<Season>>(request, 'season')
   newSeasonData._id = new ObjectId(params.id)
   const result = await (await getDb()).seasons.updateOne(
     { _id: new ObjectId(params.id) },
