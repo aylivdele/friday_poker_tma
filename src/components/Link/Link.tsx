@@ -1,17 +1,16 @@
-import { openLink } from '@tma.js/sdk-react';
-import { type FC, type MouseEventHandler, type JSX, useCallback } from 'react';
-import {
-  type LinkProps as NextLinkProps,
-  default as NextLink,
-} from 'next/link';
+import type { LinkProps as NextLinkProps } from 'next/link'
+import type { FC, JSX, MouseEventHandler } from 'react'
+import { openLink } from '@tma.js/sdk-react'
+import NextLink from 'next/link'
+import { useCallback } from 'react'
 
-import { classNames } from '@/css/classnames';
+import { classNames } from '@/css/classnames'
 
-import './Link.css';
+import './Link.css'
 
 export interface LinkProps
   extends NextLinkProps,
-    Omit<JSX.IntrinsicElements['a'], 'href'> {}
+  Omit<JSX.IntrinsicElements['a'], 'href'> {}
 
 export const Link: FC<LinkProps> = ({
   className,
@@ -21,31 +20,32 @@ export const Link: FC<LinkProps> = ({
 }) => {
   const onClick = useCallback<MouseEventHandler<HTMLAnchorElement>>(
     (e) => {
-      propsOnClick?.(e);
+      propsOnClick?.(e)
 
       // Compute if target path is external. In this case we would like to open link using
       // TMA method.
-      let path: string;
+      let path: string
       if (typeof href === 'string') {
-        path = href;
-      } else {
-        const { search = '', pathname = '', hash = '' } = href;
-        path = `${pathname}?${search}#${hash}`;
+        path = href
+      }
+      else {
+        const { search = '', pathname = '', hash = '' } = href
+        path = `${pathname}?${search}#${hash}`
       }
 
-      const targetUrl = new URL(path, window.location.toString());
-      const currentUrl = new URL(window.location.toString());
-      const isExternal =
-        targetUrl.protocol !== currentUrl.protocol ||
-        targetUrl.host !== currentUrl.host;
+      const targetUrl = new URL(path, window.location.toString())
+      const currentUrl = new URL(window.location.toString())
+      const isExternal
+        = targetUrl.protocol !== currentUrl.protocol
+          || targetUrl.host !== currentUrl.host
 
       if (isExternal) {
-        e.preventDefault();
-        openLink(targetUrl.toString());
+        e.preventDefault()
+        openLink(targetUrl.toString())
       }
     },
     [href, propsOnClick],
-  );
+  )
 
   return (
     <NextLink
@@ -54,5 +54,5 @@ export const Link: FC<LinkProps> = ({
       onClick={onClick}
       className={classNames(className, 'link')}
     />
-  );
-};
+  )
+}

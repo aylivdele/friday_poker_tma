@@ -20,6 +20,20 @@ export function getTelegramId(req: NextRequest) {
   return Number(initData.user.id)
 }
 
+export function getInitData(req: NextRequest) {
+  const initDataRaw = req.headers.get('x-init-data')
+  try {
+    validate(initDataRaw ?? '', process.env.TELEGRAM_BOT_TOKEN ?? '')
+  }
+  catch (e) {
+    if (!SignatureInvalidError.is(e)) {
+      console.error('Init data validation error:', e)
+    }
+    throw new Error('Unauthorized')
+  }
+  return parse(initDataRaw!)
+}
+
 export function nonNull<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined
 }

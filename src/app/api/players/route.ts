@@ -2,26 +2,40 @@ import type { NextRequest } from 'next/server'
 import type { Player } from '@/types/types'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
-import { deserealizeBody, getTelegramId } from '@/app/api/helpers'
+import { deserealizeBody, getInitData, getTelegramId, nonNull } from '@/app/api/helpers'
 import { getDb } from '@/core/db'
 
 export async function POST(req: NextRequest) {
-  let telegramId
+  let initData
   try {
-    telegramId = getTelegramId(req)
+    initData = getInitData(req)
   }
   catch (error) {
     return NextResponse.json({ error }, { status: 403 })
   }
+  const useInitData = req.nextUrl.searchParams.get('useInitData') === 'true'
 
-  let player: Player | null = await (
-    await getDb()
-  ).players.findOne({ telegramId })
+  let player: Player | null = null
+  if (nonNull(initData.user?.id)) {
+    player = await (
+      await getDb()
+    ).players.findOne({ telegramId: initData.user.id })
+  }
   if (!player) {
-    player = {
-      ...await deserealizeBody<Partial<Player>>(req, 'player'),
-      telegramId,
-      createdAt: Date.now(),
+    if (useInitData) {
+      player = {
+        telegramId: initData.user?.id,
+        username: initData.user?.username ?? '',
+        firstName: initData.user?.first_name ?? '',
+        lastName: initData.user?.last_name ?? '',
+        createdAt: Date.now(),
+      }
+    }
+    else {
+      player = {
+        ...await deserealizeBody<Partial<Player>>(req, 'player'),
+        createdAt: Date.now(),
+      }
     }
 
     const result = await (await getDb()).players.insertOne(player)

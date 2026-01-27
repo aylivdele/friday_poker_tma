@@ -17,14 +17,14 @@ export const api = {
     const response = await fetch(url, { headers: getDefaultHeaders() })
     return handleResponse(response)
   },
-  post: async <T>(url: string, body: any): Promise<T> => {
+  post: async <T>(url: string, body?: any): Promise<T> => {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         ...getDefaultHeaders(),
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : undefined,
     })
     return handleResponse(response)
   },
