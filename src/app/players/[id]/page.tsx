@@ -1,9 +1,10 @@
 'use client'
 import type { Player } from '@/types/types'
-import { Cell, Section, Spinner, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, AvatarStack, Cell, Info, Section, Spinner, Text } from '@telegram-apps/telegram-ui'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { api } from '@/app/api/client'
+import { Page } from '@/components/Page'
+import { api } from '@/lib/client'
 import { usePlayerStore } from '@/stores/playerStore'
 
 export function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,8 +36,26 @@ export function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
     return <Text weight="2">Ошибка при загрузке данных игрока. Попробуйте перезагрузить страницу.</Text>
   }
   return (
-    <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>
-
-    </Section>
+    <Page back={false}>
+      <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>
+        <Avatar size={96} src={player.avatarUrl} />
+        <Text>
+          username:
+          {player.username}
+        </Text>
+        <Info
+          avatarStack={(
+            <AvatarStack>
+              <Avatar size={28} />
+              <Avatar size={28} />
+              <Avatar size={28} />
+            </AvatarStack>
+          )}
+          type="avatarStack"
+        >
+          Достижения
+        </Info>
+      </Section>
+    </Page>
   )
 }

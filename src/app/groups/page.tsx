@@ -1,24 +1,27 @@
-import type { Group } from '@/types/types'
-import { Cell, FixedLayout, Section, Spinner, Tabbar, Text } from '@telegram-apps/telegram-ui'
+import { Section, TabsList } from '@telegram-apps/telegram-ui'
+import { TabsItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/TabsList/components/TabsItem/TabsItem'
 import { useEffect, useState } from 'react'
+import AllGroups from './AllGroups'
+import MyGroups from './MyGroups'
 
 export function groupsPage() {
-  const [groups, setGroups] = useState<Array<Group> | undefined>(undefined)
+  const [selectedTab, setSelectedTab] = useState<'all' | 'my'>('all')
 
   useEffect(() => {
 
   }, [])
 
-  if (groups === undefined) {
-    return <Cell before={<Spinner size="m" />}><Text weight="2">Загрузка данных игрока...</Text></Cell>
-  }
-
-  if (groups === null) {
-    return <Text weight="2">Ошибка при загрузке групп. Попробуйте перезагрузить страницу.</Text>
-  }
-
   return (
     <Section header="Группы">
+      <TabsList>
+        <TabsItem selected={selectedTab === 'all'} onClick={() => setSelectedTab('all')}>
+          Все группы
+        </TabsItem>
+        <TabsItem selected={selectedTab === 'my'} onClick={() => setSelectedTab('my')}>
+          Мои группы
+        </TabsItem>
+      </TabsList>
+      { selectedTab === 'all' ? <AllGroups /> : (<MyGroups />) }
     </Section>
   )
 }

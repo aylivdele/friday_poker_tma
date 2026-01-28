@@ -1,8 +1,9 @@
-'use client';
+'use client'
 
-import { backButton } from '@tma.js/sdk-react';
-import { PropsWithChildren, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import type { PropsWithChildren } from 'react'
+import { backButton } from '@tma.js/sdk-react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export function Page({ children, back = true }: PropsWithChildren<{
   /**
@@ -11,21 +12,22 @@ export function Page({ children, back = true }: PropsWithChildren<{
    */
   back?: boolean
 }>) {
-  const router = useRouter();
+  const router = useRouter()
 
   useEffect(() => {
     if (back) {
-      backButton.show();
-    } else {
-      backButton.hide();
+      backButton.show()
     }
-  }, [back]);
+    else {
+      backButton.hide()
+    }
+  }, [back])
 
   useEffect(() => {
     return backButton.onClick(() => {
-      router.back();
-    });
-  }, [router]);
+      router.back()
+    })
+  }, [router])
 
-  return <>{children}</>;
+  return <>{children}</>
 }

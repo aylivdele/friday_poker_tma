@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { usePlayerStore } from '@/stores/playerStore'
-import { api } from './api/client'
+import { api } from '../lib/client'
 
 export default function Bootstrap() {
   const setPlayer = usePlayerStore(s => s.setPlayer)

@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
         username: initData.user?.username ?? '',
         firstName: initData.user?.first_name ?? '',
         lastName: initData.user?.last_name ?? '',
+        avatarUrl: initData.user?.photo_url ?? '',
         createdAt: Date.now(),
       }
     }
