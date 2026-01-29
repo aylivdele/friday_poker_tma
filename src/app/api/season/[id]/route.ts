@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { Player, Season } from '@/types/types'
+import type { Player, Season } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'

@@ -1,9 +1,10 @@
 'use client'
 
-import type { Group } from '@/types/types'
-import { Avatar, Badge, Cell, List, Spinner, Text } from '@telegram-apps/telegram-ui'
+import type { Group } from '@/types/db'
+import { Cell, List, Spinner, Text } from '@telegram-apps/telegram-ui'
 import useSWR from 'swr'
 import { swrGetFetcher } from '@/lib/swrFetcher'
+import GroupComponent from './Group'
 
 export default function GroupsClient() {
   const { data, error, isLoading } = useSWR<Group[]>(
@@ -19,14 +20,7 @@ export default function GroupsClient() {
   return (
     <List>
       {data?.map(g => (
-        <Cell
-          key={g.name}
-          before={<Avatar size={48} />}
-          after={<Badge type="number">{g.members.length}</Badge>}
-          interactiveAnimation="background"
-        >
-          {g.name}
-        </Cell>
+        <GroupComponent key={g.name} group={g} />
       ))}
     </List>
   )

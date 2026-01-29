@@ -31,6 +31,13 @@ export interface GameResult {
   score: number
 }
 
+export interface GameSettings {
+  isFinal: boolean
+  firstEntryCost: number
+  reEntryCost: number
+  maxReEntries: number
+}
+
 export interface Game {
   _id?: ObjectId
   groupId: ObjectId
@@ -38,9 +45,10 @@ export interface Game {
   isFinished: boolean
   players: GamePlayer[]
   results?: GameResult[]
-  createdAt: Date
-  finishedAt?: Date
+  createdAt: number
+  finishedAt?: number
   seasonId?: ObjectId
+  settings: GameSettings
 }
 
 export interface Season {

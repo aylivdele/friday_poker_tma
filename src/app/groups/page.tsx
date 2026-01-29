@@ -1,15 +1,11 @@
 import { Section, TabsList } from '@telegram-apps/telegram-ui'
 import { TabsItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/TabsList/components/TabsItem/TabsItem'
-import { useEffect, useState } from 'react'
-import AllGroups from './AllGroups'
-import MyGroups from './MyGroups'
+import { useState } from 'react'
+import AllGroups from '../../components/Groups/AllGroups'
+import MyGroups from '../../components/Groups/MyGroups'
 
-export function groupsPage() {
+export default function groupsPage() {
   const [selectedTab, setSelectedTab] = useState<'all' | 'my'>('all')
-
-  useEffect(() => {
-
-  }, [])
 
   return (
     <Section header="Группы">

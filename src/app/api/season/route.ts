@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { Season } from '@/types/types'
+import type { Season } from '@/types/db'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
 import { deserealizeBody } from '../helpers'

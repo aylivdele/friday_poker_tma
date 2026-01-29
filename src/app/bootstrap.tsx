@@ -1,11 +1,11 @@
 'use client'
 
-import type { Player } from '@/types/types'
+import type { Player } from '@/types/db'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { usePlayerStore } from '@/stores/playerStore'
-import { api } from '../lib/client'
+import { api } from '../lib/api'
 
 export default function Bootstrap() {
   const setPlayer = usePlayerStore(s => s.setPlayer)

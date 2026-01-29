@@ -1,13 +1,13 @@
 'use client'
-import type { Player } from '@/types/types'
+import type { Player } from '@/types/db'
 import { Avatar, AvatarStack, Cell, Info, Section, Spinner, Text } from '@telegram-apps/telegram-ui'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Page } from '@/components/Page'
-import { api } from '@/lib/client'
+import { api } from '@/lib/api'
 import { usePlayerStore } from '@/stores/playerStore'
 
-export function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const profilePlayer = usePlayerStore(s => s.player)
   const [loading, setLoading] = useState<boolean>(true)
@@ -36,7 +36,7 @@ export function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
     return <Text weight="2">Ошибка при загрузке данных игрока. Попробуйте перезагрузить страницу.</Text>
   }
   return (
-    <Page back={false}>
+    <Page>
       <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>
         <Avatar size={96} src={player.avatarUrl} />
         <Text>

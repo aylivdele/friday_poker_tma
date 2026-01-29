@@ -1,4 +1,4 @@
-import type { ExtendedDb } from '@/types/types'
+import type { ExtendedDb } from '@/types/db'
 import process from 'node:process'
 import { MongoClient } from 'mongodb'
 

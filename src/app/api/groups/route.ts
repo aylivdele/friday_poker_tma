@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { Group } from '@/types/types'
+import type { Group } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { use } from 'react'

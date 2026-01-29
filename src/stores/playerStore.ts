@@ -1,4 +1,4 @@
-import type { Player } from '@/types/types'
+import type { Player } from '@/types/db'
 import { create } from 'zustand'
 
 interface PlayerState {
