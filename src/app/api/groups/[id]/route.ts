@@ -23,7 +23,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   catch (error) {
     return NextResponse.json({ error }, { status: 403 })
   }
-  const user = await (await getDb()).players.findOne({ telegramId: telegramId })
+  const user = await (await getDb()).players.findOne({ telegramId })
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 401 })
   }

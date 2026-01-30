@@ -3,6 +3,7 @@
 import type { Player } from '@/types/db'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Toaster } from 'react-hot-toast'
 import { toast } from 'react-hot-toast/headless'
 import { usePlayerStore } from '@/stores/playerStore'
 import { api } from '../lib/api'
@@ -38,5 +39,5 @@ export default function Bootstrap() {
     }
   }, [setPlayer, router])
 
-  return null
+  return <Toaster />
 }

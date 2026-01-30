@@ -2,9 +2,8 @@ import type { NextRequest } from 'next/server'
 import type { Group } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
-import { use } from 'react'
 import { getDb } from '@/core/db'
-import { deserealizeBody, getInitData, isNull, nonNull } from '../helpers'
+import { deserealizeBody, getInitData, isNull } from '../helpers'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams

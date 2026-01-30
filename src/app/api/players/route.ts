@@ -14,16 +14,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error }, { status: 403 })
   }
   const useInitData = req.nextUrl.searchParams.get('useInitData') === 'true'
+  const groupId = req.nextUrl.searchParams.get('groupId')
 
-  let player: Player | null = null
+  let caller: Player | null = null
   if (nonNull(initData.user?.id)) {
-    player = await (
+    caller = await (
       await getDb()
     ).players.findOne({ telegramId: initData.user.id })
   }
-  if (!player) {
-    if (useInitData) {
-      player = {
+
+  if (useInitData) {
+    if (!caller) {
+      caller = {
         telegramId: initData.user?.id,
         username: initData.user?.username ?? '',
         firstName: initData.user?.first_name ?? '',
@@ -31,17 +33,35 @@ export async function POST(req: NextRequest) {
         avatarUrl: initData.user?.photo_url ?? '',
         createdAt: Date.now(),
       }
-    }
-    else {
-      player = {
-        ...await deserealizeBody<Partial<Player>>(req, 'player'),
-        createdAt: Date.now(),
-      }
+      const result = await (await getDb()).players.insertOne(caller)
+      caller._id = result.insertedId
     }
 
-    const result = await (await getDb()).players.insertOne(player)
-    player._id = result.insertedId
+    return NextResponse.json(caller)
   }
+
+  if (!groupId) {
+    return NextResponse.json({ error: 'Player should be bound to group' }, { status: 400 })
+  }
+
+  const group = await (await getDb()).groups.findOne({ _id: new ObjectId(groupId) })
+  if (!group) {
+    return NextResponse.json({ error: 'Group not found' }, { status: 404 })
+  }
+  const callerIsAMember = !!caller?._id && group.members.some(m => m.equals(caller._id))
+
+  if (!callerIsAMember) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const player: Partial<Player> & Pick<Player, 'createdAt'> = {
+    ...await deserealizeBody<Partial<Player>>(req, 'player'),
+    createdAt: Date.now(),
+  }
+
+  const result = await (await getDb()).players.insertOne(player)
+  player._id = result.insertedId
+  await (await getDb()).groups.updateOne({ _id: group._id }, { $set: { ...group, members: [...group.members, player._id] } })
 
   return NextResponse.json(player)
 }

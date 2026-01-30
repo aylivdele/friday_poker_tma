@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 export function ErrorPage({
   error,
@@ -9,8 +9,8 @@ export function ErrorPage({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error(error);
-  }, [error]);
+    console.error(error)
+  }, [error])
 
   return (
     <div>
@@ -22,5 +22,5 @@ export function ErrorPage({
       </blockquote>
       {reset && <button onClick={() => reset()}>Try again</button>}
     </div>
-  );
+  )
 }
