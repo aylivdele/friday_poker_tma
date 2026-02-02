@@ -35,6 +35,10 @@ export default function Bootstrap() {
     }
 
     if (rawInitData) {
+      // eslint-disable-next-line no-console
+      console.log(`raw sdk init data ${rawInitData}\n`
+      // @ts-expect-error qwe
+        + `raw native init data ${window.Telegram?.WebApp?.initData}`)
       init()
 
       return () => {
