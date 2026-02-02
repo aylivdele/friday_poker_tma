@@ -1,6 +1,6 @@
 /* ===== Player ===== */
 export interface Player {
-  _id?: string
+  _id: string
   telegramId?: number
   username?: string
   firstName?: string
@@ -11,7 +11,7 @@ export interface Player {
 
 /* ===== Group ===== */
 export interface Group {
-  _id?: string
+  _id: string
   title: string
   ownerId: string
   members: string[]
@@ -37,7 +37,7 @@ export interface GameSettings {
 }
 
 export interface Game {
-  _id?: string
+  _id: string
   groupId: string
   title: string
   isFinished: boolean
@@ -50,7 +50,7 @@ export interface Game {
 }
 
 export interface Season {
-  _id?: string
+  _id: string
   groupId: string
   title: string
   gameIds: string[]

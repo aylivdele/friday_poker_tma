@@ -3,18 +3,19 @@ import type { Season } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { deserealizeBody } from '../../helpers'
+import { deserealizeBody } from '../../../../lib/serverHelpers'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const season = await (await getDb()).seasons.findOne({ _id: new ObjectId(params.id) })
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const season = await (await getDb()).seasons.findOne({ _id: new ObjectId((await params).id) })
   return season ? NextResponse.json(season) : NextResponse.json({ error: 'Season not found' }, { status: 404 })
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const newSeasonData = await deserealizeBody<Partial<Season>>(request, 'season')
-  newSeasonData._id = new ObjectId(params.id)
+  const { id } = await params
+  newSeasonData._id = new ObjectId(id)
   const result = await (await getDb()).seasons.updateOne(
-    { _id: new ObjectId(params.id) },
+    { _id: new ObjectId(id) },
     { $set: newSeasonData },
   )
   if (result.matchedCount === 0) {

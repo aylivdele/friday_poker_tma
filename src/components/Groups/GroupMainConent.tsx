@@ -7,39 +7,65 @@ import { mainButton } from '@tma.js/sdk-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import useSWR from 'swr'
-import { isNull } from '@/app/api/helpers'
+import { api } from '@/lib/api'
+import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
+import { usePlayerStore } from '@/stores/playerStore'
 import { Loader } from '../Loader/Loader'
+import { PinModal } from './PinModal'
 import { GroupPlayer } from './Player/Player'
 
-export function GroupMainContent({ group }: { group: Group }) {
+export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => void, group: Group }) {
   const swr = useSWR<Season[]>(`/api/seasons?groupId=${group._id}`, swrGetFetcher)
   const seasons = swr.data
+  const player = usePlayerStore(s => s.player)
   const [selectedTab, setSelectedTab] = useState<'players' | 'seasons'>('players')
+  const [modalOpen, setModalOpen] = useState(false)
 
   const router = useRouter()
 
   useEffect(() => {
-    if (!mainButton)
+    if (!mainButton || isNull(player?._id))
       return
 
-    if (selectedTab === 'players') {
+    let unbound
+    if (!group.members.includes(player._id)) {
+      mainButton.setText('Вступить в группу')
+      unbound = mainButton.onClick(() => setModalOpen(true))
+    }
+    else if (selectedTab === 'players') {
       mainButton.setText('Добавить игрока')
+      unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
     }
     else {
       mainButton.setText('Начать новый сезон')
+      unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
     }
 
     mainButton.show()
-
-    const unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
 
     return () => {
       mainButton.hide()
       unbound()
     }
-  }, [group._id, selectedTab, mainButton, router])
+  }, [group._id, selectedTab, mainButton, router, player])
+
+  const onPinEnter = (pin: number[]) => {
+    setModalOpen(false)
+    api.put(`/api/groups/${group._id}/join?pin=${pin.join('')}`).then(() => {
+      mutateGroup()
+    }).catch((error) => {
+      if (error?.error === 'Wrong password') {
+        setModalOpen(true)
+        toast.error('Неверный пароль')
+      }
+      else {
+        toast.error(error)
+      }
+    })
+  }
 
   if (isNull(seasons)) {
     return (<Loader {...swr} />)
@@ -47,6 +73,7 @@ export function GroupMainContent({ group }: { group: Group }) {
 
   return (
     <>
+      <PinModal open={modalOpen} onPinEnter={onPinEnter} />
       <TabsList>
         <TabsItem selected={selectedTab === 'players'} onClick={() => setSelectedTab('players')}>
           Игроки

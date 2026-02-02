@@ -2,8 +2,9 @@ import type { NextRequest } from 'next/server'
 import type { Player } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
-import { deserealizeBody, getInitData, getTelegramId, nonNull } from '@/app/api/helpers'
 import { getDb } from '@/core/db'
+import { nonNull } from '@/lib/helpers'
+import { deserealizeBody, getInitData, getTelegramId } from '@/lib/serverHelpers'
 
 export async function POST(req: NextRequest) {
   let initData

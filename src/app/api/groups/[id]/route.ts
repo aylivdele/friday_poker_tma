@@ -2,20 +2,20 @@ import type { NextRequest } from 'next/server'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { getTelegramId } from '../../helpers'
+import { getTelegramId } from '@/lib/serverHelpers'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
 
   const group = await (await getDb()).groups.findOne({ _id: new ObjectId(id) })
   if (!group) {
     return NextResponse.json({ error: 'Group not found' }, { status: 404 })
   }
-  return NextResponse.json(group)
+  return NextResponse.json({ ...group, pin: undefined })
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let telegramId
   try {
     telegramId = getTelegramId(request)

@@ -3,7 +3,8 @@ import type { Group } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { deserealizeBody, getInitData, isNull } from '../helpers'
+import { deserealizeBody, getInitData } from '@/lib/serverHelpers'
+import { isNull } from '../../../lib/helpers'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
   const playerId = searchParams.get('playerId')
   const useInitData = searchParams.get('useInitData') === 'true'
 
+  let groups: Group[]
   if (useInitData) {
     let initData
     try {
@@ -24,24 +26,24 @@ export async function GET(request: NextRequest) {
     }
     const player = await (await getDb()).players.findOne({ telegramId: initData.user.id })
     if (player) {
-      const groups = await (await getDb()).groups.find({ members: player._id }).toArray()
-      return NextResponse.json(groups)
+      groups = await (await getDb()).groups.find({ members: player._id }).toArray()
     }
-    return NextResponse.json({ error: 'Player not found' }, { status: 404 })
+    else {
+      return NextResponse.json({ error: 'Player not found' }, { status: 404 })
+    }
   }
-
-  if (playerId) {
-    const groups = await (await getDb()).groups.find({ members: new ObjectId(playerId) }).toArray()
-    return NextResponse.json(groups)
+  else {
+    if (playerId) {
+      groups = await (await getDb()).groups.find({ members: new ObjectId(playerId) }).toArray()
+    }
+    else if (searchString) {
+      groups = await (await getDb()).groups.find({ title: { $regex: searchString, $options: 'i' } }).toArray()
+    }
+    else {
+      groups = await (await getDb()).groups.find({}).toArray()
+    }
   }
-
-  if (searchString) {
-    const groups = await (await getDb()).groups.find({ title: { $regex: searchString, $options: 'i' } }).toArray()
-    return NextResponse.json(groups)
-  }
-
-  const groups = await (await getDb()).groups.find({}).toArray()
-  return NextResponse.json(groups)
+  return NextResponse.json(groups.map(group => ({ ...group, pin: undefined })))
 }
 
 export async function POST(request: NextRequest) {
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
   }
   const db = await getDb()
   const caller = await db.players.findOne({ telegramId: initData.user.id })
-  const { title, ownerId } = await deserealizeBody<Partial<Group>>(request, 'group')
+  const { title, ownerId, pin } = await deserealizeBody<Partial<Group>>(request, 'group')
   const creater = ownerId ?? caller?._id
 
   if (isNull(creater)) {
@@ -68,6 +70,7 @@ export async function POST(request: NextRequest) {
     title: title ?? 'New Group',
     ownerId: creater,
     members: [creater],
+    pin,
     createdAt: Date.now(),
   }
 

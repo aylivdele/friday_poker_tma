@@ -3,7 +3,7 @@ import type { Season } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { deserealizeBody } from '../helpers'
+import { deserealizeBody } from '../../../lib/serverHelpers'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams

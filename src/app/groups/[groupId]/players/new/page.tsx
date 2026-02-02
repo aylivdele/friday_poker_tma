@@ -20,7 +20,7 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
     mainButton.setText('Сохранить игрока')
     mainButton.show()
 
-    const unbound = mainButton.onClick(() => api.post<Player>(`/api/players/?groupId=${groupId}`, { firstName, secondName, avatarUrl: avatar })
+    const unbound = mainButton.onClick(() => api.post<Player>(`/api/players?groupId=${groupId}`, { firstName, secondName, avatarUrl: avatar })
       .then(player => router.replace(`/players/${player._id}`))
       .catch(e => toast.error(e)))
 

@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { Cell, Spinner, Text } from '@telegram-apps/telegram-ui'
-import { isNull } from '@/app/api/helpers'
+import { isNull } from '@/lib/helpers'
 
 export function Loader({ data, isLoading, error, children }: PropsWithChildren<{ data: any, isLoading: boolean, error: any }>) {
   if (isLoading)

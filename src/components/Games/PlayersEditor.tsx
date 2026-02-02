@@ -3,11 +3,11 @@
 import type { GamePlayer, Player } from '@/types/api'
 import { Avatar, Button, Cell, Input, List, Section, Text } from '@telegram-apps/telegram-ui'
 import useSWR from 'swr'
-import { isNull } from '@/app/api/helpers'
+import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
+import { nonNull } from '../../lib/helpers'
 import { IconPersonRemove } from '../Icons/PersonRemove'
 import { Loader } from '../Loader/Loader'
-import { nonNull } from './../../app/api/helpers'
 
 export default function PlayersEditor({
   players,

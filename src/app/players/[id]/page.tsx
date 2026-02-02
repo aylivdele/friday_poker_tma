@@ -4,10 +4,10 @@ import type { Player } from '@/types/api'
 import { Avatar, AvatarStack, Info, Section, Text } from '@telegram-apps/telegram-ui'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { isNull } from '@/app/api/helpers'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'
+import { isNull } from '@/lib/helpers'
 import { usePlayerStore } from '@/stores/playerStore'
 
 export default function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +17,7 @@ export default function PlayersPage({ params }: { params: Promise<{ id: string }
   const [player, setPlayer] = useState<Player | null | undefined>(undefined)
 
   useEffect(() => {
-    if (profilePlayer && profilePlayer._id?.toString() === id) {
+    if (profilePlayer && profilePlayer._id === id) {
       setPlayer(profilePlayer)
       setLoading(false)
       return

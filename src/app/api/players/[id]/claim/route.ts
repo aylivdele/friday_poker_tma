@@ -2,15 +2,16 @@ import type { NextRequest } from 'next/server'
 import type { Player } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
-import { deserealizeBody } from '@/app/api/helpers'
 import { getDb } from '@/core/db'
+import { deserealizeBody } from '@/lib/serverHelpers'
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const player = await deserealizeBody<Partial<Player>>(req, 'player')
   const prevId = player._id
-  player._id = new ObjectId(params.id)
+  const { id } = await params
+  player._id = new ObjectId(id)
   const result = await (await getDb()).players.updateOne(
-    { _id: new ObjectId(params.id) },
+    { _id: new ObjectId(id) },
     { $set: player },
   )
   if (result.matchedCount === 0) {

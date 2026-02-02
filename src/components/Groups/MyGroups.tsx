@@ -3,7 +3,7 @@
 import type { Group } from '@/types/api'
 import { List } from '@telegram-apps/telegram-ui'
 import useSWR from 'swr'
-import { isNull } from '@/app/api/helpers'
+import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 import { Loader } from '../Loader/Loader'
 import GroupComponent from './Group'

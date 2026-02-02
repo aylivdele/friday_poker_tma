@@ -18,6 +18,7 @@ export interface Group {
   ownerId: ObjectId
   members: ObjectId[]
   createdAt: number
+  pin?: string
 }
 
 /* ===== Game ===== */

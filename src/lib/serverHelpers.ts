@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import process from 'node:process'
 import { parse, SignatureInvalidError, validate } from '@tma.js/init-data-node'
 import { ObjectId } from 'mongodb'
+import { isNull, nonNull } from './helpers'
 
 export function getTelegramId(req: NextRequest) {
   const initDataRaw = req.headers.get('x-init-data')
@@ -32,14 +33,6 @@ export function getInitData(req: NextRequest) {
     throw new Error('Unauthorized')
   }
   return parse(initDataRaw!)
-}
-
-export function nonNull<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined
-}
-
-export function isNull<T>(value: T | null | undefined): value is null | undefined {
-  return value === null || value === undefined
 }
 
 export async function deserealizeBody<T>(req: NextRequest, type: 'game' | 'player' | 'group' | 'season'): Promise<T> {

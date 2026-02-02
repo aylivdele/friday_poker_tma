@@ -12,7 +12,7 @@ import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default async function GroupsPage({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = use (params)
-  const { data: group, isLoading, error } = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
+  const { data: group, isLoading, error, mutate } = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
 
   if (!group) {
     return (<Loader isLoading={isLoading} error={error} data={group} />)
@@ -21,7 +21,7 @@ export default async function GroupsPage({ params }: { params: Promise<{ groupId
   return (
     <Page>
       <Section header={`Группа: ${group?.title}`} footer={(<DeleteGroupButton groupId={groupId} ownerId={group?.ownerId.toString()} />)}>
-        <GroupMainContent group={group} />
+        <GroupMainContent group={group} mutateGroup={mutate} />
       </Section>
     </Page>
   )

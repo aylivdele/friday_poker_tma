@@ -1,11 +1,11 @@
 import type { NextRequest } from 'next/dist/server/web/spec-extension/request'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
-import { getTelegramId } from '@/app/api/helpers'
 import { getDb } from '@/core/db'
+import { getTelegramId } from '@/lib/serverHelpers'
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let telegramId
   try {
     telegramId = getTelegramId(request)

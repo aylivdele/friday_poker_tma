@@ -4,10 +4,10 @@ import type { Group, Season } from '@/types/api'
 import { Section } from '@telegram-apps/telegram-ui'
 import { use } from 'react'
 import useSWR from 'swr'
-import { isNull } from '@/app/api/helpers'
 import { SeasonGames } from '@/components/Games/NewGameButton'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
+import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default async function SeasonPage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
