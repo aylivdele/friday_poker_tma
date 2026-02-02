@@ -27,7 +27,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 401 })
   }
-  const result = await (await getDb()).groups.deleteOne({ $and: [{ ownerId: user?._id }, { _id: new ObjectId(id) }] })
+  const result = await (await getDb()).groups.deleteOne({ $and: [{ ownerId: user._id }, { _id: new ObjectId(id) }] })
   if (result.deletedCount === 0) {
     return NextResponse.json({ error: 'Group not found or you are not the owner' }, { status: 404 })
   }

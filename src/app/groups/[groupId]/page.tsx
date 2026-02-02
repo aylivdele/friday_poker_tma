@@ -1,27 +1,27 @@
-import { Section, Text } from '@telegram-apps/telegram-ui'
-import { ObjectId } from 'mongodb'
+'use client'
+
+import type { Group } from '@/types/api'
+import { Section } from '@telegram-apps/telegram-ui'
+import { use } from 'react'
+import useSWR from 'swr'
+import { DeleteGroupButton } from '@/components/Groups/DeleteGroupButton'
 import { GroupMainContent } from '@/components/Groups/GroupMainConent'
+import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { getDb } from '@/core/db'
+import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default async function GroupsPage({ params }: { params: Promise<{ groupId: string }> }) {
-  const { groupId } = await (params)
-  const group = await (await getDb()).groups.findOne({ _id: new ObjectId(groupId) })
+  const { groupId } = use (params)
+  const { data: group, isLoading, error } = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
 
   if (!group) {
-    return (
-      <Page>
-        <Text>Группа не найдена</Text>
-      </Page>
-    )
+    return (<Loader isLoading={isLoading} error={error} data={group} />)
   }
-
-  const seasons = (await (await getDb()).seasons.find({ groupId: group._id }).toArray()).reverse()
 
   return (
     <Page>
-      <Section header={`Группа: ${group.name}`}>
-        <GroupMainContent group={group} seasons={seasons} />
+      <Section header={`Группа: ${group?.title}`} footer={(<DeleteGroupButton groupId={groupId} ownerId={group?.ownerId.toString()} />)}>
+        <GroupMainContent group={group} />
       </Section>
     </Page>
   )

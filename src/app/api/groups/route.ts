@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (searchString) {
-    const groups = await (await getDb()).groups.find({ name: { $regex: searchString, $options: 'i' } }).toArray()
+    const groups = await (await getDb()).groups.find({ title: { $regex: searchString, $options: 'i' } }).toArray()
     return NextResponse.json(groups)
   }
 
@@ -45,17 +45,32 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { name, ownerId } = await deserealizeBody<Partial<Group>>(request, 'group')
-  if (!ownerId) {
-    return NextResponse.json({ error: 'ownerId is required' }, { status: 400 })
+  let initData
+  try {
+    initData = getInitData(request)
+    if (isNull(initData.user?.id)) {
+      throw new Error(`Telegram user id not provided`)
+    }
   }
+  catch (error) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+  const db = await getDb()
+  const caller = await db.players.findOne({ telegramId: initData.user.id })
+  const { title, ownerId } = await deserealizeBody<Partial<Group>>(request, 'group')
+  const creater = ownerId ?? caller?._id
+
+  if (isNull(creater)) {
+    return NextResponse.json({ error: 'creater info is required' }, { status: 400 })
+  }
+
   const newGroup = {
-    name: name ?? 'New Group',
-    ownerId,
-    members: [ownerId],
+    title: title ?? 'New Group',
+    ownerId: creater,
+    members: [creater],
     createdAt: Date.now(),
   }
 
-  const result = await (await getDb()).groups.insertOne(newGroup)
+  const result = await db.groups.insertOne(newGroup)
   return NextResponse.json({ ...newGroup, _id: result.insertedId })
 }

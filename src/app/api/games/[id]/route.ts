@@ -12,12 +12,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const id = new ObjectId(params.id)
-  const game = await (await getDb()).games.findOne({ _id: id })
-  if (!game) {
+  const updatedGame = await deserealizeBody<Partial<Game>>(req, 'game')
+  const result = await (await getDb()).games.updateOne({ _id: id }, { $set: updatedGame })
+  if (result.matchedCount === 0) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
   }
-  const updatedGame = { ...game, ...await deserealizeBody<Partial<Game>>(req, 'game'), _id: id }
-  await (await getDb()).games.updateOne({ _id: id }, { $set: updatedGame })
   return NextResponse.json(updatedGame)
 }
 

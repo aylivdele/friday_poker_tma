@@ -1,8 +1,6 @@
-import type { Collection, Db, ObjectId } from 'mongodb'
-
 /* ===== Player ===== */
 export interface Player {
-  _id?: ObjectId
+  _id?: string
   telegramId?: number
   username?: string
   firstName?: string
@@ -13,21 +11,21 @@ export interface Player {
 
 /* ===== Group ===== */
 export interface Group {
-  _id?: ObjectId
+  _id?: string
   title: string
-  ownerId: ObjectId
-  members: ObjectId[]
+  ownerId: string
+  members: string[]
   createdAt: number
 }
 
 /* ===== Game ===== */
 export interface GamePlayer {
-  playerId: ObjectId
+  playerId: string
   entries: number
 }
 
 export interface GameResult {
-  playerId: ObjectId
+  playerId: string
   score: number
 }
 
@@ -39,30 +37,21 @@ export interface GameSettings {
 }
 
 export interface Game {
-  _id?: ObjectId
-  groupId: ObjectId
+  _id?: string
+  groupId: string
   title: string
   isFinished: boolean
   players: GamePlayer[]
   results?: GameResult[]
   createdAt: number
   finishedAt?: number
-  seasonId?: ObjectId
+  seasonId?: string
   settings: GameSettings
 }
 
 export interface Season {
-  _id?: ObjectId
-  groupId: ObjectId
+  _id?: string
+  groupId: string
   title: string
-  gameIds: ObjectId[]
+  gameIds: string[]
 }
-
-export interface MongoCollections {
-  players: Collection<Player>
-  groups: Collection<Group>
-  games: Collection<Game>
-  seasons: Collection<Season>
-}
-
-export type ExtendedDb = Db & MongoCollections

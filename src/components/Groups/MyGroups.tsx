@@ -1,26 +1,28 @@
 'use client'
 
-import type { Group } from '@/types/db'
-import { Cell, List, Spinner, Text } from '@telegram-apps/telegram-ui'
+import type { Group } from '@/types/api'
+import { List } from '@telegram-apps/telegram-ui'
 import useSWR from 'swr'
+import { isNull } from '@/app/api/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
+import { Loader } from '../Loader/Loader'
 import GroupComponent from './Group'
 
 export default function GroupsClient() {
-  const { data, error, isLoading } = useSWR<Group[]>(
+  const swr = useSWR<Group[]>(
     '/api/groups?useInitData=true',
     swrGetFetcher,
   )
+  const data = swr.data
 
-  if (isLoading)
-    return <Cell before={<Spinner size="m" />}><Text weight="2">Загрузка...</Text></Cell>
-  if (error)
-    return <Text>Ошибка загрузки</Text>
+  if (isNull(data)) {
+    return (<Loader {...swr} />)
+  }
 
   return (
     <List>
-      {data?.map(g => (
-        <GroupComponent key={g.name} group={g} />
+      {data.map(g => (
+        <GroupComponent key={g.title} group={g} />
       ))}
     </List>
   )

@@ -1,45 +1,33 @@
-import { Cell, List, Section, Text } from '@telegram-apps/telegram-ui'
-import { ObjectId } from 'mongodb'
-import { NewGameButton } from '@/components/Games/NewGameButton'
-import { Link } from '@/components/Link/Link'
+'use client'
+
+import type { Group, Season } from '@/types/api'
+import { Section } from '@telegram-apps/telegram-ui'
+import { use } from 'react'
+import useSWR from 'swr'
+import { isNull } from '@/app/api/helpers'
+import { SeasonGames } from '@/components/Games/NewGameButton'
+import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { getDb } from '@/core/db'
+import { swrGetFetcher } from '@/lib/swrFetcher'
 
-export default async function SeasonPage({ params }: { params: Promise<{ seasonId: string }> }) {
-  const { seasonId } = await params
-  const season = await (await getDb()).seasons.findOne({ _id: new ObjectId(seasonId) })
-  if (!season) {
-    return (
-      <Page>
-        <Text>Сезон не найден</Text>
-      </Page>
-    )
+export default async function SeasonPage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
+  const { seasonId, groupId } = use(params)
+  const swr = useSWR<Season>(`/api/seasons/${seasonId}`, swrGetFetcher)
+  const season = swr.data
+  const groupSwr = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
+  const group = groupSwr.data
+
+  if (isNull(season)) {
+    return <Loader {...swr} />
   }
-
-  const games = await (await getDb()).games.find({ _id: { $in: season.gameIds } }).toArray()
-  const group = await (await getDb()).groups.findOne({ _id: season.groupId })
+  if (isNull(group)) {
+    return <Loader {...groupSwr} />
+  }
 
   return (
     <Page>
       <Section header={`Сезон: ${season.title}`}>
-        <Section header="Игры">
-          <NewGameButton groupMembers={group?.members.map(m => m.toString()) ?? []} games={games.length} seasonId={season._id.toString()} groupId={group?._id.toString()} />
-          {games.length === 0
-            ? (
-                <Text>Игры не найдены</Text>
-              )
-            : (
-                <List>
-                  {
-                    games.map(game => (
-                      <Link href={`/games/${game._id}`} key={game._id.toString()}>
-                        <Cell after={game.isFinished ? '' : 'В процессе'} subtitle={`Кол-во игроков: ${game.players.length}`}>{game.title}</Cell>
-                      </Link>
-                    ))
-                  }
-                </List>
-              )}
-        </Section>
+        <SeasonGames groupMembers={group.members} seasonId={seasonId} groupId={groupId} />
       </Section>
     </Page>
   )

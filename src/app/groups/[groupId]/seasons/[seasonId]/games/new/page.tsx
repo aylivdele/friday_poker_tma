@@ -1,9 +1,9 @@
 'use client'
 
-import type { Game } from '@/types/db'
+import type { Game } from '@/types/api'
 import { Input, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Page } from '@/components/Page'

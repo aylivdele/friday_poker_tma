@@ -1,6 +1,6 @@
 'use client'
 
-import type { Player } from '@/types/db'
+import type { Player } from '@/types/api'
 import { Input, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'

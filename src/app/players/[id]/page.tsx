@@ -1,8 +1,11 @@
 'use client'
-import type { Player } from '@/types/db'
-import { Avatar, AvatarStack, Cell, Info, Section, Spinner, Text } from '@telegram-apps/telegram-ui'
+
+import type { Player } from '@/types/api'
+import { Avatar, AvatarStack, Info, Section, Text } from '@telegram-apps/telegram-ui'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { isNull } from '@/app/api/helpers'
+import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -29,12 +32,10 @@ export default function PlayersPage({ params }: { params: Promise<{ id: string }
     })
   }, [profilePlayer, id])
 
-  if (!player) {
-    if (loading) {
-      return <Cell before={<Spinner size="m" />}><Text weight="2">Загрузка...</Text></Cell>
-    }
-    return <Text weight="2">Ошибка при загрузке данных игрока. Попробуйте перезагрузить страницу.</Text>
+  if (isNull(player)) {
+    return (<Loader data={player} isLoading={loading} error={null} />)
   }
+
   return (
     <Page>
       <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>

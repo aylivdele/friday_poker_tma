@@ -1,12 +1,12 @@
-// SaveControls.tsx
 'use client'
 
-import type { Game } from '@/types/db'
+import type { Game } from '@/types/api'
 import { Button, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
+import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 
 export default function SaveControls({
   gameId,
@@ -22,12 +22,27 @@ export default function SaveControls({
   async function save() {
     setSaving(true)
     try {
-      await api.post(`/api/games/${gameId}`, draft)
+      await api.put(`/api/games/${gameId}`, draft)
       onSaved()
     }
     catch (e) {
       console.error('Ошибка сохранения настроек игры', e)
       toast.error('Ошибка сохранения')
+    }
+    finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteGame() {
+    setSaving(true)
+    try {
+      await api.delete(`/api/games/${gameId}`)
+      onSaved()
+    }
+    catch (e) {
+      console.error('Ошибка удаления игры', e)
+      toast.error('Ошибка удаления')
     }
     finally {
       setSaving(false)
@@ -40,11 +55,11 @@ export default function SaveControls({
 
     mainButton.setText('Сохранить')
     mainButton.show()
-    mainButton.onClick(save)
+    const unbound = mainButton.onClick(save)
 
     return () => {
       mainButton.hide()
-      mainButton.offClick(save)
+      unbound()
     }
   }, [draft])
 
@@ -58,6 +73,17 @@ export default function SaveControls({
       >
         Сохранить изменения
       </Button>
+
+      <ConfirmButton description="Вы уверены что хотите удалить игру?" onConfirm={deleteGame}>
+        <Button
+          size="l"
+          stretched
+          loading={saving}
+          color="red"
+        >
+          Удалить игру
+        </Button>
+      </ConfirmButton>
     </Section>
   )
 }

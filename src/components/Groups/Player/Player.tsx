@@ -1,16 +1,22 @@
-import type { ObjectId } from 'mongodb'
+import type { Player } from '@/types/api'
 import { Avatar, Cell, Text } from '@telegram-apps/telegram-ui'
-import { useRouter } from 'next/router'
-import { getDb } from '@/core/db'
+import { useRouter } from 'next/navigation'
+import useSWR from 'swr'
+import { isNull } from '@/app/api/helpers'
+import { Loader } from '@/components/Loader/Loader'
+import { swrGetFetcher } from '@/lib/swrFetcher'
+import CrownSvg from '../../../app/_assets/crown.svg'
 import './Player.css'
-import CrownSvg from '/public/crown.svg'
 
-export async function GroupPlayer({ id, isOwner }: { id: ObjectId, isOwner: boolean }) {
-  const player = await (await getDb()).players.findOne({ _id: id })
+export async function GroupPlayer({ id, isOwner }: { id: string, isOwner: boolean }) {
+  const swr = useSWR<Player>(`/api/players/${id}`, swrGetFetcher)
+  const player = swr.data
   const router = useRouter()
-  if (!player) {
-    return <Text>Игрок не найден</Text>
+
+  if (isNull(player)) {
+    return (<Loader {...swr} />)
   }
+
   return (
     <Cell
       onClick={() => router.push(`/players/${player._id}`)}

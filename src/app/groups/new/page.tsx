@@ -1,6 +1,6 @@
 'use client'
 
-import type { Season } from '@/types/api'
+import type { Group } from '@/types/api'
 import { Input, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
@@ -9,28 +9,27 @@ import toast from 'react-hot-toast'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'
 
-export default function NewSeasonPage({ params }: { params: Promise<{ groupId: string }> }) {
-  const { groupId } = use(params)
+export default function NewGroupPage() {
   const [title, setTitle] = useState<string>('')
   const router = useRouter()
 
   useEffect(() => {
-    mainButton.setText('Сохранить сезон')
+    mainButton.setText('Сохранить группу')
     mainButton.show()
 
-    const unbound = mainButton.onClick(() => api.post<Season>(`/api/seasons/`, { title, groupId })
-      .then(season => router.replace(`/group/${groupId}/seasons/${season._id}`))
+    const unbound = mainButton.onClick(() => api.post<Group>(`/api/groups/`, { title })
+      .then(group => router.replace(`/group/${group._id}`))
       .catch(e => toast.error(e)))
 
     return () => {
       mainButton.hide()
       unbound()
     }
-  }, [mainButton, groupId, title])
+  }, [mainButton, title])
 
   return (
     <Page>
-      <Section header="Создание нового сезона">
+      <Section header="Создание новой группы">
         <Input
           value={title}
           header="Название"

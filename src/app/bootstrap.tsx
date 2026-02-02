@@ -1,6 +1,6 @@
 'use client'
 
-import type { Player } from '@/types/db'
+import type { Player } from '@/types/api'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
