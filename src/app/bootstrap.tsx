@@ -1,6 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
+import { initData, useSignal } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
@@ -11,6 +12,7 @@ import { api } from '../lib/api'
 export default function Bootstrap() {
   const setPlayer = usePlayerStore(s => s.setPlayer)
   const router = useRouter()
+  const rawInitData = useSignal(initData.raw)
 
   useEffect(() => {
     let cancelled = false
@@ -32,12 +34,14 @@ export default function Bootstrap() {
       }
     }
 
-    init()
+    if (rawInitData) {
+      init()
 
-    return () => {
-      cancelled = true
+      return () => {
+        cancelled = true
+      }
     }
-  }, [setPlayer, router])
+  }, [setPlayer, router, rawInitData])
 
   return <Toaster />
 }
