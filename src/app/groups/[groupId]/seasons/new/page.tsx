@@ -18,7 +18,7 @@ export default function NewSeasonPage({ params }: { params: Promise<{ groupId: s
     mainButton.show()
 
     const unbound = mainButton.onClick(() => api.post<string>(`/api/seasons/`, { title, groupId })
-      .then(seasonId => router.replace(`/group/${groupId}/seasons/${seasonId}`))
+      .then(seasonId => router.replace(`/groups/${groupId}/seasons/${seasonId}`))
       .catch(e => toast.error(e)))
 
     return () => {

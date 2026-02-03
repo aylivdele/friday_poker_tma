@@ -44,7 +44,7 @@ export default function NewGroupPage() {
     setModalOpen(false)
     setLoading(true)
     api.post<string>(`/api/groups`, { title, pin: pin.join('') })
-      .then(groupId => router.replace(`/group/${groupId}`))
+      .then(groupId => router.replace(`/groups/${groupId}`))
       .catch(e => toast.error(e))
       .finally(() => setLoading(false))
   }

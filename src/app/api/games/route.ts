@@ -28,7 +28,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const newGame = { createdAt: Date.now(), title: '', isFinished: false, players: [], ...await deserealizeBody<Partial<Game>>(request, 'game') }
+  const newGame = {
+    createdAt: Date.now(),
+    title: '',
+    isFinished: false,
+    players: [],
+    settings: {},
+    ...await deserealizeBody<Partial<Game>>(request, 'game'),
+  }
   if (!newGame.groupId) {
     return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
   }
