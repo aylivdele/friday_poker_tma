@@ -59,7 +59,7 @@ export default function NewGroupPage() {
           header="Название"
           disabled={loading}
           onChange={e => setTitle(e.target.value)}
-          placeholder="Весна 25 г."
+          placeholder="Пожилые страусы"
         />
       </Section>
 
