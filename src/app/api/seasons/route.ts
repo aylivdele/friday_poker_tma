@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
   let seasons
 
   if (searchString) {
-    seasons = db.seasons.find({ title: { $regex: searchString, $options: 'i' } })
+    seasons = await db.seasons.find({ title: { $regex: searchString, $options: 'i' } }).toArray()
   }
   else if (groupId) {
-    seasons = db.seasons.find({ groupId: new ObjectId(groupId) })
+    seasons = await db.seasons.find({ groupId: new ObjectId(groupId) }).toArray()
   }
   else {
     seasons = await db.seasons.find({}).toArray()
