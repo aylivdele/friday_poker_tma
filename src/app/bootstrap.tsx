@@ -1,7 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { initData, useSignal } from '@tma.js/sdk-react'
+import { initData, retrieveRawInitData, useSignal } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
@@ -34,11 +34,12 @@ export default function Bootstrap() {
       }
     }
 
+    // eslint-disable-next-line no-console
+    console.log(`raw sdk init data ${rawInitData}\n`
+    // @ts-expect-error qwe
+      + `raw native init data ${window.Telegram?.WebApp?.initData}\n` + `retreive init data ${retrieveRawInitData()}`)
+
     if (rawInitData) {
-      // eslint-disable-next-line no-console
-      console.log(`raw sdk init data ${rawInitData}\n`
-      // @ts-expect-error qwe
-        + `raw native init data ${window.Telegram?.WebApp?.initData}`)
       init()
 
       return () => {

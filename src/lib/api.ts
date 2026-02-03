@@ -1,3 +1,5 @@
+import { retrieveRawInitData } from '@tma.js/sdk-react'
+
 function handleResponse(response: Response) {
   if (!response.ok) {
     return Promise.reject(response.json())
@@ -7,8 +9,7 @@ function handleResponse(response: Response) {
 
 function getDefaultHeaders() {
   return {
-    // @ts-expect-error should be injected by Telegram app
-    'x-init-data': window.Telegram?.WebApp?.initData || '',
+    'x-init-data': retrieveRawInitData() ?? '',
   }
 }
 
