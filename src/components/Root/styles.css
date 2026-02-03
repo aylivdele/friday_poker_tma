@@ -8,3 +8,7 @@
   align-items: center;
   justify-content: center;
 }
+
+.root {
+  padding: var(--tg-content-safe-area-inset-top) var(--tg-content-safe-area-inset-right) var(--tg-content-safe-area-inset-bottom) var(--tg-content-safe-area-inset-left);
+}

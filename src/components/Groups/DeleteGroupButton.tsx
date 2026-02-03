@@ -8,7 +8,7 @@ import { api } from '@/lib/api'
 import { usePlayerStore } from '@/stores/playerStore'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 
-export function DeleteGroupButton({ groupId, ownerId }: { groupId: string, ownerId: string }) {
+export function BottomGroupButton({ groupId, ownerId }: { groupId: string, ownerId: string }) {
   const player = usePlayerStore(p => p.player)
   const router = useRouter()
   const [isLoading, setLoading] = useState(false)
@@ -24,6 +24,21 @@ export function DeleteGroupButton({ groupId, ownerId }: { groupId: string, owner
     }).finally(() => setLoading(false))
   }
 
+  const leaveGroup = async () => {
+    if (isLoading) {
+      return Promise.resolve()
+    }
+    setLoading(true)
+    return await api.put(`/api/groups/${groupId}/leave`).then(() => router.replace('/groups')).catch((reason) => {
+      console.error(reason)
+      toast.error(`Ошибка: ${reason}`)
+    }).finally(() => setLoading(false))
+  }
+
+  if (!player) {
+    return null
+  }
+
   if (player?._id?.toString() === ownerId) {
     return (
       <ConfirmButton description="Вы уверены, что хотите удалить группу?" onConfirm={deleteGroup}>
@@ -32,5 +47,9 @@ export function DeleteGroupButton({ groupId, ownerId }: { groupId: string, owner
     )
   }
 
-  return null
+  return (
+    <ConfirmButton description="Вы уверены, что хотите покинуть группу?" onConfirm={leaveGroup}>
+      <Button stretched size="l" loading={isLoading} disabled={isLoading}>Покинуть группу</Button>
+    </ConfirmButton>
+  )
 }

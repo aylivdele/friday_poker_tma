@@ -11,7 +11,7 @@ export default function Root() {
   const player = usePlayerStore(s => s.player)
   useEffect(() => {
     if (player) {
-      router.replace(`/players/${player._id}`)
+      router.replace(`/profile`)
     }
   }, [router, player])
   return (

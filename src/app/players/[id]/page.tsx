@@ -1,65 +1,25 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { Avatar, AvatarStack, Info, List, Section, Text } from '@telegram-apps/telegram-ui'
-import { use, useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
+import { use } from 'react'
+import useSWR from 'swr'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { api } from '@/lib/api'
+import { PlayerComponent } from '@/components/Player/Player'
 import { isNull } from '@/lib/helpers'
-import { usePlayerStore } from '@/stores/playerStore'
+import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const profilePlayer = usePlayerStore(s => s.player)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [player, setPlayer] = useState<Player | null | undefined>(undefined)
-
-  useEffect(() => {
-    if (profilePlayer && profilePlayer._id === id) {
-      setPlayer(profilePlayer)
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    api.get<Player>(`/api/players/${id}`).catch((e) => {
-      console.error('Error fetching player:', e)
-      toast.error(`Ошибка при загрузке данных игрока: ${e}`)
-      return null
-    }).then(p => setPlayer(p)).finally(() => {
-      setLoading(false)
-    })
-  }, [profilePlayer, id])
+  const { data: player, isLoading, error } = useSWR<Player>(`/api/players/${id}`, swrGetFetcher)
 
   if (isNull(player)) {
-    return (<Loader data={player} isLoading={loading} error={null} />)
+    return (<Loader data={player} isLoading={isLoading} error={error} />)
   }
 
   return (
     <Page>
-      <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>
-        <List>
-          <Avatar size={96} src={player.avatarUrl} />
-          <Text>
-            username:
-            {' '}
-            {player.username}
-          </Text>
-          <Info
-            avatarStack={(
-              <AvatarStack>
-                <Avatar size={28} />
-                <Avatar size={28} />
-                <Avatar size={28} />
-              </AvatarStack>
-            )}
-            type="avatarStack"
-          >
-            Достижения
-          </Info>
-        </List>
-      </Section>
+      <PlayerComponent player={player} />
     </Page>
   )
 }

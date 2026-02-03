@@ -30,27 +30,29 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
     if (!mainButton || isNull(player?._id))
       return
 
-    let unbound
+    let unbound: (() => void) | null = null
     if (!group.members.includes(player._id)) {
       mainButton.setText('Вступить в группу')
       unbound = mainButton.onClick(() => setModalOpen(true))
     }
-    else if (selectedTab === 'players') {
+    else if (selectedTab === 'players' && group.ownerId === player._id) {
       mainButton.setText('Добавить игрока')
       unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
     }
-    else {
+    else if (selectedTab === 'players' && group.ownerId === player._id) {
       mainButton.setText('Начать новый сезон')
       unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
     }
 
-    mainButton.show()
+    if (unbound) {
+      mainButton.show()
+    }
 
     return () => {
       mainButton.hide()
-      unbound()
+      unbound?.()
     }
-  }, [group._id, selectedTab, mainButton, router, player])
+  }, [group, selectedTab, mainButton, router, player])
 
   const onPinEnter = (pin: number[]) => {
     setModalOpen(false)

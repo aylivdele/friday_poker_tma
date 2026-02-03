@@ -1,8 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { initData, retrieveRawInitData, useSignal } from '@tma.js/sdk-react'
-import { useRouter } from 'next/navigation'
+import { initData, useSignal } from '@tma.js/sdk-react'
 import { useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { toast } from 'react-hot-toast/headless'

@@ -5,6 +5,7 @@ import { TabsItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Page } from '@/components/Page'
 import AllGroups from '../../components/Groups/AllGroups'
 import MyGroups from '../../components/Groups/MyGroups'
 
@@ -27,16 +28,18 @@ export default function groupsPage() {
   }, [])
 
   return (
-    <Section header="Группы">
-      <TabsList>
-        <TabsItem selected={selectedTab === 'all'} onClick={() => setSelectedTab('all')}>
-          Все группы
-        </TabsItem>
-        <TabsItem selected={selectedTab === 'my'} onClick={() => setSelectedTab('my')}>
-          Мои группы
-        </TabsItem>
-      </TabsList>
-      { selectedTab === 'all' ? <AllGroups /> : (<MyGroups />) }
-    </Section>
+    <Page back={false}>
+      <Section header="Группы">
+        <TabsList>
+          <TabsItem selected={selectedTab === 'all'} onClick={() => setSelectedTab('all')}>
+            Все группы
+          </TabsItem>
+          <TabsItem selected={selectedTab === 'my'} onClick={() => setSelectedTab('my')}>
+            Мои группы
+          </TabsItem>
+        </TabsList>
+        { selectedTab === 'all' ? <AllGroups /> : (<MyGroups />) }
+      </Section>
+    </Page>
   )
 }

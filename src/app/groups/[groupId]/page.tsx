@@ -4,7 +4,7 @@ import type { Group } from '@/types/api'
 import { Section } from '@telegram-apps/telegram-ui'
 import { use } from 'react'
 import useSWR from 'swr'
-import { DeleteGroupButton } from '@/components/Groups/DeleteGroupButton'
+import { BottomGroupButton } from '@/components/Groups/DeleteGroupButton'
 import { GroupMainContent } from '@/components/Groups/GroupMainConent'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
@@ -20,7 +20,7 @@ export default function GroupsPage({ params }: { params: Promise<{ groupId: stri
 
   return (
     <Page>
-      <Section header={`Группа: ${group?.title}`} footer={(<DeleteGroupButton groupId={groupId} ownerId={group?.ownerId.toString()} />)}>
+      <Section style={{ minHeight: '100%' }} header={`Группа: ${group?.title}`} footer={(<BottomGroupButton groupId={groupId} ownerId={group?.ownerId.toString()} />)}>
         <GroupMainContent group={group} mutateGroup={mutate} />
       </Section>
     </Page>
