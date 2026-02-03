@@ -51,7 +51,7 @@ export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers:
             <List>
               {
                 games.sort((a, b) => a.createdAt - b.createdAt).map(game => (
-                  <Link href={`/games/${game._id}`} key={game._id?.toString()}>
+                  <Link href={`/groups/${groupId}/seasons/${seasonId}/games/${game._id}`} key={game._id?.toString()}>
                     <Cell after={game.isFinished ? '' : 'В процессе'} subtitle={`Кол-во игроков: ${game.players.length}`}>{game.title}</Cell>
                   </Link>
                 ))

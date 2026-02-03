@@ -65,15 +65,6 @@ export default function SaveControls({
 
   return (
     <Section>
-      <Button
-        size="l"
-        stretched
-        loading={saving}
-        onClick={save}
-      >
-        Сохранить изменения
-      </Button>
-
       <ConfirmButton description="Вы уверены что хотите удалить игру?" onConfirm={deleteGame}>
         <Button
           size="l"
