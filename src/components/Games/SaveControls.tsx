@@ -3,6 +3,7 @@
 import type { Game } from '@/types/api'
 import { Button, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
@@ -18,6 +19,7 @@ export default function SaveControls({
   onSaved: () => void
 }) {
   const [saving, setSaving] = useState(false)
+  const router = useRouter()
 
   async function save() {
     setSaving(true)
@@ -38,7 +40,7 @@ export default function SaveControls({
     setSaving(true)
     try {
       await api.delete(`/api/games/${gameId}`)
-      onSaved()
+      router.back()
     }
     catch (e) {
       console.error('Ошибка удаления игры', e)

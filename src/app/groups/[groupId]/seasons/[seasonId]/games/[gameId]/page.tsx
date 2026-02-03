@@ -27,6 +27,9 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
     if (game) {
       setDraft(structuredClone(game))
     }
+    else {
+      setDraft(null)
+    }
   }, [game])
 
   if (!draft)
