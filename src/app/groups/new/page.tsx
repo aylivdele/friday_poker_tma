@@ -29,8 +29,10 @@ export default function NewGroupPage() {
   }, [mainButton, title])
 
   useEffect(() => {
-    mainButton.showLoader()
-    mainButton.disable()
+    if (loading) {
+      mainButton.showLoader()
+      mainButton.disable()
+    }
 
     return () => {
       mainButton.hideLoader()
