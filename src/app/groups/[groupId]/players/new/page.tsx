@@ -1,7 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { Input, Section } from '@telegram-apps/telegram-ui'
+import { FileInput, Input, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { use, useCallback, useEffect, useState } from 'react'
@@ -65,9 +65,8 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
           header="Фамилия"
           onChange={e => setSecondName(e.target.value)}
         />
-        <Input
-          value={avatar}
-          header="Ава"
+        <FileInput
+          label="Добавить аватарку"
           onChange={e => readFile(e.target.files?.[0])}
           type="file"
           accept="image/*"

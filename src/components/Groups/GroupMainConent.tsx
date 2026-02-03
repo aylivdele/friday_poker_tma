@@ -39,7 +39,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
       mainButton.setText('Добавить игрока')
       unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
     }
-    else if (selectedTab === 'players' && group.ownerId === player._id) {
+    else if (selectedTab === 'seasons' && group.ownerId === player._id) {
       mainButton.setText('Начать новый сезон')
       unbound = mainButton.onClick(() => router.push(`/groups/${group._id}/${selectedTab}/new`))
     }
