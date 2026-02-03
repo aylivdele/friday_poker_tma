@@ -1,4 +1,5 @@
-import type { ExtendedDb } from '@/types/db'
+import type { Db } from 'mongodb'
+import type { Game, Group, MongoCollections, Player, Season } from '@/types/db'
 import process from 'node:process'
 import { MongoClient } from 'mongodb'
 
@@ -14,12 +15,21 @@ if (!_mongoClientPromise) {
   _mongoClientPromise = client.connect()
 }
 
-let db: ExtendedDb | null = null
+let db: Db | null = null
 
-export async function getDb(): Promise<ExtendedDb> {
+export function getCollections(db: Db): MongoCollections {
+  return {
+    players: db.collection<Player>('players'),
+    groups: db.collection<Group>('groups'),
+    games: db.collection<Game>('games'),
+    seasons: db.collection<Season>('seasons'),
+  }
+}
+
+export async function getDb(): Promise<MongoCollections> {
   if (db)
-    return db
+    return getCollections(db)
   const client = await _mongoClientPromise!
-  db = client.db() as ExtendedDb
-  return db
+  db = client.db()
+  return getCollections(db)
 }

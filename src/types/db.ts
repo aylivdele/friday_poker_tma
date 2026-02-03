@@ -65,5 +65,3 @@ export interface MongoCollections {
   games: Collection<Game>
   seasons: Collection<Season>
 }
-
-export type ExtendedDb = Db & MongoCollections
