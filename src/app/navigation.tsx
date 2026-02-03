@@ -17,10 +17,10 @@ export function Navigation() {
       <Tabbar.Item selected={currentTab === 'profile'}>
         <Link href={`/players/${player._id}`} onClick={() => setCurrentTab('profile')}>Профиль</Link>
       </Tabbar.Item>
-      <Tabbar.Item text="Группы" selected={currentTab === 'groups'}>
+      <Tabbar.Item selected={currentTab === 'groups'}>
         <Link href="/groups" onClick={() => setCurrentTab('groups')}>Группы</Link>
       </Tabbar.Item>
-      <Tabbar.Item text="Игры" selected={currentTab === 'games'}>
+      <Tabbar.Item selected={currentTab === 'games'}>
         <Link href="/games" onClick={() => setCurrentTab('games')}>Игры</Link>
       </Tabbar.Item>
     </Tabbar>

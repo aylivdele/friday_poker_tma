@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'
 
-export default async function NewGamePage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
+export default function NewGamePage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(false)

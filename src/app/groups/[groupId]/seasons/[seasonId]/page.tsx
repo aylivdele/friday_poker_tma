@@ -10,7 +10,7 @@ import { Page } from '@/components/Page'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
-export default async function SeasonPage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
+export default function SeasonPage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
   const swr = useSWR<Season>(`/api/seasons/${seasonId}`, swrGetFetcher)
   const season = swr.data

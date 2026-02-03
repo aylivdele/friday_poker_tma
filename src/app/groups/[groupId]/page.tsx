@@ -10,7 +10,7 @@ import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
-export default async function GroupsPage({ params }: { params: Promise<{ groupId: string }> }) {
+export default function GroupsPage({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = use (params)
   const { data: group, isLoading, error, mutate } = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
 
