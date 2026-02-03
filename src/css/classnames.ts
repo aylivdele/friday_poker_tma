@@ -25,7 +25,7 @@ export function classNames(...values: any[]): string {
       if (Array.isArray(value)) {
         return classNames(...value)
       }
-      return value.toString?.()
+      return value?.toString?.()
     })
     .filter(Boolean)
     .join(' ')
