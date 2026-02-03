@@ -1,6 +1,5 @@
 'use client'
 
-import type { Game } from '@/types/api'
 import { Input, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
@@ -22,14 +21,14 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
     setLoading(true)
 
     try {
-      const game = await api.post<Game>('/api/games', {
+      const gameId = await api.post<string>('/api/games', {
         title,
         groupId,
         seasonId,
       })
 
       router.replace(
-        `/groups/${groupId}/seasons/${seasonId}/games/${game._id}`,
+        `/groups/${groupId}/seasons/${seasonId}/games/${gameId}`,
       )
     }
     catch (e) {

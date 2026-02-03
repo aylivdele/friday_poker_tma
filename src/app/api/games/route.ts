@@ -41,5 +41,5 @@ export async function POST(request: NextRequest) {
       { $push: { gameIds: result.insertedId } },
     )
   }
-  return NextResponse.json(result)
+  return NextResponse.json(result.insertedId)
 }

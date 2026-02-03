@@ -1,6 +1,5 @@
 'use client'
 
-import type { Season } from '@/types/api'
 import { Input, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
@@ -18,8 +17,8 @@ export default function NewSeasonPage({ params }: { params: Promise<{ groupId: s
     mainButton.setText('Сохранить сезон')
     mainButton.show()
 
-    const unbound = mainButton.onClick(() => api.post<Season>(`/api/seasons/`, { title, groupId })
-      .then(season => router.replace(`/group/${groupId}/seasons/${season._id}`))
+    const unbound = mainButton.onClick(() => api.post<string>(`/api/seasons/`, { title, groupId })
+      .then(seasonId => router.replace(`/group/${groupId}/seasons/${seasonId}`))
       .catch(e => toast.error(e)))
 
     return () => {

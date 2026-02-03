@@ -43,8 +43,8 @@ export default function NewGroupPage() {
   const onPinEnter = (pin: number[]) => {
     setModalOpen(false)
     setLoading(true)
-    api.post<Group>(`/api/groups`, { title, pin: pin.join('') })
-      .then(group => router.replace(`/group/${group._id}`))
+    api.post<string>(`/api/groups`, { title, pin: pin.join('') })
+      .then(groupId => router.replace(`/group/${groupId}`))
       .catch(e => toast.error(e))
       .finally(() => setLoading(false))
   }

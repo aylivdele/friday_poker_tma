@@ -30,13 +30,19 @@ export async function POST(request: NextRequest) {
   if (!body.groupId) {
     return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
   }
+  else {
+    body.groupId = new ObjectId(body.groupId)
+  }
   if (!body.title) {
     body.title = `Сезон ${new Date().toLocaleDateString()}`
   }
   if (!body.gameIds) {
     body.gameIds = []
   }
-  // @ts-expect-error group id is not undefined
+  else {
+    body.gameIds = body.gameIds.map(id => new ObjectId(id))
+  }
+  // @ts-expect-error id is defined
   const season = await (await getDb()).seasons.insertOne(body)
-  return NextResponse.json(season, { status: 200 })
+  return NextResponse.json(season.insertedId, { status: 200 })
 }

@@ -75,5 +75,5 @@ export async function POST(request: NextRequest) {
   }
 
   const result = await db.groups.insertOne(newGroup)
-  return NextResponse.json({ ...newGroup, _id: result.insertedId })
+  return NextResponse.json(result.insertedId)
 }
