@@ -57,13 +57,11 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
             setDraft({ ...draft, settings })}
         />
 
-        {isEditable && (
-          <SaveControls
-            gameId={gameId}
-            draft={draft}
-            onSaved={mutate}
-          />
-        )}
+        <SaveControls
+          gameId={gameId}
+          draft={draft}
+          onSaved={mutate}
+        />
       </Section>
     </Page>
   )

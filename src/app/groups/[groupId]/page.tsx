@@ -20,7 +20,7 @@ export default function GroupsPage({ params }: { params: Promise<{ groupId: stri
 
   return (
     <Page>
-      <Section style={{ minHeight: '100%' }} header={`Группа: ${group?.title}`} footer={(<BottomGroupButton groupId={groupId} ownerId={group?.ownerId.toString()} />)}>
+      <Section style={{ minHeight: '100%' }} header={`Группа: ${group?.title}`} footer={(<BottomGroupButton members={group.members} groupId={groupId} ownerId={group?.ownerId.toString()} />)}>
         <GroupMainContent group={group} mutateGroup={mutate} />
       </Section>
     </Page>

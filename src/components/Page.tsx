@@ -1,7 +1,7 @@
 'use client'
 
 import type { PropsWithChildren } from 'react'
-import { backButton, mainButton } from '@tma.js/sdk-react'
+import { backButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -28,10 +28,6 @@ export function Page({ children, back = true }: PropsWithChildren<{
       router.back()
     })
   }, [router])
-
-  useEffect(() => {
-    mainButton.hide()
-  }, [])
 
   return <>{children}</>
 }

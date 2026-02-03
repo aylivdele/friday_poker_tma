@@ -13,6 +13,23 @@ interface ConfirmButtonProps {
   children: JSX.Element
 }
 
+export function confirmPopup({ title, description, cancelText = 'Подтвердить', confirmText = 'Отмена', onConfirm }: Omit<ConfirmButtonProps, 'children'>) {
+  return popup.show(
+    {
+      title,
+      message: description,
+      buttons: [
+        { id: 'cancel', type: 'default', text: cancelText },
+        { id: 'confirm', type: 'destructive', text: confirmText },
+      ],
+    },
+  ).then((result) => {
+    if (result === 'confirm') {
+      return onConfirm()
+    }
+  })
+}
+
 export function ConfirmButton({
   title,
   description,
@@ -23,20 +40,7 @@ export function ConfirmButton({
 }: ConfirmButtonProps) {
   async function handleClick() {
     if (popup) {
-      await popup.show(
-        {
-          title,
-          message: description,
-          buttons: [
-            { id: 'cancel', type: 'default', text: cancelText },
-            { id: 'confirm', type: 'destructive', text: confirmText },
-          ],
-        },
-      ).then((result) => {
-        if (result === 'confirm') {
-          return onConfirm()
-        }
-      })
+      await confirmPopup({ title, description, confirmText, cancelText, onConfirm })
       return
     }
 

@@ -1,14 +1,16 @@
 'use client'
 
 import { Button } from '@telegram-apps/telegram-ui'
+import { secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { usePlayerStore } from '@/stores/playerStore'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import { confirmPopup } from './../ConfirmButton/ConfirmButton'
 
-export function BottomGroupButton({ groupId, ownerId }: { groupId: string, ownerId: string }) {
+export function BottomGroupButton({ groupId, ownerId, members }: { groupId: string, ownerId: string, members: string[] }) {
   const player = usePlayerStore(p => p.player)
   const router = useRouter()
   const [isLoading, setLoading] = useState(false)
@@ -35,21 +37,27 @@ export function BottomGroupButton({ groupId, ownerId }: { groupId: string, owner
     }).finally(() => setLoading(false))
   }
 
-  if (!player) {
-    return null
-  }
+  useEffect(() => {
+    if (!player || !members.includes(player._id)) {
+      return
+    }
+    let unbound
+    if (player?._id?.toString() === ownerId) {
+      unbound = secondaryButton.onClick(() => confirmPopup({ onConfirm: deleteGroup, description: 'Вы уверены что хотите удалить группу?' }))
+      secondaryButton.setText('Удалить группу')
+    }
+    else {
+      unbound = secondaryButton.onClick(() => confirmPopup({ onConfirm: leaveGroup, description: 'Вы уверены что хотите покинуть группу?' }))
+      secondaryButton.setText('Покинуть группу')
+    }
+    secondaryButton.show()
+    secondaryButton.setBgColor('#FF0000')
 
-  if (player?._id?.toString() === ownerId) {
-    return (
-      <ConfirmButton description="Вы уверены, что хотите удалить группу?" onConfirm={deleteGroup}>
-        <Button stretched size="l" loading={isLoading} disabled={isLoading}>Удалить группу</Button>
-      </ConfirmButton>
-    )
-  }
+    return () => {
+      unbound()
+      secondaryButton.hide()
+    }
+  }, [player, members, groupId, ownerId])
 
-  return (
-    <ConfirmButton description="Вы уверены, что хотите покинуть группу?" onConfirm={leaveGroup}>
-      <Button stretched size="l" loading={isLoading} disabled={isLoading}>Покинуть группу</Button>
-    </ConfirmButton>
-  )
+  return null
 }
