@@ -4,6 +4,7 @@ import {
   emitEvent,
   initData,
   init as initSDK,
+  mainButton,
   miniApp,
   mockTelegramEnv,
   retrieveLaunchParams,
@@ -69,6 +70,7 @@ export async function init(options: {
 
   // Mount all components used in the project.
   backButton.mount()
+  mainButton.mount()
   initData.restore()
 
   try {
