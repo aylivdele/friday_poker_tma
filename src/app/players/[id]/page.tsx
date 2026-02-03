@@ -1,7 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { Avatar, AvatarStack, Info, Section, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, AvatarStack, Info, List, Section, Text } from '@telegram-apps/telegram-ui'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Loader } from '@/components/Loader/Loader'
@@ -39,23 +39,26 @@ export default function PlayersPage({ params }: { params: Promise<{ id: string }
   return (
     <Page>
       <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>
-        <Avatar size={96} src={player.avatarUrl} />
-        <Text>
-          username:
-          {player.username}
-        </Text>
-        <Info
-          avatarStack={(
-            <AvatarStack>
-              <Avatar size={28} />
-              <Avatar size={28} />
-              <Avatar size={28} />
-            </AvatarStack>
-          )}
-          type="avatarStack"
-        >
-          Достижения
-        </Info>
+        <List>
+          <Avatar size={96} src={player.avatarUrl} />
+          <Text>
+            username:
+            {' '}
+            {player.username}
+          </Text>
+          <Info
+            avatarStack={(
+              <AvatarStack>
+                <Avatar size={28} />
+                <Avatar size={28} />
+                <Avatar size={28} />
+              </AvatarStack>
+            )}
+            type="avatarStack"
+          >
+            Достижения
+          </Info>
+        </List>
       </Section>
     </Page>
   )

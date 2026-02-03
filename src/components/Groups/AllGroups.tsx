@@ -8,7 +8,7 @@ import { swrGetFetcher } from '@/lib/swrFetcher'
 import { Loader } from '../Loader/Loader'
 import GroupComponent from './Group'
 
-export default async function GroupsAll() {
+export default function GroupsAll() {
   const swr = useSWR<Group[]>(`/api/groups`, swrGetFetcher)
   const groups = swr.data
 

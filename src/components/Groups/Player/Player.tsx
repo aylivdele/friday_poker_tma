@@ -8,7 +8,7 @@ import { swrGetFetcher } from '@/lib/swrFetcher'
 import CrownSvg from '../../../app/_assets/crown.svg'
 import './Player.css'
 
-export async function GroupPlayer({ id, isOwner }: { id: string, isOwner: boolean }) {
+export function GroupPlayer({ id, isOwner }: { id: string, isOwner: boolean }) {
   const swr = useSWR<Player>(`/api/players/${id}`, swrGetFetcher)
   const player = swr.data
   const router = useRouter()
