@@ -51,7 +51,7 @@ export default function NewGroupPage() {
 
   return (
     <Page>
-      <PinModal open={modalOpen} onPinEnter={onPinEnter} />
+      <PinModal open={modalOpen} onOpenChange={setModalOpen} onPinEnter={onPinEnter} />
 
       <Section header="Создание новой группы">
         <Input

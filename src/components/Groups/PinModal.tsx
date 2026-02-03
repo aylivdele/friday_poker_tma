@@ -1,7 +1,7 @@
 import { Modal, PinInput } from '@telegram-apps/telegram-ui'
 import { useEffect, useState } from 'react'
 
-export function PinModal({ open, onPinEnter }: { open: boolean, onPinEnter: (pin: number[]) => void }) {
+export function PinModal({ open, onOpenChange, onPinEnter }: { open: boolean, onOpenChange: (isOpen: boolean) => void, onPinEnter: (pin: number[]) => void }) {
   const [value, setValue] = useState<number[]>([])
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export function PinModal({ open, onPinEnter }: { open: boolean, onPinEnter: (pin
 
   return (
     <>
-      <Modal open={open} dismissible>
+      <Modal header="Пароль" onOpenChange={onOpenChange} open={open} dismissible>
         <PinInput pinCount={4} value={value} onChange={setValue} label="Введите пароль" />
       </Modal>
     </>

@@ -73,7 +73,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
 
   return (
     <>
-      <PinModal open={modalOpen} onPinEnter={onPinEnter} />
+      <PinModal open={modalOpen} onOpenChange={setModalOpen} onPinEnter={onPinEnter} />
       <TabsList>
         <TabsItem selected={selectedTab === 'players'} onClick={() => setSelectedTab('players')}>
           Игроки
