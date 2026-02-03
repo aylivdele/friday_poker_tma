@@ -72,6 +72,7 @@ export async function init(options: {
   backButton.mount()
   mainButton.mount()
   initData.restore()
+  themeParams.mount()
 
   try {
     miniApp.mount()
