@@ -17,10 +17,8 @@ export function PinModal({ open, onOpenChange, onPinEnter }: { open: boolean, on
   }, [value])
 
   return (
-    <>
-      <Modal header="Пароль" onOpenChange={onOpenChange} open={open} dismissible>
-        <PinInput pinCount={4} value={value} onChange={setValue} label="Введите пароль" />
-      </Modal>
-    </>
+    <Modal onOpenChange={onOpenChange} open={open}>
+      <PinInput pinCount={4} value={value} onChange={setValue} label="Введите пароль" />
+    </Modal>
   )
 }
