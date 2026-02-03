@@ -11,7 +11,6 @@ import { api } from '../lib/api'
 
 export default function Bootstrap() {
   const setPlayer = usePlayerStore(s => s.setPlayer)
-  const router = useRouter()
   const rawInitData = useSignal(initData.raw)
 
   useEffect(() => {
@@ -25,8 +24,6 @@ export default function Bootstrap() {
           return
 
         setPlayer(player)
-
-        router.replace(`/players/${player._id}`)
       }
       catch (e) {
         console.error('Error fetching/creating player:', e)
@@ -41,7 +38,7 @@ export default function Bootstrap() {
         cancelled = true
       }
     }
-  }, [setPlayer, router, rawInitData])
+  }, [setPlayer, rawInitData])
 
   return <Toaster />
 }
