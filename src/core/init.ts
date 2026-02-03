@@ -8,6 +8,7 @@ import {
   miniApp,
   mockTelegramEnv,
   retrieveLaunchParams,
+  secondaryButton,
   setDebug,
 
   themeParams,
@@ -73,6 +74,7 @@ export async function init(options: {
   mainButton.mount()
   initData.restore()
   themeParams.mount()
+  secondaryButton.mount()
 
   try {
     miniApp.mount()
