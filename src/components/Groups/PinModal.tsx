@@ -16,7 +16,7 @@ import './PinModal.css'
 //   return result.reverse()
 // }
 
-export function PinModal({ open, onOpenChange, onPinEnter }: { open: boolean, onOpenChange: (isOpen: boolean) => void, onPinEnter: (pin: number[]) => void }) {
+export function PinModal({ open, onPinEnter }: { open: boolean, onOpenChange: (isOpen: boolean) => void, onPinEnter: (pin: number[]) => void }) {
   const [value, setValue] = useState<number[]>([])
 
   useEffect(() => {
@@ -31,10 +31,18 @@ export function PinModal({ open, onOpenChange, onPinEnter }: { open: boolean, on
     }
   }, [value])
 
+  if (!open) {
+    return null
+  }
+
   return (
-    <Modal header={<Headline>Ввод пароля</Headline>} onOpenChange={onOpenChange} open={open} className="pin-modal">
-      <PinInput pinCount={4} value={value} onChange={setValue} label="Введите пароль" />
-      {/* <Input type="number" value={value.join('')} onChange={e => setValue(splitNumber(e.target.value))}></Input> */}
-    </Modal>
+    <PinInput pinCount={4} value={value} onChange={setValue} label="Введите пароль" />
+
   )
 }
+
+// return (
+//   <Modal header={<Headline>Ввод пароля</Headline>} onOpenChange={onOpenChange} open={open} className="pin-modal">
+//     <PinInput pinCount={4} value={value} onChange={setValue} label="Введите пароль" />
+//     {/* <Input type="number" value={value.join('')} onChange={e => setValue(splitNumber(e.target.value))}></Input> */}
+//   </Modal>
