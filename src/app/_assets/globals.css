@@ -5,5 +5,5 @@ body {
 }
 
 navigation {
-  padding-bottom: var(--tg-safe-area-inset-bottom);
+  margin-bottom: var(--tg-safe-area-inset-bottom);
 }

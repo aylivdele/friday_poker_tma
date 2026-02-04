@@ -1,7 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { Avatar, FileInput, Input, Section } from '@telegram-apps/telegram-ui'
+import { Avatar, Cell, FileInput, Input, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { use, useCallback, useEffect, useState } from 'react'
@@ -66,7 +66,7 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
           onChange={e => setlastName(e.target.value)}
         />
         { avatar
-          ? (<Avatar size={40} src={avatar} />)
+          ? (<Cell onClick={() => setAvatar('')} before={<Avatar size={48} src={avatar} />}>Удалить аватар</Cell>)
           : (
               <FileInput
                 label="Добавить аватарку"
