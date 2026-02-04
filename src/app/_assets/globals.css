@@ -3,3 +3,7 @@ body {
   padding: 0;
   margin: 0;
 }
+
+navigation {
+  padding-bottom: var(--tg-content-safe-area-inset-bottom);
+}

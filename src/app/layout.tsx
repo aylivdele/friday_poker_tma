@@ -22,7 +22,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         <Root>
           <Bootstrap />
           {children}
-          <FixedLayout>
+          <FixedLayout className="navigation">
             <Navigation />
           </FixedLayout>
         </Root>

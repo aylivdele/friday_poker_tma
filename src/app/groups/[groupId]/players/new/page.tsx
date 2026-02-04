@@ -1,7 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { FileInput, Input, Section } from '@telegram-apps/telegram-ui'
+import { Avatar, FileInput, Input, Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { use, useCallback, useEffect, useState } from 'react'
@@ -28,7 +28,7 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
       mainButton.hide()
       unbound()
     }
-  }, [mainButton, groupId, firstName])
+  }, [mainButton, groupId, firstName, secondName, avatar])
 
   const readFile = useCallback((file?: Blob) => {
     const reader = new FileReader()
@@ -65,12 +65,16 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
           header="Фамилия"
           onChange={e => setSecondName(e.target.value)}
         />
-        <FileInput
-          label="Добавить аватарку"
-          onChange={e => readFile(e.target.files?.[0])}
-          type="file"
-          accept="image/*"
-        />
+        { avatar
+          ? (<Avatar size={28} src={avatar} />)
+          : (
+              <FileInput
+                label="Добавить аватарку"
+                onChange={e => readFile(e.target.files?.[0])}
+                type="file"
+                accept="image/*"
+              />
+            )}
       </Section>
 
     </Page>
