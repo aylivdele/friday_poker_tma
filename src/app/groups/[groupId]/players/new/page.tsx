@@ -12,7 +12,7 @@ import { api } from '@/lib/api'
 export default function NewPlayerPage({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = use(params)
   const [firstName, setFirstName] = useState<string>('')
-  const [secondName, setSecondName] = useState<string>('')
+  const [lastName, setlastName] = useState<string>('')
   const [avatar, setAvatar] = useState<string>('')
   const router = useRouter()
 
@@ -20,7 +20,7 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
     mainButton.setText('Сохранить игрока')
     mainButton.show()
 
-    const unbound = mainButton.onClick(() => api.post<Player>(`/api/players?groupId=${groupId}`, { firstName, secondName, avatarUrl: avatar })
+    const unbound = mainButton.onClick(() => api.post<Player>(`/api/players?groupId=${groupId}`, { firstName, lastName, avatarUrl: avatar })
       .then(player => router.replace(`/players/${player._id}`))
       .catch(e => toast.error(e)))
 
@@ -28,7 +28,7 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
       mainButton.hide()
       unbound()
     }
-  }, [mainButton, groupId, firstName, secondName, avatar])
+  }, [mainButton, groupId, firstName, lastName, avatar])
 
   const readFile = useCallback((file?: Blob) => {
     const reader = new FileReader()
@@ -61,12 +61,12 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
           onChange={e => setFirstName(e.target.value)}
         />
         <Input
-          value={secondName}
+          value={lastName}
           header="Фамилия"
-          onChange={e => setSecondName(e.target.value)}
+          onChange={e => setlastName(e.target.value)}
         />
         { avatar
-          ? (<Avatar size={28} src={avatar} />)
+          ? (<Avatar size={40} src={avatar} />)
           : (
               <FileInput
                 label="Добавить аватарку"
