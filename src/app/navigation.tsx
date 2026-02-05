@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Tabbar } from '@telegram-apps/telegram-ui'
+import { Button, Subheadline, Tabbar } from '@telegram-apps/telegram-ui'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -38,13 +38,13 @@ export function Navigation() {
   return (
     <Tabbar>
       <Tabbar.Item selected={currentTab === 'profile'} onClick={() => switchTab('profile')}>
-        Профиль
+        <Subheadline style={{ padding: '10px 5px' }}>Профиль</Subheadline>
       </Tabbar.Item>
       <Tabbar.Item selected={currentTab === 'groups'} onClick={() => switchTab('groups')}>
-        Группы
+        <Subheadline style={{ padding: '10px 5px' }}>Группы</Subheadline>
       </Tabbar.Item>
       <Tabbar.Item selected={currentTab === 'games'} onClick={() => switchTab('games')}>
-        Игры
+        <Subheadline style={{ padding: '10px 5px' }}>Игры</Subheadline>
       </Tabbar.Item>
     </Tabbar>
   )
