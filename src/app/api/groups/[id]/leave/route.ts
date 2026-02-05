@@ -23,7 +23,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (!player) {
     return NextResponse.json({ error: 'Player not found' }, { status: 404 })
   }
-  if (!group.members.includes(player._id!)) {
+  if (!group.members.some(m => m.equals(player._id))) {
     return NextResponse.json({ error: 'Player is not a member of the group' }, { status: 400 })
   }
   await db.groups.updateOne(
