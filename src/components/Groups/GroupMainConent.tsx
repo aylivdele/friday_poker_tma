@@ -21,7 +21,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
   const playersSwr = useSWR<Player[]>(`/api/players?groupId=${group._id}`, swrGetFetcher)
 
   const seasons = swr.data
-  const { player, setPlayer } = usePlayerStore(s => s)
+  const player = usePlayerStore(s => s.player)
   const [selectedTab, setSelectedTab] = useState<'players' | 'seasons'>('players')
   const [pinOpen, setPinOpen] = useState(false)
   const [chooseModalOpen, setChooseModalOpen] = useState(false)
@@ -78,7 +78,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
   const onPinEnter = (pin: number[]) => {
     setPinOpen(false);
     (chosenEmptyPlayer
-      ? api.put<Player>(`/api/players/${chosenEmptyPlayer._id}/claim`).then(newProfile => setPlayer(newProfile))
+      ? api.put<Player>(`/api/players/${chosenEmptyPlayer._id}/claim`)
       : api.put(`/api/groups/${group._id}/join?pin=${pin.join('')}`))
       .then(() => {
         mutateGroup()
@@ -112,7 +112,6 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
         open={chooseModalOpen}
         onOpenChange={(open: boolean) => {
           if (!open) {
-            setChosenEmptyPlayer(undefined)
             setChooseModalOpen(false)
           }
         }}
