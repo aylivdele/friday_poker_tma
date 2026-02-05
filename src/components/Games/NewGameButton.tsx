@@ -51,7 +51,7 @@ export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers:
               {
                 games.sort((a, b) => a.createdAt - b.createdAt).map(game => (
                   <Cell
-                    href={`/groups/${groupId}/seasons/${seasonId}/games/${game._id}`}
+                    onClick={() => router.push(`/groups/${groupId}/seasons/${seasonId}/games/${game._id}`)}
                     after={game.isFinished ? '' : (<Text>В процессе</Text>)}
                     subtitle={(
                       <Text>

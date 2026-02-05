@@ -144,8 +144,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
               {seasons.map(season => (
                 <Cell
                   key={season._id}
-                  Component="a"
-                  href={`/groups/${group._id}/seasons/${season._id}`}
+                  onClick={() => router.push(`/groups/${group._id}/seasons/${season._id}`)}
                   subtitle={(
                     <Text>
                       Игр:
