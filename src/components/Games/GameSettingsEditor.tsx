@@ -6,6 +6,7 @@ import {
   Cell,
   Input,
   Section,
+  Subheadline,
   Switch,
   Text,
 } from '@telegram-apps/telegram-ui'
@@ -47,8 +48,9 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Cell before={<Caption level="1">Стоимость первого входа</Caption>}>
+      <Cell before={<Subheadline level="1">Стоимость первого входа</Subheadline>}>
         <Input
+          status="focused"
           className="input"
           type="number"
           value={gameSettings.firstEntryCost}
@@ -58,8 +60,9 @@ export default function GameSettingsEditor({
         />
       </Cell>
 
-      <Cell before={<Caption level="1">Стоимость повторного входа</Caption>}>
+      <Cell before={<Subheadline level="1">Стоимость повторного входа</Subheadline>}>
         <Input
+          status="focused"
           className="input"
           type="number"
           value={gameSettings.reEntryCost}
@@ -69,8 +72,9 @@ export default function GameSettingsEditor({
         />
       </Cell>
 
-      <Cell before={<Caption level="1">Кол-во повторных входов</Caption>}>
+      <Cell before={<Subheadline level="1">Кол-во повторных входов</Subheadline>}>
         <Input
+          status="focused"
           className="input"
           type="number"
           value={gameSettings.maxReEntries}
