@@ -2,13 +2,11 @@
 
 import type { GameSettings } from './../../types/db'
 import {
-  Caption,
   Cell,
   Input,
   Section,
   Subheadline,
   Switch,
-  Text,
 } from '@telegram-apps/telegram-ui'
 
 export default function GameSettingsEditor({
@@ -48,50 +46,38 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Cell after={(
-        <Input
-          status="focused"
-          className="input"
-          type="number"
-          value={gameSettings.firstEntryCost}
-          disabled={!editable}
-          onChange={e =>
-            updateSettings({ firstEntryCost: +e.target.value })}
-        />
-      )}
-      >
-        <Subheadline level="1">Стоимость первого входа</Subheadline>
-      </Cell>
+      <Input
+        before={<Subheadline level="1">Стоимость первого входа</Subheadline>}
+        status="focused"
+        className="input"
+        type="number"
+        value={gameSettings.firstEntryCost}
+        disabled={!editable}
+        onChange={e =>
+          updateSettings({ firstEntryCost: +e.target.value })}
+      />
 
-      <Cell after={(
-        <Input
-          status="focused"
-          className="input"
-          type="number"
-          value={gameSettings.reEntryCost}
-          disabled={!editable}
-          onChange={e =>
-            updateSettings({ reEntryCost: +e.target.value })}
-        />
-      )}
-      >
-        <Subheadline level="1">Стоимость повторного входа</Subheadline>
+      <Input
+        before={<Subheadline level="1">Стоимость повторного входа</Subheadline>}
+        status="focused"
+        className="input"
+        type="number"
+        value={gameSettings.reEntryCost}
+        disabled={!editable}
+        onChange={e =>
+          updateSettings({ reEntryCost: +e.target.value })}
+      />
 
-      </Cell>
-      <Cell after={(
-        <Input
-          status="focused"
-          className="input"
-          type="number"
-          value={gameSettings.maxReEntries}
-          disabled={!editable}
-          onChange={e =>
-            updateSettings({ maxReEntries: +e.target.value })}
-        />
-      )}
-      >
-        <Subheadline level="1">Кол-во повторных входов</Subheadline>
-      </Cell>
+      <Input
+        before={<Subheadline level="1">Кол-во повторных входов</Subheadline>}
+        status="focused"
+        className="input"
+        type="number"
+        value={gameSettings.maxReEntries}
+        disabled={!editable}
+        onChange={e =>
+          updateSettings({ maxReEntries: +e.target.value })}
+      />
     </Section>
   )
 }

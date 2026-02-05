@@ -2,7 +2,7 @@
 
 import { Button, Tabbar } from '@telegram-apps/telegram-ui'
 import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { usePlayerStore } from '@/stores/playerStore'
 
 export function Navigation() {
@@ -19,6 +19,18 @@ export function Navigation() {
     setCurrentTab(tab)
     router.push(newPath)
   }, [router, pathname])
+
+  useEffect(() => {
+    if (pathname.startsWith('/profile')) {
+      setCurrentTab('profile')
+    }
+    if (pathname.startsWith('/groups')) {
+      setCurrentTab('groups')
+    }
+    if (pathname.startsWith('/games')) {
+      setCurrentTab('games')
+    }
+  }, [pathname])
 
   if (!player)
     return null
