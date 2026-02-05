@@ -1,7 +1,7 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { Avatar, Cell, FileInput, Input, Section } from '@telegram-apps/telegram-ui'
+import { Avatar, Cell, FileInput, Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { use, useCallback, useEffect, useState } from 'react'
@@ -56,13 +56,15 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
     <Page>
       <Section header="Создание нового игрока">
         <Input
+          className="input"
           value={firstName}
-          header="Имя"
+          before={<Subheadline>Имя</Subheadline>}
           onChange={e => setFirstName(e.target.value)}
         />
         <Input
+          className="input"
           value={lastName}
-          header="Фамилия"
+          before={<Subheadline>Фамилия</Subheadline>}
           onChange={e => setlastName(e.target.value)}
         />
         { avatar

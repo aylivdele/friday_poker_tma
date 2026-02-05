@@ -1,7 +1,7 @@
 'use client'
 
 import type { Group } from '@/types/api'
-import { Input, Section } from '@telegram-apps/telegram-ui'
+import { Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -55,8 +55,9 @@ export default function NewGroupPage() {
 
       <Section header="Создание новой группы">
         <Input
+          className="input"
           value={title}
-          header="Название"
+          header={<Subheadline>Название</Subheadline>}
           disabled={loading}
           onChange={e => setTitle(e.target.value)}
           placeholder="Пожилые страусы"

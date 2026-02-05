@@ -7,10 +7,10 @@ export function PlayerComponent({ player }: { player: Player }) {
     <Section header={`Профиль: ${player.firstName} ${player.lastName}`}>
       <List>
         <Avatar size={96} src={player.avatarUrl} style={{ margin: '20px calc(50% - 48px)' }} />
-        {player.username
+        {player.telegramId
           ? (
-              <Cell before="Tg username:" onClick={() => openTelegramLink?.(`https://t.me/${player.username}`)}>
-                <Text>{player.username}</Text>
+              <Cell before="Telegram:" onClick={() => openTelegramLink?.(`tg://user?id=${player.telegramId}`)}>
+                <Text Component="a">{player.username || player.telegramId}</Text>
               </Cell>
             )
           : <Cell>Не занятый пользователь</Cell>}

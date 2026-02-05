@@ -1,6 +1,6 @@
 'use client'
 
-import { Input, Section } from '@telegram-apps/telegram-ui'
+import { Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
@@ -31,8 +31,9 @@ export default function NewSeasonPage({ params }: { params: Promise<{ groupId: s
     <Page>
       <Section header="Создание нового сезона">
         <Input
+          className="input"
           value={title}
-          header="Название"
+          header={<Subheadline>Название</Subheadline>}
           onChange={e => setTitle(e.target.value)}
           placeholder="Весна 25 г."
         />
