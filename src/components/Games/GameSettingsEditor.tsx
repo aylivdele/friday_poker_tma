@@ -47,7 +47,7 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Cell before={<Caption level="2">Стоимость первого входа</Caption>}>
+      <Cell before={<Caption level="1">Стоимость первого входа</Caption>}>
         <Input
           type="number"
           value={gameSettings.firstEntryCost}
@@ -57,7 +57,7 @@ export default function GameSettingsEditor({
         />
       </Cell>
 
-      <Cell before={<Caption level="2">Стоимость повторного входа</Caption>}>
+      <Cell before={<Caption level="1">Стоимость повторного входа</Caption>}>
         <Input
           type="number"
           value={gameSettings.reEntryCost}
@@ -67,7 +67,7 @@ export default function GameSettingsEditor({
         />
       </Cell>
 
-      <Cell before={<Caption level="2">Кол-во повторных входов</Caption>}>
+      <Cell before={<Caption level="1">Кол-во повторных входов</Caption>}>
         <Input
           type="number"
           value={gameSettings.maxReEntries}

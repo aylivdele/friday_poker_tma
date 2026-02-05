@@ -170,7 +170,7 @@ export default function SaveControls({
                       </Cell>
                     )
                   })
-                : <Text>Список пуст</Text>}
+                : <Cell><Text>Список пуст</Text></Cell>}
             </List>
           </Section>
           <Section header="Добавить игроков">

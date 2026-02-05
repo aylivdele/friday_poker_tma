@@ -80,7 +80,7 @@ export default function PlayersEditor({
                   </Cell>
                 )
               })
-            : <Text>Список пуст</Text>}
+            : <Cell><Text>Список пуст</Text></Cell>}
         </List>
       </Section>
       {editable

@@ -25,14 +25,14 @@ export function Navigation() {
 
   return (
     <Tabbar>
-      <Tabbar.Item selected={currentTab === 'profile'}>
-        <Button mode="plain" size="s" onClick={() => switchTab('profile')}>Профиль</Button>
+      <Tabbar.Item selected={currentTab === 'profile'} onClick={() => switchTab('profile')}>
+        Профиль
       </Tabbar.Item>
-      <Tabbar.Item selected={currentTab === 'groups'}>
-        <Button mode="plain" size="s" onClick={() => switchTab('groups')}>Группы</Button>
+      <Tabbar.Item selected={currentTab === 'groups'} onClick={() => switchTab('groups')}>
+        Группы
       </Tabbar.Item>
-      <Tabbar.Item selected={currentTab === 'games'}>
-        <Button mode="plain" size="s" onClick={() => switchTab('games')}>Игры</Button>
+      <Tabbar.Item selected={currentTab === 'games'} onClick={() => switchTab('games')}>
+        Игры
       </Tabbar.Item>
     </Tabbar>
   )
