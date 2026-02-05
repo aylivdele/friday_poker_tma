@@ -116,7 +116,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
       >
         <List>
           <List>
-            {playersSwr.data?.filter(p => !p.telegramId).map(member => (
+            {!!playersSwr.data && playersSwr.data.filter(p => !p.telegramId).map(member => (
               <GroupPlayer key={member._id} player={member} isOwner={member._id === group.ownerId} onClick={() => chooseProfile(member)} />
             ))}
           </List>
