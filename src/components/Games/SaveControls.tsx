@@ -2,7 +2,7 @@
 
 import type { Game, GameResult, Player } from '@/types/api'
 
-import { Avatar, Button, Cell, Input, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, Button, Cell, Chip, Input, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton, secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -119,7 +119,7 @@ export default function SaveControls({
     setSumScore(results.reduce((acc, cv) => acc + cv.score, 0))
   }, [results])
 
-  const updateResult = (index: number, patch: GameResult) => {
+  const updateResult = (index: number, patch?: GameResult) => {
     const next = [...results]
     if (patch) {
       next[index] = { ...next[index], ...patch }
@@ -133,7 +133,7 @@ export default function SaveControls({
   return draft.isFinished || !groupPlayers
     ? null
     : (
-        <Modal dismissible header="Результаты" open={resultModalOpen} onOpenChange={setResultModalOpen}>
+        <Modal dismissible header={<Text>Результаты</Text>} open={resultModalOpen} onOpenChange={setResultModalOpen}>
           <Section header="Финалисты">
             <List>
               {results.map((p, i) => {
@@ -147,16 +147,11 @@ export default function SaveControls({
                       />
                     )}
                     after={(
-                      <Input
-                        header="Стэки"
-                        type="number"
-                        disabled={true}
-                        value={p.score}
-                        before={(<Button mode="bezeled" size="s" onClick={() => (p.score > 0) && updateResult(i, { ...p, score: p.score - 1 })}>-</Button>)}
-                        after={(
-                          <Button mode="bezeled" size="s" onClick={() => (maxScore - sumScore > 0) && updateResult(i, { ...p, score: p.score + 1 })}>+</Button>
-                        )}
-                      />
+                      <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
+                        <Button mode="bezeled" size="s" onClick={() => (p.score > 0) ? updateResult(i, { ...p, score: p.score - 1 }) : updateResult(i, undefined)}>-</Button>
+                        <Chip>{p.score}</Chip>
+                        <Button mode="bezeled" size="s" onClick={() => (maxScore - sumScore > 0) && updateResult(i, { ...p, score: p.score + 1 })}>+</Button>
+                      </div>
                     )}
                   >
                     {playerData?.firstName}

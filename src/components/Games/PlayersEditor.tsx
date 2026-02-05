@@ -1,7 +1,7 @@
 'use client'
 
 import type { GamePlayer, Player } from '@/types/api'
-import { Avatar, Button, Cell, Input, List, Section, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, Button, Cell, Chip, Input, List, Section, Text } from '@telegram-apps/telegram-ui'
 import { isNull } from '@/lib/helpers'
 import { nonNull } from '../../lib/helpers'
 import { IconPersonRemove } from '../Icons/PersonRemove'
@@ -69,21 +69,17 @@ export default function PlayersEditor({
                   />
                 )}
                 after={(
-                  <Input
-                    header="Докупы"
-                    type="number"
-                    disabled={true}
-                    value={p.entries}
-                    before={editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) && updatePlayer(i, { ...p, entries: p.entries - 1 })}>-</Button>) : undefined}
-                    after={editable
+                  <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
+                    {editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) ? updatePlayer(i, { ...p, entries: p.entries - 1 }) : updatePlayer(i, undefined)}>-</Button>) : undefined}
+                    <Chip>{p.entries}</Chip>
+                    {editable
                       ? (
                           <>
                             <Button mode="bezeled" size="s" onClick={() => (p.entries < maxReEntries) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
-                            <Button size="s" onClick={() => updatePlayer(i, undefined)}><IconPersonRemove /></Button>
                           </>
                         )
                       : undefined}
-                  />
+                  </div>
                 )}
               >
                 {playerData?.firstName}

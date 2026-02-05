@@ -2,6 +2,7 @@
 
 import type { Game, Player } from '@/types/api'
 import {
+  Headline,
   Section,
   Text,
 } from '@telegram-apps/telegram-ui'
@@ -40,9 +41,9 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   return (
     <Page>
       <Section>
-        <Text weight="2" size={4}>
+        <Headline>
           {draft.title}
-        </Text>
+        </Headline>
 
         <PlayersEditor
           groupPlayers={groupPlayers}
