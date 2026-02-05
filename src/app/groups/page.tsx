@@ -22,10 +22,10 @@ export default function groupsPage() {
     const unbound = mainButton.onClick(() => router.push(`/groups/new`))
 
     return () => {
-      mainButton.hide()
       unbound()
+      mainButton.hide()
     }
-  }, [])
+  }, [mainButton])
 
   return (
     <Page back={false}>

@@ -2,9 +2,7 @@
 
 import type { GamePlayer, Player } from '@/types/api'
 import { Avatar, Button, Cell, Input, List, Section, Text } from '@telegram-apps/telegram-ui'
-import useSWR from 'swr'
 import { isNull } from '@/lib/helpers'
-import { swrGetFetcher } from '@/lib/swrFetcher'
 import { nonNull } from '../../lib/helpers'
 import { IconPersonRemove } from '../Icons/PersonRemove'
 import { Loader } from '../Loader/Loader'
@@ -13,22 +11,26 @@ export default function PlayersEditor({
   players,
   editable,
   onChange,
-  groupId,
+  maxReEntries,
+  groupPlayers,
+  error,
+  isLoading,
 }: {
   players: GamePlayer[]
   editable: boolean
   onChange: (players: GamePlayer[]) => void
-  groupId: string
+  maxReEntries: number
+  groupPlayers?: Player[]
+  error: any
+  isLoading: boolean
 }) {
-  const { data: groupPlayers, isLoading, error } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
-
   function updatePlayer(index: number, patch?: GamePlayer) {
     const next = [...players]
     if (patch) {
       next[index] = { ...next[index], ...patch }
     }
     else {
-      delete next[index]
+      next.splice(index, 1)
     }
     onChange(next)
   }
@@ -70,11 +72,17 @@ export default function PlayersEditor({
                   <Input
                     header="Докупы"
                     type="number"
-                    disabled={!editable}
+                    disabled={true}
                     value={p.entries}
-                    after={editable ? (<Button onClick={() => updatePlayer(i, undefined)}><IconPersonRemove /></Button>) : undefined}
-                    onChange={e =>
-                      updatePlayer(i, { playerId: p.playerId, entries: +e.target.value })}
+                    before={editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) && updatePlayer(i, { ...p, entries: p.entries - 1 })}>-</Button>) : undefined}
+                    after={editable
+                      ? (
+                          <>
+                            <Button mode="bezeled" size="s" onClick={() => (p.entries < maxReEntries) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
+                            <Button size="s" onClick={() => updatePlayer(i, undefined)}><IconPersonRemove /></Button>
+                          </>
+                        )
+                      : undefined}
                   />
                 )}
               >
@@ -83,7 +91,7 @@ export default function PlayersEditor({
                 {playerData?.lastName}
               </Cell>
             )
-          })}
+          }) || <Text>Список пуст</Text>}
         </List>
       </Section>
       {editable

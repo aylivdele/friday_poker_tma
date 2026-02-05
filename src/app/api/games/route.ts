@@ -33,18 +33,32 @@ export async function POST(request: NextRequest) {
     title: '',
     isFinished: false,
     players: [],
-    settings: {},
+    settings: {
+      isFinal: false,
+      maxReEntries: 5,
+      firstEntryCost: 100,
+      reEntryCost: 100,
+    },
     ...await deserealizeBody<Partial<Game>>(request, 'game'),
   }
   if (!newGame.groupId) {
     return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
   }
+  else {
+    newGame.groupId = new ObjectId(newGame.groupId)
+  }
+  if (!newGame.seasonId) {
+    return NextResponse.json({ error: 'seasonId is required' }, { status: 400 })
+  }
+  else {
+    newGame.seasonId = new ObjectId(newGame.seasonId)
+  }
 
   // @ts-expect-error group id is not undefined
   const result = await (await getDb()).games.insertOne(newGame)
-  if (nonNull(newGame.seasonId) && nonNull(result.insertedId)) {
+  if (nonNull(result.insertedId)) {
     (await getDb()).seasons.updateOne(
-      { _id: new ObjectId(newGame.seasonId) },
+      { _id: newGame.seasonId },
       { $push: { gameIds: result.insertedId } },
     )
   }

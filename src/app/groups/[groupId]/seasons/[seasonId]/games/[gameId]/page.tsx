@@ -1,6 +1,6 @@
 'use client'
 
-import type { Game } from '@/types/api'
+import type { Game, Player } from '@/types/api'
 import {
   Section,
   Text,
@@ -20,6 +20,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
     `/api/games/${gameId}`,
     swrGetFetcher,
   )
+  const { data: groupPlayers, isLoading: pIsLoading, error: pError } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+
   const [draft, setDraft] = useState<Game | null>(null)
   const isEditable = game && !game.isFinished
 
@@ -43,9 +45,12 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
         </Text>
 
         <PlayersEditor
-          groupId={groupId}
+          groupPlayers={groupPlayers}
+          isLoading={pIsLoading}
+          error={pError}
           players={draft.players}
           editable={!!isEditable}
+          maxReEntries={draft.settings.maxReEntries}
           onChange={players =>
             setDraft({ ...draft, players })}
         />
@@ -60,6 +65,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
         <SaveControls
           gameId={gameId}
           draft={draft}
+          groupPlayers={groupPlayers}
           onSaved={mutate}
         />
       </Section>

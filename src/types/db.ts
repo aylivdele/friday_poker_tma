@@ -1,4 +1,4 @@
-import type { Collection, Db, ObjectId } from 'mongodb'
+import type { Collection, ObjectId } from 'mongodb'
 
 /* ===== Player ===== */
 export interface Player {
