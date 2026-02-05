@@ -5,7 +5,7 @@ import type { Game, GameResult, Player } from '@/types/api'
 import { Avatar, Button, Cell, Chip, Input, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton, secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { nonNull } from '@/lib/helpers'
@@ -39,7 +39,7 @@ export default function SaveControls({
     }
   }
 
-  async function finishGame() {
+  const finishGame = useCallback(async () => {
     try {
       if (!draft.results) {
         throw new Error('Отсутствуют результаты игры')
@@ -55,9 +55,9 @@ export default function SaveControls({
       console.error('Ошибка сохранения настроек игры', e)
       toast.error(`Ошибка сохранения: ${e}`)
     }
-  }
+  }, [draft, maxScore, gameId, results])
 
-  async function deleteGame() {
+  const deleteGame = useCallback(async () => {
     try {
       await api.delete(`/api/games/${gameId}`)
       router.back()
@@ -66,7 +66,7 @@ export default function SaveControls({
       console.error('Ошибка удаления игры', e)
       toast.error('Ошибка удаления')
     }
-  }
+  }, [gameId])
 
   useEffect(() => {
     if (!mainButton || resultModalOpen)
@@ -77,7 +77,6 @@ export default function SaveControls({
     mainButton.show()
 
     return () => {
-      mainButton.hide()
       unbound()
     }
   }, [draft, resultModalOpen])
@@ -106,10 +105,18 @@ export default function SaveControls({
     secondaryButton.show()
 
     return () => {
-      secondaryButton.hide()
       unbound()
     }
-  }, [draft, resultModalOpen])
+  }, [draft, resultModalOpen, finishGame, deleteGame])
+
+  useEffect(() => {
+    return () => {
+      if (mainButton)
+        mainButton.hide()
+      if (secondaryButton)
+        secondaryButton.hide()
+    }
+  }, [])
 
   useEffect(() => {
     setMaxScore(draft.players.reduce((acc, cv) => acc + cv.entries, draft.players.length))

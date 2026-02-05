@@ -50,15 +50,7 @@ export default function PlayersEditor({
     <>
       <Section header="Игроки в игре">
         <List>
-          {players.sort((a, b) => {
-            if (a.entries === b.entries) {
-              return 0
-            }
-            if (a.entries === 0) {
-              return 1
-            }
-            return -1
-          }).map((p, i) => {
+          {players.map((p, i) => {
             const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
             return (
               <Cell
