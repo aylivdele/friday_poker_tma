@@ -27,25 +27,29 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
   else {
     await db.games.updateMany(
-      {
-        $or: [
-          { 'players.playerId': claimedId },
-          { 'results.playerId': claimedId },
-        ],
-      },
+      { 'players.playerId': claimedId },
       {
         $set: {
           'players.$[p].playerId': caller._id,
+        },
+      },
+      {
+        arrayFilters: [{ 'p.playerId': claimedId }],
+      },
+    )
+
+    await db.games.updateMany(
+      { 'results.playerId': claimedId },
+      {
+        $set: {
           'results.$[r].playerId': caller._id,
         },
       },
       {
-        arrayFilters: [
-          { 'p.playerId': claimedId },
-          { 'r.playerId': claimedId },
-        ],
+        arrayFilters: [{ 'r.playerId': claimedId }],
       },
     )
+
     await db.groups.updateMany(
       { members: claimedId },
       {
