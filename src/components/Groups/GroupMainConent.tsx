@@ -115,11 +115,9 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
         dismissible
       >
         <List>
-          <List>
-            {!!playersSwr.data && playersSwr.data.filter(p => !p.telegramId).map(member => (
-              <GroupPlayer key={member._id} player={member} isOwner={member._id === group.ownerId} onClick={() => chooseProfile(member)} />
-            ))}
-          </List>
+          {!!playersSwr.data && playersSwr.data.filter(p => !p.telegramId).map(member => (
+            <GroupPlayer key={member._id} player={member} isOwner={member._id === group.ownerId} onClick={() => chooseProfile(member)} />
+          ))}
         </List>
       </Modal>
       <PinModal open={pinOpen} onOpenChange={setPinOpen} onPinEnter={onPinEnter} />

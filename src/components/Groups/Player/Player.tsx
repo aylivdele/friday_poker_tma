@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import CrownSvg from '../../../app/_assets/crown.svg'
 import './Player.css'
 
-export function GroupPlayer({ player, isOwner, onClick }: { player: Player, isOwner: boolean, onClick?: () => void }) {
+export function GroupPlayer({ player, isOwner, onClick }: { player: Player, isOwner: boolean, onClick: () => void }) {
   const router = useRouter()
 
   return (
@@ -15,7 +15,7 @@ export function GroupPlayer({ player, isOwner, onClick }: { player: Player, isOw
           size={48}
           src={player.avatarUrl}
         >
-          {isOwner && <CrownSvg alt="Владелец" className="avatar-icon" />}
+          {isOwner && <img src={CrownSvg} alt="Владелец" className="avatar-icon" />}
         </Avatar>
       )}
       after={(
