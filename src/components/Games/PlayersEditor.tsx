@@ -1,10 +1,9 @@
 'use client'
 
 import type { GamePlayer, Player } from '@/types/api'
-import { Avatar, Button, Cell, Chip, Input, List, Section, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, Button, Cell, Chip, List, Section, Text } from '@telegram-apps/telegram-ui'
 import { isNull } from '@/lib/helpers'
 import { nonNull } from '../../lib/helpers'
-import { IconPersonRemove } from '../Icons/PersonRemove'
 import { Loader } from '../Loader/Loader'
 
 export default function PlayersEditor({

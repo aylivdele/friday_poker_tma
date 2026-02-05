@@ -13,7 +13,7 @@ interface ConfirmButtonProps {
   children: JSX.Element
 }
 
-export function confirmPopup({ title, description, cancelText = 'Подтвердить', confirmText = 'Отмена', onConfirm }: Omit<ConfirmButtonProps, 'children'>) {
+export function confirmPopup({ title, description, cancelText = 'Отмена', confirmText = 'Подтвердить', onConfirm }: Omit<ConfirmButtonProps, 'children'>) {
   return popup.show(
     {
       title,

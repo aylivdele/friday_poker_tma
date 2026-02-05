@@ -2,7 +2,7 @@
 
 import type { Game, GameResult, Player } from '@/types/api'
 
-import { Avatar, Button, Cell, Chip, Input, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, Button, Cell, Chip, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton, secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -41,7 +41,7 @@ export default function SaveControls({
 
   const finishGame = useCallback(async () => {
     try {
-      if (!draft.results) {
+      if (!results) {
         throw new Error('Отсутствуют результаты игры')
       }
       if (sumScore !== maxScore) {
@@ -69,8 +69,10 @@ export default function SaveControls({
   }, [gameId])
 
   useEffect(() => {
-    if (!mainButton || resultModalOpen)
+    if (!mainButton || resultModalOpen) {
+      mainButton?.hide()
       return
+    }
 
     const unbound = mainButton.onClick(save)
     mainButton.setText('Сохранить')
