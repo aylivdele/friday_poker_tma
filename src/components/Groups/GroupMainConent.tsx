@@ -41,6 +41,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
       if (secondaryButton && playersSwr.data?.some(p => !p.telegramId)) {
         unboundSecondary = secondaryButton.onClick(() => setChooseModalOpen(true))
         secondaryButton.setText('Занять профиль')
+        secondaryButton.setBgColor('#00FF00')
       }
       mainButton.setText('Вступить в группу')
       unbound = mainButton.onClick(() => setPinOpen(true))
@@ -63,6 +64,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
 
     return () => {
       unbound?.()
+      unboundSecondary?.()
     }
   }, [group, selectedTab, mainButton, secondaryButton, router, player, playersSwr])
 
@@ -108,10 +110,13 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
       <Modal
         header={<Headline style={{ padding: 5 }}>Выберите профиль</Headline>}
         open={chooseModalOpen}
-        onOpenChange={() => {
-          setChosenEmptyPlayer(undefined)
-          setChooseModalOpen(false)
+        onOpenChange={(open: boolean) => {
+          if (!open) {
+            setChosenEmptyPlayer(undefined)
+            setChooseModalOpen(false)
+          }
         }}
+        modal
         dismissible
       >
         <List>
