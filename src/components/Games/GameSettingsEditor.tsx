@@ -8,6 +8,7 @@ import {
   Subheadline,
   Switch,
 } from '@telegram-apps/telegram-ui'
+import './GameSettingsEditor.css'
 
 export default function GameSettingsEditor({
   gameSettings,
