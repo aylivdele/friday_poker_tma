@@ -49,6 +49,7 @@ export default function GameSettingsEditor({
 
       <Cell before={<Caption level="1">Стоимость первого входа</Caption>}>
         <Input
+          className="input"
           type="number"
           value={gameSettings.firstEntryCost}
           disabled={!editable}
@@ -59,6 +60,7 @@ export default function GameSettingsEditor({
 
       <Cell before={<Caption level="1">Стоимость повторного входа</Caption>}>
         <Input
+          className="input"
           type="number"
           value={gameSettings.reEntryCost}
           disabled={!editable}
@@ -69,6 +71,7 @@ export default function GameSettingsEditor({
 
       <Cell before={<Caption level="1">Кол-во повторных входов</Caption>}>
         <Input
+          className="input"
           type="number"
           value={gameSettings.maxReEntries}
           disabled={!editable}
