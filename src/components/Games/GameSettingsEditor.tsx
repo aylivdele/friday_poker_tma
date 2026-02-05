@@ -48,7 +48,7 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Cell before={<Subheadline level="1">Стоимость первого входа</Subheadline>}>
+      <Cell after={(
         <Input
           status="focused"
           className="input"
@@ -58,9 +58,12 @@ export default function GameSettingsEditor({
           onChange={e =>
             updateSettings({ firstEntryCost: +e.target.value })}
         />
+      )}
+      >
+        <Subheadline level="1">Стоимость первого входа</Subheadline>
       </Cell>
 
-      <Cell before={<Subheadline level="1">Стоимость повторного входа</Subheadline>}>
+      <Cell after={(
         <Input
           status="focused"
           className="input"
@@ -70,9 +73,12 @@ export default function GameSettingsEditor({
           onChange={e =>
             updateSettings({ reEntryCost: +e.target.value })}
         />
-      </Cell>
+      )}
+      >
+        <Subheadline level="1">Стоимость повторного входа</Subheadline>
 
-      <Cell before={<Subheadline level="1">Кол-во повторных входов</Subheadline>}>
+      </Cell>
+      <Cell after={(
         <Input
           status="focused"
           className="input"
@@ -82,6 +88,9 @@ export default function GameSettingsEditor({
           onChange={e =>
             updateSettings({ maxReEntries: +e.target.value })}
         />
+      )}
+      >
+        <Subheadline level="1">Кол-во повторных входов</Subheadline>
       </Cell>
     </Section>
   )
