@@ -6,6 +6,7 @@ import {
   Input,
   Section,
   Switch,
+  Text,
 } from '@telegram-apps/telegram-ui'
 
 export default function GameSettingsEditor({
@@ -44,17 +45,17 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Input
-        header="Стоимость первого входа"
-        type="number"
-        value={gameSettings.firstEntryCost}
-        disabled={!editable}
-        onChange={e =>
-          updateSettings({ firstEntryCost: +e.target.value })}
-      />
+      <Cell before={<Text>Стоимость первого входа</Text>}>
+        <Input
+          type="number"
+          value={gameSettings.firstEntryCost}
+          disabled={!editable}
+          onChange={e =>
+            updateSettings({ firstEntryCost: +e.target.value })}
+        />
+      </Cell>
 
       <Input
-        header="Стоимость повторного входа"
         type="number"
         value={gameSettings.reEntryCost}
         disabled={!editable}

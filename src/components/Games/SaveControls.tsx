@@ -55,7 +55,7 @@ export default function SaveControls({
       console.error('Ошибка сохранения настроек игры', e)
       toast.error(`Ошибка сохранения: ${e}`)
     }
-  }, [draft, maxScore, gameId, results])
+  }, [draft, sumScore, maxScore, gameId, results])
 
   const deleteGame = useCallback(async () => {
     try {
