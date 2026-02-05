@@ -1,3 +1,6 @@
-.input input{
-  width: 100px;
+.input {
+  justify-content: space-between;
+  input {
+    width: 100px;
+  }
 }
