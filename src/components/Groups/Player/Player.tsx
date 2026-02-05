@@ -1,31 +1,21 @@
 import type { Player } from '@/types/api'
 import { Avatar, Cell, Text } from '@telegram-apps/telegram-ui'
 import { useRouter } from 'next/navigation'
-import useSWR from 'swr'
-import { Loader } from '@/components/Loader/Loader'
-import { isNull } from '@/lib/helpers'
-import { swrGetFetcher } from '@/lib/swrFetcher'
 import CrownSvg from '../../../app/_assets/crown.svg'
 import './Player.css'
 
-export function GroupPlayer({ id, isOwner }: { id: string, isOwner: boolean }) {
-  const swr = useSWR<Player>(`/api/players/${id}`, swrGetFetcher)
-  const player = swr.data
+export function GroupPlayer({ player, isOwner, onClick }: { player: Player, isOwner: boolean, onClick?: () => void }) {
   const router = useRouter()
-
-  if (isNull(player)) {
-    return (<Loader {...swr} />)
-  }
 
   return (
     <Cell
-      onClick={() => router.push(`/players/${player._id}`)}
+      onClick={onClick ?? (() => router.push(`/players/${player._id}`))}
       before={(
         <Avatar
           size={48}
           src={player.avatarUrl}
         >
-          {isOwner && <img src={CrownSvg} alt="Владелец" className="avatar-icon" />}
+          {isOwner && <CrownSvg alt="Владелец" className="avatar-icon" />}
         </Avatar>
       )}
       after={(

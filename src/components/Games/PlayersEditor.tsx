@@ -49,36 +49,38 @@ export default function PlayersEditor({
     <>
       <Section header="Игроки в игре">
         <List>
-          {players.map((p, i) => {
-            const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
-            return (
-              <Cell
-                key={p.playerId.toString()}
-                before={(
-                  <Avatar
-                    src={playerData?.avatarUrl}
-                  />
-                )}
-                after={(
-                  <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
-                    {editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) ? updatePlayer(i, { ...p, entries: p.entries - 1 }) : updatePlayer(i, undefined)}>-</Button>) : undefined}
-                    <Chip>{p.entries}</Chip>
-                    {editable
-                      ? (
-                          <>
-                            <Button mode="bezeled" size="s" onClick={() => (p.entries < maxReEntries) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
-                          </>
-                        )
-                      : undefined}
-                  </div>
-                )}
-              >
-                {playerData?.firstName}
-                {' '}
-                {playerData?.lastName}
-              </Cell>
-            )
-          }) || <Text>Список пуст</Text>}
+          {players.length
+            ? players.map((p, i) => {
+                const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
+                return (
+                  <Cell
+                    key={p.playerId.toString()}
+                    before={(
+                      <Avatar
+                        src={playerData?.avatarUrl}
+                      />
+                    )}
+                    after={(
+                      <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
+                        {editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) ? updatePlayer(i, { ...p, entries: p.entries - 1 }) : updatePlayer(i, undefined)}>-</Button>) : undefined}
+                        <Chip>{p.entries}</Chip>
+                        {editable
+                          ? (
+                              <>
+                                <Button mode="bezeled" size="s" onClick={() => (p.entries < maxReEntries) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
+                              </>
+                            )
+                          : undefined}
+                      </div>
+                    )}
+                  >
+                    {playerData?.firstName}
+                    {' '}
+                    {playerData?.lastName}
+                  </Cell>
+                )
+              })
+            : <Text>Список пуст</Text>}
         </List>
       </Section>
       {editable

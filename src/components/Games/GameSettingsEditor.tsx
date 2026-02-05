@@ -2,6 +2,7 @@
 
 import type { GameSettings } from './../../types/db'
 import {
+  Caption,
   Cell,
   Input,
   Section,
@@ -37,7 +38,8 @@ export default function GameSettingsEditor({
               updateSettings({
                 isFinal: e.target.checked,
                 firstEntryCost: e.target.checked ? 300 : 100,
-                maxReEntries: e.target.checked ? 3 : 6,
+                reEntryCost: 100,
+                maxReEntries: e.target.checked ? 3 : 5,
               })}
           />
         )}
@@ -45,7 +47,7 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Cell before={<Text>Стоимость первого входа</Text>}>
+      <Cell before={<Caption level="2">Стоимость первого входа</Caption>}>
         <Input
           type="number"
           value={gameSettings.firstEntryCost}
@@ -55,22 +57,25 @@ export default function GameSettingsEditor({
         />
       </Cell>
 
-      <Input
-        type="number"
-        value={gameSettings.reEntryCost}
-        disabled={!editable}
-        onChange={e =>
-          updateSettings({ reEntryCost: +e.target.value })}
-      />
+      <Cell before={<Caption level="2">Стоимость повторного входа</Caption>}>
+        <Input
+          type="number"
+          value={gameSettings.reEntryCost}
+          disabled={!editable}
+          onChange={e =>
+            updateSettings({ reEntryCost: +e.target.value })}
+        />
+      </Cell>
 
-      <Input
-        header="Кол-во повторных входов"
-        type="number"
-        value={gameSettings.maxReEntries}
-        disabled={!editable}
-        onChange={e =>
-          updateSettings({ maxReEntries: +e.target.value })}
-      />
+      <Cell before={<Caption level="2">Кол-во повторных входов</Caption>}>
+        <Input
+          type="number"
+          value={gameSettings.maxReEntries}
+          disabled={!editable}
+          onChange={e =>
+            updateSettings({ maxReEntries: +e.target.value })}
+        />
+      </Cell>
     </Section>
   )
 }

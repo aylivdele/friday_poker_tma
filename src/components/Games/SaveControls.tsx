@@ -47,7 +47,7 @@ export default function SaveControls({
       if (sumScore !== maxScore) {
         throw new Error('Стеки не распределены до конца')
       }
-      await api.put(`/api/games/${gameId}`, { ...draft, isFinished: true, results })
+      await api.put(`/api/games/${gameId}`, { ...draft, isFinished: true, finishedAt: Date.now(), results })
       onSaved()
       setResultModalOpen(false)
     }
@@ -69,7 +69,7 @@ export default function SaveControls({
   }, [gameId])
 
   useEffect(() => {
-    if (!mainButton || resultModalOpen) {
+    if (!mainButton || resultModalOpen || draft.isFinished) {
       mainButton?.hide()
       return
     }
@@ -145,30 +145,32 @@ export default function SaveControls({
         <Modal dismissible header={<Text>Результаты</Text>} open={resultModalOpen} onOpenChange={setResultModalOpen}>
           <Section header="Финалисты">
             <List>
-              {results.map((p, i) => {
-                const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
-                return (
-                  <Cell
-                    key={p.playerId.toString()}
-                    before={(
-                      <Avatar
-                        src={playerData?.avatarUrl}
-                      />
-                    )}
-                    after={(
-                      <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
-                        <Button mode="bezeled" size="s" onClick={() => (p.score > 0) ? updateResult(i, { ...p, score: p.score - 1 }) : updateResult(i, undefined)}>-</Button>
-                        <Chip>{p.score}</Chip>
-                        <Button mode="bezeled" size="s" onClick={() => (maxScore - sumScore > 0) && updateResult(i, { ...p, score: p.score + 1 })}>+</Button>
-                      </div>
-                    )}
-                  >
-                    {playerData?.firstName}
-                    {' '}
-                    {playerData?.lastName}
-                  </Cell>
-                )
-              }) || <Text>Список пуст</Text>}
+              {results.length
+                ? results.map((p, i) => {
+                    const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
+                    return (
+                      <Cell
+                        key={p.playerId.toString()}
+                        before={(
+                          <Avatar
+                            src={playerData?.avatarUrl}
+                          />
+                        )}
+                        after={(
+                          <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
+                            <Button mode="bezeled" size="s" onClick={() => (p.score > 0) ? updateResult(i, { ...p, score: p.score - 1 }) : updateResult(i, undefined)}>-</Button>
+                            <Chip>{p.score}</Chip>
+                            <Button mode="bezeled" size="s" onClick={() => (maxScore - sumScore > 0) && updateResult(i, { ...p, score: p.score + 1 })}>+</Button>
+                          </div>
+                        )}
+                      >
+                        {playerData?.firstName}
+                        {' '}
+                        {playerData?.lastName}
+                      </Cell>
+                    )
+                  })
+                : <Text>Список пуст</Text>}
             </List>
           </Section>
           <Section header="Добавить игроков">

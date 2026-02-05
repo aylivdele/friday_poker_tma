@@ -1,10 +1,9 @@
 'use client'
 
-import type { Group, Season } from '@/types/api'
-import { Cell, List, TabsList } from '@telegram-apps/telegram-ui'
+import type { Group, Player, Season } from '@/types/api'
+import { Cell, Headline, List, Modal, TabsList, Text } from '@telegram-apps/telegram-ui'
 import { TabsItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/TabsList/components/TabsItem/TabsItem'
-import { mainButton } from '@tma.js/sdk-react'
-import Link from 'next/link'
+import { mainButton, secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -19,21 +18,32 @@ import { GroupPlayer } from './Player/Player'
 
 export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => void, group: Group }) {
   const swr = useSWR<Season[]>(`/api/seasons?groupId=${group._id}`, swrGetFetcher)
+  const playersSwr = useSWR<Player[]>(`/api/players?groupId=${group._id}`, swrGetFetcher)
+
   const seasons = swr.data
-  const player = usePlayerStore(s => s.player)
+  const { player, setPlayer } = usePlayerStore(s => s)
   const [selectedTab, setSelectedTab] = useState<'players' | 'seasons'>('players')
-  const [modalOpen, setModalOpen] = useState(false)
+  const [pinOpen, setPinOpen] = useState(false)
+  const [chooseModalOpen, setChooseModalOpen] = useState(false)
+  const [chosenEmptyPlayer, setChosenEmptyPlayer] = useState<Player | undefined>(undefined)
 
   const router = useRouter()
 
   useEffect(() => {
-    if (!mainButton || isNull(player?._id))
+    if (!mainButton || isNull(player?._id)) {
+      mainButton?.hide()
       return
+    }
 
     let unbound: (() => void) | null = null
+    let unboundSecondary = null
     if (!group.members.includes(player._id)) {
+      if (secondaryButton && playersSwr.data?.some(p => !p.telegramId)) {
+        unboundSecondary = secondaryButton.onClick(() => setChooseModalOpen(true))
+        secondaryButton.setText('Занять профиль')
+      }
       mainButton.setText('Вступить в группу')
-      unbound = mainButton.onClick(() => setModalOpen(true))
+      unbound = mainButton.onClick(() => setPinOpen(true))
     }
     else if (selectedTab === 'players' && group.ownerId === player._id) {
       mainButton.setText('Добавить игрока')
@@ -47,26 +57,46 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
     if (unbound) {
       mainButton.show()
     }
+    if (unboundSecondary) {
+      secondaryButton.show()
+    }
 
     return () => {
-      mainButton.hide()
       unbound?.()
     }
-  }, [group, selectedTab, mainButton, router, player])
+  }, [group, selectedTab, mainButton, secondaryButton, router, player, playersSwr])
+
+  useEffect(() => {
+    return () => {
+      mainButton?.hide()
+      secondaryButton?.hide()
+    }
+  }, [mainButton, secondaryButton, group])
 
   const onPinEnter = (pin: number[]) => {
-    setModalOpen(false)
-    api.put(`/api/groups/${group._id}/join?pin=${pin.join('')}`).then(() => {
-      mutateGroup()
-    }).catch((error) => {
-      if (error?.error === 'Wrong password') {
-        setModalOpen(true)
-        toast.error('Неверный пароль')
-      }
-      else {
-        toast.error(error)
-      }
-    })
+    setPinOpen(false);
+    (chosenEmptyPlayer
+      ? api.put<Player>(`/api/players/${chosenEmptyPlayer._id}/claim`).then(newProfile => setPlayer(newProfile))
+      : api.put(`/api/groups/${group._id}/join?pin=${pin.join('')}`))
+      .then(() => {
+        mutateGroup()
+      })
+      .catch((error) => {
+        if (error?.error === 'Wrong password') {
+          setPinOpen(true)
+          toast.error('Неверный пароль')
+        }
+        else {
+          setChosenEmptyPlayer(undefined)
+          toast.error(error)
+        }
+      })
+  }
+
+  const chooseProfile = (player: Player) => {
+    setChosenEmptyPlayer(player)
+    setChooseModalOpen(false)
+    setPinOpen(true)
   }
 
   if (isNull(seasons)) {
@@ -75,7 +105,24 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
 
   return (
     <>
-      <PinModal open={modalOpen} onOpenChange={setModalOpen} onPinEnter={onPinEnter} />
+      <Modal
+        header={<Headline style={{ padding: 5 }}>Выберите профиль</Headline>}
+        open={chooseModalOpen}
+        onOpenChange={() => {
+          setChosenEmptyPlayer(undefined)
+          setChooseModalOpen(false)
+        }}
+        dismissible
+      >
+        <List>
+          <List>
+            {playersSwr.data?.filter(p => !p.telegramId).map(member => (
+              <GroupPlayer key={member._id} player={member} isOwner={member._id === group.ownerId} onClick={() => chooseProfile(member)} />
+            ))}
+          </List>
+        </List>
+      </Modal>
+      <PinModal open={pinOpen} onOpenChange={setPinOpen} onPinEnter={onPinEnter} />
       <TabsList>
         <TabsItem selected={selectedTab === 'players'} onClick={() => setSelectedTab('players')}>
           Игроки
@@ -86,18 +133,30 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
       </TabsList>
       { selectedTab === 'players'
         ? (
-            <List>
-              {group.members.map(memberId => (
-                <GroupPlayer key={memberId.toString()} id={memberId} isOwner={memberId === group.ownerId} />
-              ))}
-            </List>
+            <Loader {...playersSwr}>
+              <List>
+                {playersSwr.data?.map(member => (
+                  <GroupPlayer key={member._id} player={member} isOwner={member._id === group.ownerId} />
+                ))}
+              </List>
+            </Loader>
           )
         : (
             <List>
               {seasons.map(season => (
-                <Link href={`/groups/${group._id}/seasons/${season._id}`} key={season._id?.toString()}>
-                  <Cell subtitle={`Игр: ${season.gameIds.length}`}>{season.title}</Cell>
-                </Link>
+                <Cell
+                  key={season._id}
+                  Component="a"
+                  href={`/groups/${group._id}/seasons/${season._id}`}
+                  subtitle={(
+                    <Text>
+                      Игр:
+                      {season.gameIds.length}
+                    </Text>
+                  )}
+                >
+                  <Text>{season.title}</Text>
+                </Cell>
               ))}
             </List>
           ) }

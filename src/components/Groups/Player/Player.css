@@ -1,5 +1,8 @@
 .avatar-icon {
-  width: 32px;
-  height: 32px;
   object-fit: cover;
+  width: 16px;
+  height: 16px;
+  position: relative;
+  top: -30%;
+  left: -30%;
 }

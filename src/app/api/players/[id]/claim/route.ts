@@ -1,24 +1,34 @@
 import type { NextRequest } from 'next/server'
-import type { Player } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { deserealizeBody } from '@/lib/serverHelpers'
+import { getTelegramId } from '@/lib/serverHelpers'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const player = await deserealizeBody<Partial<Player>>(req, 'player')
-  const prevId = player._id
+  let tgId
+  try {
+    tgId = getTelegramId(req)
+  }
+  catch (error) {
+    return NextResponse.json({ error }, { status: 403 })
+  }
+  const db = await getDb()
+  const caller = await db.players.findOne({ telegramId: tgId })
+  if (!caller) {
+    return NextResponse.json({ error: 'You are not registered' }, { status: 401 })
+  }
+  const prevId = caller._id
   const { id } = await params
-  player._id = new ObjectId(id)
-  const result = await (await getDb()).players.updateOne(
+  caller._id = new ObjectId(id)
+  const result = await db.players.updateOne(
     { _id: new ObjectId(id) },
-    { $set: player },
+    { $set: caller },
   )
   if (result.matchedCount === 0) {
     return NextResponse.json({ error: 'Player not found' }, { status: 404 })
   }
   else {
-    await (await getDb()).games.deleteOne({ _id: prevId })
+    await db.games.deleteOne({ _id: prevId })
   }
-  return NextResponse.json(player)
+  return NextResponse.json(caller)
 }

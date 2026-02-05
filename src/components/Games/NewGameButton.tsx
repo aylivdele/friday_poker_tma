@@ -3,7 +3,6 @@
 import type { Game } from '@/types/api'
 import { Cell, List, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import useSWR from 'swr'
@@ -51,9 +50,18 @@ export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers:
             <List>
               {
                 games.sort((a, b) => a.createdAt - b.createdAt).map(game => (
-                  <Link href={`/groups/${groupId}/seasons/${seasonId}/games/${game._id}`} key={game._id?.toString()}>
-                    <Cell after={game.isFinished ? '' : 'В процессе'} subtitle={`Кол-во игроков: ${game.players.length}`}>{game.title}</Cell>
-                  </Link>
+                  <Cell
+                    href={`/groups/${groupId}/seasons/${seasonId}/games/${game._id}`}
+                    after={game.isFinished ? '' : (<Text>В процессе</Text>)}
+                    subtitle={(
+                      <Text>
+                        Кол-во игроков:
+                        {game.players.length}
+                      </Text>
+                    )}
+                  >
+                    <Text>{game.title}</Text>
+                  </Cell>
                 ))
               }
             </List>

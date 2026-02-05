@@ -2,7 +2,11 @@
 
 import type { Game, Player } from '@/types/api'
 import {
+  Avatar,
+  Cell,
+  Chip,
   Headline,
+  List,
   Section,
   Text,
 } from '@telegram-apps/telegram-ui'
@@ -41,9 +45,40 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   return (
     <Page>
       <Section>
-        <Headline>
+        <Headline style={{ padding: 10, textAlign: 'center' }}>
           {draft.title}
         </Headline>
+
+        {draft.isFinished && draft.results
+          ? (
+              <Section header="Финалисты">
+                <List>
+                  {draft.results.map((p) => {
+                    const playerData = groupPlayers?.find(dp => dp._id?.toString() === p.playerId.toString())
+                    return (
+                      <Cell
+                        key={p.playerId.toString()}
+                        before={(
+                          <Avatar
+                            src={playerData?.avatarUrl}
+                          />
+                        )}
+                        after={(
+                          <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
+                            <Chip>{p.score}</Chip>
+                          </div>
+                        )}
+                      >
+                        {playerData?.firstName}
+                        {' '}
+                        {playerData?.lastName}
+                      </Cell>
+                    )
+                  }) || <Text>Список пуст</Text>}
+                </List>
+              </Section>
+            )
+          : null}
 
         <PlayersEditor
           groupPlayers={groupPlayers}
