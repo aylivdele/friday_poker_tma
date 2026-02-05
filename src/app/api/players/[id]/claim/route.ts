@@ -17,9 +17,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!caller) {
     return NextResponse.json({ error: 'You are not registered' }, { status: 401 })
   }
-  const { id: claimedId } = await params
+  const { id } = await params
+  const claimedId = new ObjectId(id)
   const result = await db.players.deleteOne(
-    { _id: new ObjectId(claimedId) },
+    { _id: claimedId },
   )
   if (result.deletedCount === 0) {
     return NextResponse.json({ error: 'Player not found' }, { status: 404 })
@@ -43,6 +44,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           { 'p.playerId': claimedId },
           { 'r.playerId': claimedId },
         ],
+      },
+    )
+    await db.groups.updateMany(
+      { members: claimedId },
+      {
+        $set: {
+          'members.$[m]': caller._id,
+        },
+      },
+      {
+        arrayFilters: [{ m: claimedId }],
       },
     )
   }
