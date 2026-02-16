@@ -18,6 +18,9 @@
   padding: 10px;
   border-bottom: 1px solid #ddd;
   z-index: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Первая колонка (имена) */
@@ -34,7 +37,7 @@
 .cell {
   padding: 10px;
   text-align: center;
-  border-bottom: 1px solid #eee;
+  border: 1px solid #eee;
   white-space: nowrap;
 }
 

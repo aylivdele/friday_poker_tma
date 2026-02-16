@@ -19,13 +19,13 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
   return (
     <Section header="Таблица">
       <div className="container">
-        <div className="grid-table" style={{ gridTemplateColumns: `160px repeat(${data.games.length}, minmax(90px, 1fr)) 110px` }}>
+        <div className="grid-table" style={{ gridTemplateColumns: `160px repeat(${data.games.length}, minmax(80px, 1fr)) 110px` }}>
           <div className="sticky-col header">Игрок</div>
 
           {data.games.map(g => (
             <div key={g._id} className="header">
-              {g.title}
               {g.isFinal && <span className="ml-1">🏆</span>}
+              {g.title}
             </div>
           ))}
 
