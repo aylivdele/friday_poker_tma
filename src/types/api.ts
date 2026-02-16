@@ -55,3 +55,16 @@ export interface Season {
   title: string
   gameIds: string[]
 }
+
+export interface SeasonTableResponse {
+  players: Player[]
+  games: {
+    _id: string
+    title: string
+    isFinal?: boolean
+  }[]
+  cells: Record<string, Record<string, number>>
+  totals: Record<string, number>
+  finalWinners: string[]
+  seasonPlaces: Record<string, 1 | 2 | 3>
+}

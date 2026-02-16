@@ -1,5 +1,5 @@
 import type { Db } from 'mongodb'
-import type { Game, Group, MongoCollections, Player, Season } from '@/types/db'
+import type { Game, Group, MongoCollectionsWithClient, Player, Season } from '@/types/db'
 import process from 'node:process'
 import { MongoClient } from 'mongodb'
 
@@ -17,16 +17,17 @@ if (!_mongoClientPromise) {
 
 let db: Db | null = null
 
-export function getCollections(db: Db): MongoCollections {
+export function getCollections(db: Db): MongoCollectionsWithClient {
   return {
     players: db.collection<Player>('players'),
     groups: db.collection<Group>('groups'),
     games: db.collection<Game>('games'),
     seasons: db.collection<Season>('seasons'),
+    client: db,
   }
 }
 
-export async function getDb(): Promise<MongoCollections> {
+export async function getDb(): Promise<MongoCollectionsWithClient> {
   if (db)
     return getCollections(db)
   const client = await _mongoClientPromise!

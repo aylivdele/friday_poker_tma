@@ -16,7 +16,7 @@ import { Loader } from '../Loader/Loader'
 import { PinModal } from './PinModal'
 import { GroupPlayer } from './Player/Player'
 
-export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => void, group: Group }) {
+export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => Promise<any>, group: Group }) {
   const swr = useSWR<Season[]>(`/api/seasons?groupId=${group._id}`, swrGetFetcher)
   const playersSwr = useSWR<Player[]>(`/api/players?groupId=${group._id}`, swrGetFetcher)
 
@@ -81,7 +81,7 @@ export function GroupMainContent({ group, mutateGroup }: { mutateGroup: () => vo
       ? api.put<Player>(`/api/players/${chosenEmptyPlayer._id}/claim`)
       : api.put(`/api/groups/${group._id}/join?pin=${pin.join('')}`))
       .then(() => {
-        mutateGroup()
+        mutateGroup().then(() => playersSwr.mutate())
       })
       .catch((error) => {
         if (error?.error === 'Wrong password') {

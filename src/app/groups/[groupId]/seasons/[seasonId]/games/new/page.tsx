@@ -50,10 +50,15 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
     mainButton.onClick(handleSubmit)
 
     return () => {
-      mainButton.hide()
       mainButton.offClick(handleSubmit)
     }
   }, [title, loading])
+
+  useEffect(() => {
+    return () => {
+      mainButton?.hide()
+    }
+  }, [mainButton])
 
   return (
     <Page>

@@ -22,10 +22,15 @@ export default function NewSeasonPage({ params }: { params: Promise<{ groupId: s
       .catch(e => toast.error(e)))
 
     return () => {
-      mainButton.hide()
       unbound()
     }
   }, [mainButton, groupId, title])
+
+  useEffect(() => {
+    return () => {
+      mainButton?.hide()
+    }
+  }, [mainButton])
 
   return (
     <Page>
@@ -33,7 +38,7 @@ export default function NewSeasonPage({ params }: { params: Promise<{ groupId: s
         <Input
           className="input"
           value={title}
-          header={<Subheadline>Название</Subheadline>}
+          before={<Subheadline>Название</Subheadline>}
           onChange={e => setTitle(e.target.value)}
           placeholder="Весна 25 г."
         />

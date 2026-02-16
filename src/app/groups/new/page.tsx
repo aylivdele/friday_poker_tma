@@ -23,10 +23,10 @@ export default function NewGroupPage() {
     const unbound = mainButton.onClick(() => setModalOpen(true))
 
     return () => {
-      mainButton.hide()
       unbound()
+      mainButton.hide()
     }
-  }, [mainButton, title])
+  }, [mainButton])
 
   useEffect(() => {
     if (loading) {

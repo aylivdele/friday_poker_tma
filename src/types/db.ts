@@ -1,4 +1,4 @@
-import type { Collection, ObjectId } from 'mongodb'
+import type { Collection, Db, ObjectId } from 'mongodb'
 
 /* ===== Player ===== */
 export interface Player {
@@ -59,9 +59,10 @@ export interface Season {
   gameIds: ObjectId[]
 }
 
-export interface MongoCollections {
+export interface MongoCollectionsWithClient {
   players: Collection<Player>
   groups: Collection<Group>
   games: Collection<Game>
   seasons: Collection<Season>
+  client: Db
 }

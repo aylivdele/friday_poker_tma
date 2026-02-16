@@ -25,10 +25,15 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
       .catch(e => toast.error(e)))
 
     return () => {
-      mainButton.hide()
       unbound()
     }
   }, [mainButton, groupId, firstName, lastName, avatar])
+
+  useEffect(() => {
+    return () => {
+      mainButton?.hide()
+    }
+  }, [mainButton])
 
   const readFile = useCallback((file?: Blob) => {
     const reader = new FileReader()
