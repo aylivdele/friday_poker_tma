@@ -6,6 +6,7 @@ import useSWR from 'swr'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 import { Loader } from '../Loader/Loader'
+import './SeasonTable.css'
 
 export function SeasonTable({ seasonId }: { seasonId: string }) {
   const swr = useSWR<SeasonTableResponse>(`/api/seasons/${seasonId}/results`, swrGetFetcher)

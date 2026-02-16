@@ -32,10 +32,10 @@ export default function SeasonPage({ params }: { params: Promise<{ seasonId: str
 
         <TabsList>
           <TabsList.Item selected={selectedTab === 'games'} onClick={() => setSelectedTab('games')}>
-            Игроки
+            Игры
           </TabsList.Item>
           <TabsList.Item selected={selectedTab === 'table'} onClick={() => setSelectedTab('table')}>
-            Сезоны
+            Таблица
           </TabsList.Item>
         </TabsList>
         {
