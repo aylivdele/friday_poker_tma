@@ -1,6 +1,11 @@
+.container {
+  height: 100%;
+  width: 100%;
+  overflow: scroll;
+}
+
 .grid-table {
   display: grid;
-  grid-template-columns: 160px repeat(auto-fit, minmax(90px, 1fr)) 110px;
   min-width: max-content;
 }
 
