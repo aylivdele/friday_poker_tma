@@ -17,6 +17,8 @@
   font-weight: 600;
   padding: 10px;
   border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+
   z-index: 2;
   white-space: nowrap;
   overflow: hidden;
@@ -37,7 +39,8 @@
 .cell {
   padding: 10px;
   text-align: center;
-  border: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  border-right: 1px solid #eee;
   white-space: nowrap;
 }
 
