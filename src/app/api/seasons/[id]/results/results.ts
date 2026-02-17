@@ -11,6 +11,8 @@ export async function calculateSeasonResults(seasonId: string): Promise<SeasonTa
 
   const playersMap = new Map()
   const cells: Record<string, Record<string, number>> = {}
+  const seasonEntries: Record<string, number> = {}
+  let maxSeasonEntries = 0
 
   for (const game of games) {
     const gameId = game._id.toString()
@@ -40,6 +42,18 @@ export async function calculateSeasonResults(seasonId: string): Promise<SeasonTa
         const reEntries = r.score - entries
         cells[playerId][gameId]
       = (cells[playerId][gameId] || 0) + (entries * game.settings.firstEntryCost) + (reEntries * game.settings.reEntryCost)
+      }
+    }
+
+    if (!game.settings.isFinal) {
+      maxSeasonEntries += game.settings.maxReEntries + 1
+      for (const p of game.players) {
+        const playerId = p.playerId.toString()
+        let entries = 1 + p.entries
+        if (game.results?.some(r => r.playerId.equals(p.playerId))) {
+          entries = game.settings.maxReEntries + 1
+        }
+        seasonEntries[playerId] = (seasonEntries[playerId] ?? 0) + entries
       }
     }
   }
@@ -82,6 +96,7 @@ export async function calculateSeasonResults(seasonId: string): Promise<SeasonTa
   })
 
   return {
+    seasonEntries: Object.fromEntries(Object.entries(seasonEntries).map(([playerId, entries]) => ([playerId, entries / maxSeasonEntries]))),
     finalWinners,
     cells,
     totals,

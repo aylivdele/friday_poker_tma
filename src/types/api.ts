@@ -66,6 +66,7 @@ export interface SeasonTable {
   totals: Record<string, number>
   finalWinners: string[]
   seasonPlaces: Record<string, 1 | 2 | 3>
+  seasonEntries: Record<string, number>
   updatedAt: number
 }
 

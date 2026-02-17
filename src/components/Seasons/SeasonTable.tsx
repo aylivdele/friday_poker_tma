@@ -1,7 +1,7 @@
 'use client'
 
 import type { SeasonTableResponse } from '@/types/api'
-import { Section } from '@telegram-apps/telegram-ui'
+import { Badge, Section } from '@telegram-apps/telegram-ui'
 import useSWR from 'swr'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
@@ -32,6 +32,10 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
           <div className="header total">Итого</div>
 
           {data.players.map((player) => {
+            const seasonEntries = ((data.seasonEntries[player._id] ?? 0) * 100).toString()
+            const indexOfDot = seasonEntries.indexOf('.')
+            const seasonEntriesPercentage = seasonEntries.substring(0, indexOfDot >= 0 ? indexOfDot : 3).concat('%')
+
             const total = data.totals[player._id]
             const place = data.seasonPlaces[player._id]
             const isFinalWinner = data.finalWinners.includes(player._id)
@@ -39,6 +43,9 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
             return (
               <>
                 <div className="sticky-col player">
+                  <Badge mode="primary" type="number">
+                    {seasonEntriesPercentage}
+                  </Badge>
                   {player.firstName}
                   {' '}
                   {player.lastName?.substring(0, 3)?.concat('.') ?? ''}
