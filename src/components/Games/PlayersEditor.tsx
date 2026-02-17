@@ -61,7 +61,7 @@ export default function PlayersEditor({
                         src={playerData?.avatarUrl}
                       />
                     )}
-                    subtitle={`Max входов: ${maxEntries}`}
+                    subtitle={`Maкс. входов: ${maxEntries}`}
                     after={(
                       <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
                         {editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) ? updatePlayer(i, { ...p, entries: p.entries - 1 }) : updatePlayer(i, undefined)}>-</Button>) : undefined}

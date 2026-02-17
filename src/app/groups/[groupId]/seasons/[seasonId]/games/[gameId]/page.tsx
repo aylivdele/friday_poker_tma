@@ -41,18 +41,18 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   }, [game])
 
   const maxPlayerEntries: Record<string, number> = useMemo(() => {
-    if (!game || !groupPlayers) {
+    if (!draft || !groupPlayers) {
       return {}
     }
 
     return Object.fromEntries(groupPlayers.map((p) => {
-      let max = game.settings.maxReEntries + 1
-      if (game.settings.isFinal) {
+      let max = draft.settings.maxReEntries + 1
+      if (draft.settings.isFinal) {
         max = Math.floor((max) * (table?.seasonEntries[p._id] ?? 0))
       }
       return [p._id, max]
     }))
-  }, [table, game, groupPlayers])
+  }, [table, draft, groupPlayers])
 
   if (!draft)
     return <Loader data={game} error={error} isLoading={isLoading} />
