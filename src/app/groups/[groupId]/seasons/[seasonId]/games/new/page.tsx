@@ -1,16 +1,19 @@
 'use client'
 
+import type { GameSettings } from '@/types/api'
 import { Input, Section, Subheadline, Text } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import GameSettingsEditor from '@/components/Games/GameSettingsEditor'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'
 
 export default function NewGamePage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
   const [title, setTitle] = useState('')
+  const [settings, setSettings] = useState<GameSettings>({ isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -25,6 +28,7 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
         title,
         groupId,
         seasonId,
+        settings,
       })
 
       router.replace(
@@ -76,8 +80,9 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
           disabled={loading}
         />
 
-      </Section>
+        <GameSettingsEditor gameSettings={settings} onChange={setSettings} editable />
 
+      </Section>
     </Page>
   )
 }

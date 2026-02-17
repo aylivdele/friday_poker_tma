@@ -3,7 +3,9 @@ import type { Game } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
+import { nonNull } from '@/lib/helpers'
 import { deserealizeBody } from '../../../../lib/serverHelpers'
+import { calculateSeasonResults } from '../../seasons/[id]/results/results'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -14,11 +16,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: sid } = await params
 
+  const db = await getDb()
   const id = new ObjectId(sid)
   const updatedGame = await deserealizeBody<Partial<Game>>(req, 'game')
-  const result = await (await getDb()).games.updateOne({ _id: id }, { $set: updatedGame })
+  const result = await db.games.updateOne({ _id: id }, { $set: updatedGame })
   if (result.matchedCount === 0) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
+  }
+  if (updatedGame.isFinished && nonNull(updatedGame.seasonId)) {
+    const seasonTable = await calculateSeasonResults(updatedGame.seasonId.toString())
+    await db.seasons.updateOne({ _id: id }, { $set: { table: seasonTable } })
   }
   return NextResponse.json(updatedGame)
 }

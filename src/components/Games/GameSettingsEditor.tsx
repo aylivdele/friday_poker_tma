@@ -36,9 +36,6 @@ export default function GameSettingsEditor({
             onChange={e =>
               updateSettings({
                 isFinal: e.target.checked,
-                firstEntryCost: e.target.checked ? 300 : 100,
-                reEntryCost: 100,
-                maxReEntries: e.target.checked ? 3 : 5,
               })}
           />
         )}

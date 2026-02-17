@@ -56,8 +56,7 @@ export interface Season {
   gameIds: string[]
 }
 
-export interface SeasonTableResponse {
-  players: Player[]
+export interface SeasonTable {
   games: {
     _id: string
     title: string
@@ -67,4 +66,9 @@ export interface SeasonTableResponse {
   totals: Record<string, number>
   finalWinners: string[]
   seasonPlaces: Record<string, 1 | 2 | 3>
+  updatedAt: number
+}
+
+export interface SeasonTableResponse extends SeasonTable {
+  players: Player[]
 }

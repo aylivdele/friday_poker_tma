@@ -1,4 +1,5 @@
 import type { Collection, Db, ObjectId } from 'mongodb'
+import type { SeasonTable } from './api'
 
 /* ===== Player ===== */
 export interface Player {
@@ -57,6 +58,7 @@ export interface Season {
   groupId: ObjectId
   title: string
   gameIds: ObjectId[]
+  table?: SeasonTable
 }
 
 export interface MongoCollectionsWithClient {
