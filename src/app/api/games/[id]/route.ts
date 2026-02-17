@@ -32,9 +32,27 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const id = new ObjectId((await params).id)
-  const result = await (await getDb()).games.deleteOne({ _id: id })
-  if (result.deletedCount === 0) {
+  const db = await getDb()
+
+  const game = await db.games.findOne({ _id: id })
+
+  if (!game) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
   }
-  return NextResponse.json({ message: 'Game deleted successfully' })
+  const session = db.client.client.startSession()
+
+  try {
+    await db.seasons.updateOne({ _id: game.seasonId }, { $pull: { gameIds: id } }, { session })
+    await db.games.deleteOne({ _id: id }, { session })
+
+    await session.commitTransaction()
+    return NextResponse.json({ message: 'Game deleted successfully' })
+  }
+  catch (e) {
+    await session.abortTransaction()
+    throw e
+  }
+  finally {
+    await session.endSession()
+  }
 }

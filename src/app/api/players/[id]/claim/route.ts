@@ -26,8 +26,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const result = await db.players.deleteOne(
       { _id: claimedId },
+      { session },
     )
     if (result.deletedCount === 0) {
+      await session.abortTransaction()
       return NextResponse.json({ error: 'Player not found' }, { status: 404 })
     }
     else {
@@ -40,6 +42,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         },
         {
           arrayFilters: [{ 'p.playerId': claimedId }],
+          session,
         },
       )
 
@@ -52,6 +55,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         },
         {
           arrayFilters: [{ 'r.playerId': claimedId }],
+          session,
         },
       )
 
@@ -64,6 +68,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         },
         {
           arrayFilters: [{ m: claimedId }],
+          session,
         },
       )
     }
