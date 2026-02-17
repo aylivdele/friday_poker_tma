@@ -45,13 +45,13 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
       return {}
     }
 
-    return groupPlayers.map((p) => {
+    return Object.fromEntries(groupPlayers.map((p) => {
       let max = game.settings.maxReEntries + 1
       if (game.settings.isFinal) {
         max = Math.floor((max) * (table?.seasonEntries[p._id] ?? 0))
       }
-      return max
-    })
+      return [p._id, max]
+    }))
   }, [table, game, groupPlayers])
 
   if (!draft)
