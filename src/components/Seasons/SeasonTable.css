@@ -67,3 +67,8 @@
   align-items: center;
   gap: 6px;
 }
+
+.percentage-badge {
+  min-width: fit-content;
+  width: fit-content;
+}

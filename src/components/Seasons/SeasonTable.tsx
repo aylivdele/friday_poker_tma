@@ -43,7 +43,7 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
             return (
               <>
                 <div className="sticky-col player">
-                  <Badge mode="primary" type="number">
+                  <Badge className="percentage-badge" mode="primary" type="number">
                     {seasonEntriesPercentage}
                   </Badge>
                   {player.firstName}

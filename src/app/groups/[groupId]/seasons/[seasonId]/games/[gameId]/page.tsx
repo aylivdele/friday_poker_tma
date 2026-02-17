@@ -1,6 +1,6 @@
 'use client'
 
-import type { Game, Player } from '@/types/api'
+import type { Game, Player, SeasonTableResponse } from '@/types/api'
 import {
   Avatar,
   Cell,
@@ -10,7 +10,7 @@ import {
   Section,
   Text,
 } from '@telegram-apps/telegram-ui'
-import { use, useEffect, useState } from 'react'
+import { use, useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import GameSettingsEditor from '@/components/Games/GameSettingsEditor'
 import PlayersEditor from '@/components/Games/PlayersEditor'
@@ -19,13 +19,14 @@ import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
-export default function GamePage({ params }: { params: Promise<{ gameId: string, groupId: string }> }) {
-  const { gameId, groupId } = use(params)
+export default function GamePage({ params }: { params: Promise<{ gameId: string, groupId: string, seasonId: string }> }) {
+  const { gameId, groupId, seasonId } = use(params)
   const { data: game, mutate, error, isLoading } = useSWR<Game>(
     `/api/games/${gameId}`,
     swrGetFetcher,
   )
   const { data: groupPlayers, isLoading: pIsLoading, error: pError } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const { data: table, isLoading: tIsLoading, error: tError } = useSWR<SeasonTableResponse>(`/api/seasons/${seasonId}`, swrGetFetcher)
 
   const [draft, setDraft] = useState<Game | null>(null)
   const isEditable = game && !game.isFinished
@@ -38,6 +39,20 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
       setDraft(null)
     }
   }, [game])
+
+  const maxPlayerEntries: Record<string, number> = useMemo(() => {
+    if (!game || !groupPlayers || table?.seasonEntries === undefined) {
+      return {}
+    }
+
+    return groupPlayers.map((p) => {
+      let max = game.settings.maxReEntries + 1
+      if (game.settings.isFinal) {
+        max = Math.floor((max) * (table.seasonEntries[p._id] ?? 0))
+      }
+      return max
+    })
+  }, [table, game, groupPlayers])
 
   if (!draft)
     return <Loader data={game} error={error} isLoading={isLoading} />
@@ -82,13 +97,14 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
 
         <PlayersEditor
           groupPlayers={groupPlayers}
-          isLoading={pIsLoading}
-          error={pError}
+          isLoading={pIsLoading || tIsLoading}
+          error={pError ?? tError}
           players={draft.players}
           editable={!!isEditable}
           maxReEntries={draft.settings.maxReEntries}
           onChange={players =>
             setDraft({ ...draft, players })}
+          maxPlayerEntries={maxPlayerEntries}
         />
 
         <GameSettingsEditor

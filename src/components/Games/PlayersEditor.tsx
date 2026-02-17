@@ -11,6 +11,7 @@ export default function PlayersEditor({
   editable,
   onChange,
   maxReEntries,
+  maxPlayerEntries,
   groupPlayers,
   error,
   isLoading,
@@ -22,6 +23,7 @@ export default function PlayersEditor({
   groupPlayers?: Player[]
   error: any
   isLoading: boolean
+  maxPlayerEntries: Record<string, number>
 }) {
   function updatePlayer(index: number, patch?: GamePlayer) {
     const next = [...players]
@@ -52,6 +54,7 @@ export default function PlayersEditor({
           {players.length
             ? players.map((p, i) => {
                 const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
+                const maxEntries = maxPlayerEntries[p.playerId] ?? 0
                 return (
                   <Cell
                     key={p.playerId.toString()}
@@ -60,6 +63,7 @@ export default function PlayersEditor({
                         src={playerData?.avatarUrl}
                       />
                     )}
+                    subtitle={`Max входов: ${maxEntries}`}
                     after={(
                       <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
                         {editable ? (<Button mode="bezeled" size="s" onClick={() => (p.entries > 0) ? updatePlayer(i, { ...p, entries: p.entries - 1 }) : updatePlayer(i, undefined)}>-</Button>) : undefined}
@@ -67,7 +71,7 @@ export default function PlayersEditor({
                         {editable
                           ? (
                               <>
-                                <Button mode="bezeled" size="s" onClick={() => (p.entries < maxReEntries) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
+                                <Button disabled={p.entries < (maxEntries - 1)} mode="bezeled" size="s" onClick={() => (p.entries < (maxEntries - 1)) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
                               </>
                             )
                           : undefined}
@@ -87,21 +91,25 @@ export default function PlayersEditor({
         && (
           <Section header="Добавить игроков">
             <List>
-              {groupPlayers.filter(dp => nonNull(dp._id) && !players.some(p => p.playerId === dp._id)).map(p => (
-                <Cell
-                  key={p._id!.toString()}
-                  before={(
-                    <Avatar
-                      src={p.avatarUrl}
-                    />
-                  )}
-                  after={<Button onClick={() => addPlayer(p._id!)}>Добавить</Button>}
-                >
-                  {p.firstName}
-                  {' '}
-                  {p.lastName}
-                </Cell>
-              ),
+              {groupPlayers.filter(dp => nonNull(dp._id) && !players.some(p => p.playerId === dp._id)).map((p) => {
+                const maxEntries = maxPlayerEntries[p._id] ?? 0
+                return (
+                  <Cell
+                    key={p._id!.toString()}
+                    before={(
+                      <Avatar
+                        src={p.avatarUrl}
+                      />
+                    )}
+                    subtitle={`Maкс. входов: ${maxEntries}`}
+                    after={<Button disabled={maxEntries > 0} onClick={() => (maxEntries > 0) && addPlayer(p._id!)}>Добавить</Button>}
+                  >
+                    {p.firstName}
+                    {' '}
+                    {p.lastName}
+                  </Cell>
+                )
+              },
               )}
             </List>
           </Section>
