@@ -69,7 +69,7 @@ export default function PlayersEditor({
                         {editable
                           ? (
                               <>
-                                <Button disabled={p.entries < (maxEntries - 1)} mode="bezeled" size="s" onClick={() => (p.entries < (maxEntries - 1)) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
+                                <Button disabled={p.entries >= (maxEntries - 1)} mode="bezeled" size="s" onClick={() => (p.entries < (maxEntries - 1)) && updatePlayer(i, { ...p, entries: p.entries + 1 })}>+</Button>
                               </>
                             )
                           : undefined}
@@ -100,7 +100,7 @@ export default function PlayersEditor({
                       />
                     )}
                     subtitle={`Maкс. входов: ${maxEntries}`}
-                    after={<Button disabled={maxEntries > 0} onClick={() => (maxEntries > 0) && addPlayer(p._id!)}>Добавить</Button>}
+                    after={<Button disabled={maxEntries <= 0} onClick={() => (maxEntries > 0) && addPlayer(p._id!)}>Добавить</Button>}
                   >
                     {p.firstName}
                     {' '}
