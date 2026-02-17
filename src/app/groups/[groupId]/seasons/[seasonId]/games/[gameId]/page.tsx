@@ -41,14 +41,14 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   }, [game])
 
   const maxPlayerEntries: Record<string, number> = useMemo(() => {
-    if (!game || !groupPlayers || table?.seasonEntries === undefined) {
+    if (!game || !groupPlayers) {
       return {}
     }
 
     return groupPlayers.map((p) => {
       let max = game.settings.maxReEntries + 1
       if (game.settings.isFinal) {
-        max = Math.floor((max) * (table.seasonEntries[p._id] ?? 0))
+        max = Math.floor((max) * (table?.seasonEntries[p._id] ?? 0))
       }
       return max
     })
@@ -101,7 +101,6 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
           error={pError ?? tError}
           players={draft.players}
           editable={!!isEditable}
-          maxReEntries={draft.settings.maxReEntries}
           onChange={players =>
             setDraft({ ...draft, players })}
           maxPlayerEntries={maxPlayerEntries}

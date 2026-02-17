@@ -10,7 +10,6 @@ export default function PlayersEditor({
   players,
   editable,
   onChange,
-  maxReEntries,
   maxPlayerEntries,
   groupPlayers,
   error,
@@ -19,7 +18,6 @@ export default function PlayersEditor({
   players: GamePlayer[]
   editable: boolean
   onChange: (players: GamePlayer[]) => void
-  maxReEntries: number
   groupPlayers?: Player[]
   error: any
   isLoading: boolean
