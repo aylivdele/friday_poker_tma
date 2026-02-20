@@ -30,7 +30,7 @@ export default function GamesPage() {
           : (
               <List>
                 {
-                  games.sort((a, b) => a.createdAt - b.createdAt).map(game => (
+                  games.sort((a, b) => b.createdAt - a.createdAt).map(game => (
                     <Cell
                       onClick={() => router.push(`/groups/${game.groupId}/seasons/${game.seasonId}/games/${game._id}`)}
                       after={game.isFinished ? '' : (<Text>В процессе</Text>)}
