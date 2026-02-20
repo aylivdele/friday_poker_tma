@@ -1,7 +1,7 @@
 'use client'
 
 import type { Game } from '@/types/api'
-import { Cell, List, Section, Text } from '@telegram-apps/telegram-ui'
+import { Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -9,6 +9,7 @@ import useSWR from 'swr'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 import { usePlayerStore } from '@/stores/playerStore'
+import { GamesList } from '../Games/GamesList'
 import { Loader } from '../Loader/Loader'
 
 export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers: string[], seasonId: string, groupId: string }) {
@@ -42,30 +43,7 @@ export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers:
 
   return (
     <Section header="Игры">
-      {games.length === 0
-        ? (
-            <Text>Игры не найдены</Text>
-          )
-        : (
-            <List>
-              {
-                games.sort((a, b) => a.createdAt - b.createdAt).map(game => (
-                  <Cell
-                    onClick={() => router.push(`/groups/${groupId}/seasons/${seasonId}/games/${game._id}`)}
-                    after={game.isFinished ? '' : (<Text>В процессе</Text>)}
-                    subtitle={(
-                      <Text>
-                        Кол-во игроков:
-                        {game.players.length}
-                      </Text>
-                    )}
-                  >
-                    <Text>{game.title}</Text>
-                  </Cell>
-                ))
-              }
-            </List>
-          )}
+      <GamesList games={games} />
     </Section>
   )
 }
