@@ -2,7 +2,7 @@
 
 import type { Game } from '@/types/api'
 import { Cell, List, Section, Text } from '@telegram-apps/telegram-ui'
-import router from 'next/router'
+import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
@@ -12,6 +12,7 @@ import { swrGetFetcher } from '@/lib/swrFetcher'
 export default function GamesPage() {
   const swr = useSWR<Game[]>(`/api/games?useInitData=true`, swrGetFetcher)
   const games = swr.data
+  const router = useRouter()
 
   if (isNull(games)) {
     return <Loader {...swr} />
