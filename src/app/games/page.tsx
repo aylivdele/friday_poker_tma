@@ -10,7 +10,11 @@ import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function GamesPage() {
-  const swr = useSWR<Game[]>(`/api/games?useInitData=true`, swrGetFetcher)
+  const swr = useSWR<Game[]>(`/api/games?useInitData=true`, swrGetFetcher, {
+    revalidateOnMount: true,
+    revalidateOnFocus: true,
+    dedupingInterval: 2000,
+  })
   const games = swr.data
 
   if (isNull(games)) {
