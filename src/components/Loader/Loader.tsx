@@ -15,9 +15,11 @@ export function Loader({ data, isLoading, error, children }: PropsWithChildren<{
   }
   if (isNull(data)) {
     return (
-      <Text weight="2">
-        Не найдено
-      </Text>
+      <Cell>
+        <Text weight="2">
+          Не найдено
+        </Text>
+      </Cell>
     )
   }
   return children

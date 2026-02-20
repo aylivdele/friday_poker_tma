@@ -42,6 +42,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const session = db.client.client.startSession()
 
   try {
+    session.startTransaction()
+
     await db.seasons.updateOne({ _id: game.seasonId }, { $pull: { gameIds: id } }, { session })
     await db.games.deleteOne({ _id: id }, { session })
 
