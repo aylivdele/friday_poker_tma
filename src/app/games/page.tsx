@@ -7,9 +7,10 @@ import useSWR from 'swr'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { isNull } from '@/lib/helpers'
+import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function GamesPage() {
-  const swr = useSWR<Game[]>(`/api/games?useInitData=true`)
+  const swr = useSWR<Game[]>(`/api/games?useInitData=true`, swrGetFetcher)
   const games = swr.data
 
   if (isNull(games)) {
@@ -21,7 +22,9 @@ export default function GamesPage() {
 
         {games.length === 0
           ? (
-              <Text>Игры не найдены</Text>
+              <Cell>
+                <Text>Игры не найдены</Text>
+              </Cell>
             )
           : (
               <List>
