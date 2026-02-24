@@ -6,6 +6,7 @@ import { getDb } from '@/core/db'
 import { nonNull } from '@/lib/helpers'
 import { deserealizeBody } from '../../../../lib/serverHelpers'
 import { calculateSeasonResults } from '../../seasons/[id]/results/results'
+import { updateAchievments } from '@/lib/achievments'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,6 +27,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (updatedGame.isFinished && nonNull(updatedGame.seasonId)) {
     const seasonTable = await calculateSeasonResults(updatedGame.seasonId.toString())
     await db.seasons.updateOne({ _id: id }, { $set: { table: seasonTable } })
+
+    await updateAchievments(id)
   }
   return NextResponse.json(updatedGame)
 }

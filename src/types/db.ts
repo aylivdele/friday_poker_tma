@@ -1,5 +1,5 @@
 import type { Collection, Db, ObjectId } from 'mongodb'
-import type { SeasonTable } from './api'
+import type { Achievment, SeasonTable } from './api'
 
 /* ===== Player ===== */
 export interface Player {
@@ -10,6 +10,7 @@ export interface Player {
   lastName?: string
   avatarUrl?: string
   createdAt: number
+  achievments?: Omit<Achievment, 'name' | 'description' | 'icon'>[]
 }
 
 /* ===== Group ===== */

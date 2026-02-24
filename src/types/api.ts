@@ -73,3 +73,11 @@ export interface SeasonTable {
 export interface SeasonTableResponse extends SeasonTable {
   players: Player[]
 }
+
+export interface Achievment {
+  id: string
+  icon: string
+  name: string
+  description: string
+  progress: [number, number]
+}
