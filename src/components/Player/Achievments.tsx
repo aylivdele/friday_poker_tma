@@ -19,7 +19,21 @@ export function Achievments({ progresses }: { progresses?: Pick<Achievment, 'id'
           return null
         }
         return { ...i, progress }
-      }).filter(nonNull))
+      }).filter(nonNull).sort((a, b) => {
+        const procB = (b.progress[0] / b.progress[1])
+        const procA = (a.progress[0] / a.progress[1])
+
+        if (a.progress[0] === b.progress[0]) {
+          return procB - procA
+        }
+        if (procA === 1) {
+          return -1
+        }
+        if (procB === 1) {
+          return 1
+        }
+        return b.progress[0] - a.progress[0]
+      }))
     }
     else {
       setAchievments([])
