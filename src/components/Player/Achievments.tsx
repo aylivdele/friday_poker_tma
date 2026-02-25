@@ -1,5 +1,5 @@
 import type { Achievment } from '@/types/api'
-import { Avatar, Cell, List, Steps, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, Caption, Cell, List, Progress, Steps } from '@telegram-apps/telegram-ui'
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { Loader } from '@/components/Loader/Loader'
@@ -35,8 +35,8 @@ export function Achievments({ progresses }: { progresses?: Pick<Achievment, 'id'
         achievments.map(a => (
           <Cell
             before={(<Avatar size={28} fallbackIcon={(<span>{a.icon}</span>)} />)}
-            subtitle={<Text>{a.description}</Text>}
-            description={<Steps progress={a.progress[0]} count={a.progress[1]} />}
+            subtitle={<Caption level="2">{a.description}</Caption>}
+            description={a.maxProgress > 20 ? (<Progress value={a.progress[0] / a.progress[1]} />) : (<Steps progress={a.progress[0]} count={a.progress[1]} />)}
           >
             {a.name}
           </Cell>

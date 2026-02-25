@@ -83,6 +83,22 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
     },
   },
   {
+    id: '19',
+    icon: '👴',
+    name: 'Олд',
+    description: 'Сыграть тридцатую игру',
+    maxProgress: 30,
+    calcNewProgress({ player, game }) {
+      const achievmentId = this.id
+      const progress = player.achievments?.find(a => a.id === achievmentId)?.progress || [0, this.maxProgress]
+      if (progress[0] === this.maxProgress) {
+        return progress
+      }
+      const hasPlayed = game.players.some(p => p.playerId.equals(player._id))
+      return [progress[0] + +hasPlayed, this.maxProgress]
+    },
+  },
+  {
     id: '4',
     icon: '💸',
     name: 'Потеря девственности',
@@ -374,22 +390,6 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       const wonWithoutEntries = game.players.some(p => p.playerId.equals(player._id) && p.entries === 0)
         && game.results?.some(r => r.playerId.equals(player._id) && r.score > 1)
       return [+!!wonWithoutEntries, this.maxProgress]
-    },
-  },
-  {
-    id: '19',
-    icon: '👴',
-    name: 'Олд',
-    description: 'Сыграть тридцатую игру',
-    maxProgress: 30,
-    calcNewProgress({ player, game }) {
-      const achievmentId = this.id
-      const progress = player.achievments?.find(a => a.id === achievmentId)?.progress || [0, this.maxProgress]
-      if (progress[0] === this.maxProgress) {
-        return progress
-      }
-      const hasPlayed = game.players.some(p => p.playerId.equals(player._id))
-      return [progress[0] + +hasPlayed, this.maxProgress]
     },
   },
 ]
