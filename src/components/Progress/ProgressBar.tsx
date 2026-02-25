@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import './ProgressBar.css`'
+import './ProgressBar.css'
 
 export function ProgressBar({ progress, count }: { progress: number, count: number }) {
   const arr = useMemo(() => Array.from({ length: count }), [count])
