@@ -357,9 +357,9 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '17',
-    icon: '🧙',
+    icon: '🧘‍♂️',
     name: 'Копил ману',
-    description: 'Выиграть финальную игру, проиграв все остальные',
+    description: 'Выиграть финал, проиграв остальные игры',
     maxProgress: 1,
     calcNewProgress({ player, game, seasonGames }) {
       const achievmentId = this.id
