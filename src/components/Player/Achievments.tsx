@@ -35,7 +35,7 @@ export function Achievments({ progresses }: { progresses?: Pick<Achievment, 'id'
       {
         achievments.map(a => (
           <Cell
-            before={(<Avatar size={28} fallbackIcon={(<span>{a.icon}</span>)} />)}
+            before={(<Avatar size={28} fallbackIcon={(<span style={{ fontSize: '40px' }}>{a.icon}</span>)} />)}
             subtitle={<Caption level="2">{a.description}</Caption>}
             description={(<ProgressBar count={a.progress[1]} progress={a.progress[0]} />)}
           >
