@@ -10,7 +10,7 @@ export function PlayerComponent({ player }: { player: Player }) {
         <Avatar size={96} src={player.avatarUrl} style={{ margin: '20px calc(50% - 48px)' }} />
         {player.telegramId
           ? (
-              <Cell before="Telegram:" onClick={() => openTelegramLink?.(`https://t.me/${player.username}`)}>
+              <Cell before={<Text>Telegram:</Text>} onClick={() => openTelegramLink?.(`https://t.me/${player.username}`)}>
                 <Text Component="a">{player.username}</Text>
               </Cell>
             )

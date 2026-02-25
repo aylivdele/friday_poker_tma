@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader } from '@/components/Loader/Loader'
+import { Page } from '@/components/Page'
 import { PlayerComponent } from '@/components/Player/Player'
 import { isNull } from '@/lib/helpers'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -13,6 +14,8 @@ export default function PlayersPage() {
   }
 
   return (
-    <PlayerComponent player={profilePlayer} />
+    <Page back={false}>
+      <PlayerComponent player={profilePlayer} />
+    </Page>
   )
 }
