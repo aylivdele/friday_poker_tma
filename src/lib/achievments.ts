@@ -2,6 +2,7 @@ import type { ObjectId } from 'mongodb'
 import type { Achievment } from '@/types/api'
 import type { Game, Player } from '@/types/db'
 import { getDb } from '@/core/db'
+import { hackermanIcon } from './hackermanIcon'
 import { nonNull } from './helpers'
 
 type Checker = (params: { player: Player, game: Game, seasonGames: Game[] }) => Achievment['progress']
@@ -11,7 +12,15 @@ const secretAchievments: Omit<Achievment, 'progress'>[] = [
     id: '-1',
     icon: '💩',
     name: 'Пожрал говна',
-    description: 'За участие в альфа-тесте',
+    description: 'Учавствовал в альфа-тесте',
+    maxProgress: 1,
+    isSecret: true,
+  },
+  {
+    id: '-2',
+    icon: hackermanIcon,
+    name: 'Hackerman',
+    description: 'Единственный разработчик этого чуда',
     maxProgress: 1,
     isSecret: true,
   },
