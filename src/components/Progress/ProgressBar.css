@@ -1,0 +1,19 @@
+.progress-bar {
+  width: 100%;
+  display: flex;
+  padding: 12px 0;
+  flex-wrap: nowrap;
+  justify-content: space-evenly;
+}
+
+.progress-cell {
+    background: var(--tgui--tertiary_bg_color, #f4f4f7);
+    border-radius: 2px;
+    width: 100%;
+    min-width: 3px;
+    height: 3px;
+
+    &.filled {
+      background: var(--tgui--link_color, #007aff);
+    }
+}
