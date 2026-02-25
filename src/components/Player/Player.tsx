@@ -1,6 +1,7 @@
 import type { Player } from '@/types/api'
-import { Avatar, AvatarStack, Cell, Info, List, Section, Text } from '@telegram-apps/telegram-ui'
+import { Avatar, Cell, List, Section, Text } from '@telegram-apps/telegram-ui'
 import { openTelegramLink } from '@tma.js/sdk-react'
+import { Achievments } from './Achievments'
 
 export function PlayerComponent({ player }: { player: Player }) {
   return (
@@ -14,20 +15,10 @@ export function PlayerComponent({ player }: { player: Player }) {
               </Cell>
             )
           : <Cell>Не занятый пользователь</Cell>}
-        <Cell>
-          <Info
-            avatarStack={(
-              <AvatarStack>
-                <Avatar size={28} />
-                <Avatar size={28} />
-                <Avatar size={28} />
-              </AvatarStack>
-            )}
-            type="avatarStack"
-          >
-            Достижения
-          </Info>
-        </Cell>
+
+        <Section header="Достижения">
+          <Achievments progresses={player.achievments} />
+        </Section>
       </List>
     </Section>
   )

@@ -1,26 +1,7 @@
-import type { ObjectId } from 'mongodb'
-import type { Achievment } from '@/types/api'
-import type { Game, Player } from '@/types/db'
-import { getDb } from '@/core/db'
-import { nonNull } from './helpers'
-
-type Checker = (params: { player: Player, game: Game, seasonGames: Game[] }) => Achievment['progress']
-
-const secretAchievments: Omit<Achievment, 'progress'>[] = [
-  {
-    id: '-1',
-    icon: '💩',
-    name: 'Пожрал говна',
-    description: 'За участие в альфа-тесте',
-    maxProgress: 1,
-    isSecret: true,
-  },
-]
-
-const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Checker })[] = [
+const possibleAchievments = [
   {
     id: '0',
-    icon: '🐣',
+    icon: '',
     name: 'Посвещение',
     description: 'Сыграть первую игру',
     maxProgress: 1,
@@ -36,7 +17,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '1',
-    icon: '🔰',
+    icon: '',
     name: 'Новичек',
     description: 'Сыграть пятую игру',
     maxProgress: 5,
@@ -52,7 +33,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '2',
-    icon: '🎮',
+    icon: '',
     name: 'Любитель',
     maxProgress: 10,
     description: 'Сыграть десятую игру',
@@ -68,7 +49,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '3',
-    icon: '🧭',
+    icon: '',
     name: 'Бывалый',
     description: 'Сыграть пятнадцатую игру',
     maxProgress: 15,
@@ -84,7 +65,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '4',
-    icon: '💸',
+    icon: '',
     name: 'Потеря девственности',
     description: 'Закончить в плюсе в первый раз',
     maxProgress: 1,
@@ -103,7 +84,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '5',
-    icon: '✌️',
+    icon: '',
     name: 'Красаучик',
     description: 'Закончить в плюсе две игры подряд',
     maxProgress: 2,
@@ -126,7 +107,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '6',
-    icon: '🔥',
+    icon: '',
     name: 'Молодчик',
     description: 'Закончить в плюсе три игры подряд',
     maxProgress: 3,
@@ -149,7 +130,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '7',
-    icon: '⚡',
+    icon: '',
     name: 'На скиле',
     description: 'Закончить в плюсе пять игр подряд',
     maxProgress: 5,
@@ -172,7 +153,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '8',
-    icon: '🍀',
+    icon: '',
     name: 'Просто повезло',
     description: 'Первый раз выиграть финальную игру сезона',
     maxProgress: 1,
@@ -188,7 +169,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '9',
-    icon: '🏆',
+    icon: '',
     name: 'Чемпион',
     description: 'Второй раз выиграть финальную игру сезона',
     maxProgress: 2,
@@ -204,7 +185,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '10',
-    icon: '👑',
+    icon: '',
     name: 'Легенда',
     description: 'Третий раз выиграть финальную игру сезона',
     maxProgress: 3,
@@ -220,7 +201,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '11',
-    icon: '🌧️',
+    icon: '',
     name: 'Все бывает впервые',
     description: 'Первый раз проиграть',
     maxProgress: 1,
@@ -236,7 +217,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '12',
-    icon: '💀',
+    icon: '',
     name: 'Закономерность?',
     description: 'Проиграть третий раз подряд',
     maxProgress: 3,
@@ -259,7 +240,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '13',
-    icon: '🤡',
+    icon: '',
     name: 'Ебать ты лох',
     description: 'Проиграть шестой раз подряд',
     maxProgress: 6,
@@ -282,7 +263,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '14',
-    icon: '🪦',
+    icon: '',
     name: 'Бро, тебе надо тренироваться',
     description: 'Проиграть десятый раз подряд',
     maxProgress: 10,
@@ -305,7 +286,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '15',
-    icon: '🧂',
+    icon: '',
     name: 'Солеварня',
     description: 'Забрать весь выигрышь на обычной игре',
     maxProgress: 1,
@@ -322,7 +303,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '16',
-    icon: '📅',
+    icon: '',
     name: 'Постоялец',
     description: 'Посетить все игры сезона',
     maxProgress: 1,
@@ -341,7 +322,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '17',
-    icon: '🧙',
+    icon: '',
     name: 'Копил ману',
     description: 'Выиграть финальную игру, проиграв все остальные',
     maxProgress: 1,
@@ -361,7 +342,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
   {
     id: '18',
-    icon: '🎯',
+    icon: '',
     name: 'Проще простого',
     description: 'Выиграть без докупов',
     maxProgress: 1,
@@ -376,56 +357,6 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       return [+!!wonWithoutEntries, this.maxProgress]
     },
   },
-  {
-    id: '19',
-    icon: '👴',
-    name: 'Олд',
-    description: 'Сыграть тридцатую игру',
-    maxProgress: 30,
-    calcNewProgress({ player, game }) {
-      const achievmentId = this.id
-      const progress = player.achievments?.find(a => a.id === achievmentId)?.progress || [0, this.maxProgress]
-      if (progress[0] === this.maxProgress) {
-        return progress
-      }
-      const hasPlayed = game.players.some(p => p.playerId.equals(player._id))
-      return [progress[0] + +hasPlayed, this.maxProgress]
-    },
-  },
 ]
 
-export async function updateAchievments(gameId: ObjectId) {
-  const db = await getDb()
-  const game = await db.games.findOne({ _id: gameId })
-  if (!game)
-    return
-  const groupPlayersIds = await db.groups.findOne({ _id: game.groupId }, { projection: { members: 1 } })
-  if (!groupPlayersIds)
-    return
-  const groupPlayers = await db.players.find({ _id: { $in: groupPlayersIds.members } }).toArray()
-
-  const seasonGames = nonNull(game.seasonId) ? await db.games.find({ seasonId: game.seasonId }).toArray() : []
-  for (const player of groupPlayers) {
-    const newAchievments = possibleAchievments.map(a => ({ id: a.id, progress: a.calcNewProgress({ player, game, seasonGames }) }))
-    await db.players.updateOne({ _id: player._id }, { $set: { achievments: newAchievments } })
-  }
-}
-
-export function getAchievmentsInfo(): Omit<Achievment, 'progress'>[] {
-  return [...possibleAchievments.map(a => ({ ...a, calcNewProgress: undefined })), ...secretAchievments]
-}
-
-export function getAchievments(playerAchievments: Player['achievments']) {
-  const result: Achievment[] = [...possibleAchievments.map((a) => {
-    const progress = playerAchievments?.find(pa => pa.id === a.id)?.progress ?? [0, a.maxProgress]
-    return { ...a, calcNewProgress: undefined, progress }
-  })]
-  result.push(...secretAchievments.map((s) => {
-    const found = playerAchievments?.find(p => p.id === s.id && p.progress[0] === p.progress[1])
-    if (found) {
-      return { ...s, progress: found.progress }
-    }
-    return null
-  }).filter(nonNull))
-  return result
-}
+possibleAchievments.forEach(a => console.log(`Id: ${a.id}, name: "${a.name}", description: "${a.description}" `))

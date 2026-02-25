@@ -10,7 +10,7 @@ export interface Player {
   lastName?: string
   avatarUrl?: string
   createdAt: number
-  achievments?: Omit<Achievment, 'name' | 'description' | 'icon'>[]
+  achievments?: Pick<Achievment, 'id' | 'progress'>[]
 }
 
 /* ===== Group ===== */

@@ -7,6 +7,7 @@ export interface Player {
   lastName?: string
   avatarUrl?: string
   createdAt: number
+  achievments?: Pick<Achievment, 'id' | 'progress'>[]
 }
 
 /* ===== Group ===== */
@@ -79,5 +80,7 @@ export interface Achievment {
   icon: string
   name: string
   description: string
+  maxProgress: number
   progress: [number, number]
+  isSecret?: boolean
 }
