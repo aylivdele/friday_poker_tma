@@ -59,67 +59,65 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
 
   return (
     <Page>
-      <Section>
-        <Headline style={{ padding: 10, textAlign: 'center' }}>
-          {draft.title}
-        </Headline>
+      <Headline style={{ padding: 10, textAlign: 'center' }}>
+        {draft.title}
+      </Headline>
 
-        {draft.isFinished && draft.results
-          ? (
-              <Section header="Финалисты">
-                <List>
-                  {draft.results.map((p) => {
-                    const playerData = groupPlayers?.find(dp => dp._id?.toString() === p.playerId.toString())
-                    return (
-                      <Cell
-                        key={p.playerId.toString()}
-                        before={(
-                          <Avatar
-                            src={playerData?.avatarUrl}
-                          />
-                        )}
-                        after={(
-                          <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
-                            <Chip>{p.score}</Chip>
-                          </div>
-                        )}
-                      >
-                        {playerData?.firstName}
-                        {' '}
-                        {playerData?.lastName}
-                      </Cell>
-                    )
-                  }) || <Text>Список пуст</Text>}
-                </List>
-              </Section>
-            )
-          : null}
+      {draft.isFinished && draft.results
+        ? (
+            <Section header="Финалисты">
+              <List>
+                {draft.results.map((p) => {
+                  const playerData = groupPlayers?.find(dp => dp._id?.toString() === p.playerId.toString())
+                  return (
+                    <Cell
+                      key={p.playerId.toString()}
+                      before={(
+                        <Avatar
+                          src={playerData?.avatarUrl}
+                        />
+                      )}
+                      after={(
+                        <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
+                          <Chip>{p.score}</Chip>
+                        </div>
+                      )}
+                    >
+                      {playerData?.firstName}
+                      {' '}
+                      {playerData?.lastName}
+                    </Cell>
+                  )
+                }) || <Text>Список пуст</Text>}
+              </List>
+            </Section>
+          )
+        : null}
 
-        <PlayersEditor
-          groupPlayers={groupPlayers}
-          isLoading={pIsLoading || tIsLoading}
-          error={pError ?? tError}
-          players={draft.players}
-          editable={!!isEditable}
-          onChange={players =>
-            setDraft({ ...draft, players })}
-          maxPlayerEntries={maxPlayerEntries}
-        />
+      <PlayersEditor
+        groupPlayers={groupPlayers}
+        isLoading={pIsLoading || tIsLoading}
+        error={pError ?? tError}
+        players={draft.players}
+        editable={!!isEditable}
+        onChange={players =>
+          setDraft({ ...draft, players })}
+        maxPlayerEntries={maxPlayerEntries}
+      />
 
-        <GameSettingsEditor
-          gameSettings={draft.settings}
-          editable={!!isEditable}
-          onChange={settings =>
-            setDraft({ ...draft, settings })}
-        />
+      <GameSettingsEditor
+        gameSettings={draft.settings}
+        editable={!!isEditable}
+        onChange={settings =>
+          setDraft({ ...draft, settings })}
+      />
 
-        <SaveControls
-          gameId={gameId}
-          draft={draft}
-          groupPlayers={groupPlayers}
-          onSaved={mutate}
-        />
-      </Section>
+      <SaveControls
+        gameId={gameId}
+        draft={draft}
+        groupPlayers={groupPlayers}
+        onSaved={mutate}
+      />
     </Page>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import type { SeasonTableResponse } from '@/types/api'
-import { Badge, Section } from '@telegram-apps/telegram-ui'
+import { Badge } from '@telegram-apps/telegram-ui'
 import useSWR from 'swr'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
@@ -17,71 +17,68 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
   }
 
   return (
-    <Section header="Таблица">
-      <div className="container">
-        <div className="grid-table" style={{ gridTemplateColumns: `160px repeat(${data.games.length}, minmax(80px, 1fr)) 110px` }}>
-          <div className="sticky-col header">Игрок</div>
+    <div className="container">
+      <div className="grid-table" style={{ gridTemplateColumns: `160px repeat(${data.games.length}, minmax(80px, 1fr)) 110px` }}>
+        <div className="sticky-col header">Игрок</div>
 
-          {data.games.map(g => (
-            <div key={g._id} className="header">
-              {g.isFinal && <span className="ml-1">🏆</span>}
-              {g.title}
-            </div>
-          ))}
+        {data.games.map(g => (
+          <div key={g._id} className="header">
+            {g.isFinal && <span className="ml-1">🏆</span>}
+            {g.title}
+          </div>
+        ))}
 
-          <div className="header total">Итого</div>
+        <div className="header total">Итого</div>
 
-          {data.players.map((player) => {
-            const seasonEntries = ((data.seasonEntries[player._id] ?? 0) * 100).toString()
-            const indexOfDot = seasonEntries.indexOf('.')
-            const seasonEntriesPercentage = seasonEntries.substring(0, indexOfDot >= 0 ? indexOfDot : 3).concat('%')
+        {data.players.map((player) => {
+          const seasonEntries = ((data.seasonEntries[player._id] ?? 0) * 100).toString()
+          const indexOfDot = seasonEntries.indexOf('.')
+          const seasonEntriesPercentage = seasonEntries.substring(0, indexOfDot >= 0 ? indexOfDot : 3).concat('%')
 
-            const total = data.totals[player._id]
-            const place = data.seasonPlaces[player._id]
-            const isFinalWinner = data.finalWinners.includes(player._id)
+          const total = data.totals[player._id]
+          const place = data.seasonPlaces[player._id]
+          const isFinalWinner = data.finalWinners.includes(player._id)
 
-            return (
-              <>
-                <div className="sticky-col player">
-                  <Badge className="percentage-badge" mode="primary" type="number">
-                    {seasonEntriesPercentage}
-                  </Badge>
-                  {player.firstName}
-                  {' '}
-                  {player.lastName?.substring(0, 3)?.concat('.') ?? ''}
+          return (
+            <>
+              <div className="sticky-col player">
+                <Badge className="percentage-badge" mode="primary" type="number">
+                  {seasonEntriesPercentage}
+                </Badge>
+                {player.firstName}
+                {' '}
+                {player.lastName?.substring(0, 3)?.concat('.') ?? ''}
 
-                  {isFinalWinner && <span className="ml-1">🏆</span>}
+                {isFinalWinner && <span className="ml-1">🏆</span>}
 
-                  {place === 1 && <span className="ml-1">🥇</span>}
-                  {place === 2 && <span className="ml-1">🥈</span>}
-                  {place === 3 && <span className="ml-1">🥉</span>}
-                </div>
+                {place === 1 && <span className="ml-1">🥇</span>}
+                {place === 2 && <span className="ml-1">🥈</span>}
+                {place === 3 && <span className="ml-1">🥉</span>}
+              </div>
 
-                {data.games.map((game) => {
-                  const value = data.cells[player._id]?.[game._id] ?? 0
+              {data.games.map((game) => {
+                const value = data.cells[player._id]?.[game._id] ?? 0
 
-                  return (
-                    <div
-                      key={game._id}
-                      className={`cell ${
-                        value > 0 ? 'win' : value < 0 ? 'lose' : ''
-                      }`}
-                    >
-                      {value}
-                    </div>
-                  )
-                })}
+                return (
+                  <div
+                    key={game._id}
+                    className={`cell ${
+                      value > 0 ? 'win' : value < 0 ? 'lose' : ''
+                    }`}
+                  >
+                    {value}
+                  </div>
+                )
+              })}
 
-                <div className="cell total">
-                  {total}
-                </div>
-              </>
-            )
-          })}
+              <div className="cell total">
+                {total}
+              </div>
+            </>
+          )
+        })}
 
-        </div>
       </div>
-
-    </Section>
+    </div>
   )
 }

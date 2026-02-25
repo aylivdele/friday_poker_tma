@@ -1,7 +1,6 @@
 'use client'
 
 import type { Game } from '@/types/api'
-import { Section } from '@telegram-apps/telegram-ui'
 import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -46,8 +45,6 @@ export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers:
   }
 
   return (
-    <Section header="Игры">
-      <GamesList games={games} />
-    </Section>
+    <GamesList games={games} />
   )
 }
