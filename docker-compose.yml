@@ -25,4 +25,4 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
     command: >
-      mongod --replSet rs0 --bind_ip_all --auth
+      mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo-keyfile
