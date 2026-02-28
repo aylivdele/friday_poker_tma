@@ -16,15 +16,15 @@ services:
   mongo:
     image: mongo:7.0.28
     container_name: mongodb
-    restart: always
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
       - /srv/mongodb:/data/db
       - /srv/mongodb-keyfile:/etc/mongo-keyfile:ro
 
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
     command: >
-      mongod --replSet rs0 --bind_ip_all --auth --keyFile /etc/mongo-keyfile
+      mongod
+      --replSet rs0
+      --bind_ip_all
+      --keyFile /etc/mongo-keyfile
