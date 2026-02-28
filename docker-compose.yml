@@ -21,6 +21,8 @@ services:
       - "27017:27017"
     volumes:
       - /srv/mongodb:/data/db
+      - /srv/mongodb-keyfile:/etc/mongo-keyfile:ro
+
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
