@@ -8,20 +8,21 @@ services:
     ports:
       - "3000:3000"
     environment:
-      MONGODB_URI: mongodb://mongo:27017/myapp
       NODE_ENV: production
     env_file:
       - .env
     depends_on:
       - mongo
-
   mongo:
-    image: mongo:7
+    image: mongo:7.0.28
     container_name: mongodb
-    restart: unless-stopped
+    restart: always
     ports:
       - "27017:27017"
     volumes:
       - /srv/mongodb:/data/db
     environment:
-      MONGO_INITDB_DATABASE: myapp
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    command: >
+      mongod --replSet rs0 --bind_ip_all --auth
