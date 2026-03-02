@@ -3,19 +3,26 @@ import type { Game, Group, MongoCollectionsWithClient, Player, Season } from '@/
 import process from 'node:process'
 import { MongoClient } from 'mongodb'
 
-const uri = `mongodb://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_HOST ?? 'localhost'}:${process.env.MONGODB_PORT ?? 27017}/${process.env.MONGODB_DBNAME}?authSource=admin`
-const options = {}
-
-let client: MongoClient
-
-let _mongoClientPromise: Promise<MongoClient> | undefined
-
-if (!_mongoClientPromise) {
-  client = new MongoClient(uri, options)
-  _mongoClientPromise = client.connect()
+function getMongoUri() {
+  return `mongodb://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_HOST}:${process.env.MONGODB_PORT}/${process.env.MONGODB_DBNAME}?authSource=admin`
 }
 
+let _mongoClientPromise: Promise<MongoClient> | undefined
 let db: Db | null = null
+
+export async function getDb(): Promise<MongoCollectionsWithClient> {
+  if (db)
+    return getCollections(db)
+
+  if (!_mongoClientPromise) {
+    const client = new MongoClient(getMongoUri())
+    _mongoClientPromise = client.connect()
+  }
+
+  const client = await _mongoClientPromise
+  db = client.db()
+  return getCollections(db)
+}
 
 export function getCollections(db: Db): MongoCollectionsWithClient {
   return {
@@ -27,10 +34,3 @@ export function getCollections(db: Db): MongoCollectionsWithClient {
   }
 }
 
-export async function getDb(): Promise<MongoCollectionsWithClient> {
-  if (db)
-    return getCollections(db)
-  const client = await _mongoClientPromise!
-  db = client.db()
-  return getCollections(db)
-}
