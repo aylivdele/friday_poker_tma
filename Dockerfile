@@ -1,35 +1,41 @@
-# ---------- Stage 1: deps ----------
-FROM node:20-alpine AS deps
+# ---------- Base ----------
+FROM node:20-alpine AS base
 WORKDIR /app
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-COPY package.json package-lock.json* ./
-RUN pnpm ci
+# ---------- Dependencies ----------
+FROM base AS deps
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# ---------- Stage 2: build ----------
-FROM node:20-alpine AS builder
-WORKDIR /app
-
+# ---------- Build ----------
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN pnpm build
 
-RUN pnpm run build
-
-# ---------- Stage 3: production ----------
+# ---------- Production ----------
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+RUN corepack enable
+
+# создаём non-root пользователя
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]
