@@ -15,7 +15,9 @@ export async function getDb(): Promise<MongoCollectionsWithClient> {
     return getCollections(db)
 
   if (!_mongoClientPromise) {
-    const client = new MongoClient(getMongoUri())
+    const uri = getMongoUri()
+    console.error(uri)
+    const client = new MongoClient(uri)
     _mongoClientPromise = client.connect()
   }
 
@@ -33,4 +35,3 @@ export function getCollections(db: Db): MongoCollectionsWithClient {
     client: db,
   }
 }
-
