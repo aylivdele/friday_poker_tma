@@ -13,6 +13,8 @@ services:
       - .env
     depends_on:
       - mongo
+    networks:
+      - friday-poker-network
   mongo:
     image: mongo:7.0.28
     container_name: mongodb
@@ -29,3 +31,8 @@ services:
       --bind_ip_all
       --auth
       --keyFile /etc/mongo-keyfile
+    networks:
+      - friday-poker-network
+networks:
+  friday-poker-network:
+    driver: bridge
