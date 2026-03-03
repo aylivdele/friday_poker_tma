@@ -3,10 +3,10 @@ import type { Game } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
+import { updateAchievments } from '@/lib/achievments'
 import { nonNull } from '@/lib/helpers'
 import { deserealizeBody } from '../../../../lib/serverHelpers'
 import { calculateSeasonResults } from '../../seasons/[id]/results/results'
-import { updateAchievments } from '@/lib/achievments'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

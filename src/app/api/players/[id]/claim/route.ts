@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
+import { updateAchievments } from '@/lib/achievments'
 import { getTelegramId } from '@/lib/serverHelpers'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -71,6 +72,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           session,
         },
       )
+      // recalc achievments
+      const games = await db.games.find({ 'players.playerId': caller._id }).toArray()
+      games.sort((a, b) => a.createdAt - b.createdAt)
+      for (const game of games) {
+        await updateAchievments(game._id, caller._id)
+      }
     }
     await session.commitTransaction()
   }

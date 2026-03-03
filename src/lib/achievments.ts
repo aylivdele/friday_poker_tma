@@ -402,7 +402,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
 ]
 
-export async function updateAchievments(gameId: ObjectId) {
+export async function updateAchievments(gameId: ObjectId, playerId?: ObjectId) {
   const db = await getDb()
   const game = await db.games.findOne({ _id: gameId })
   if (!game)
@@ -414,8 +414,12 @@ export async function updateAchievments(gameId: ObjectId) {
 
   const seasonGames = nonNull(game.seasonId) ? await db.games.find({ seasonId: game.seasonId }).toArray() : []
   for (const player of groupPlayers) {
+    if (nonNull(playerId) && !player._id.equals(playerId)) {
+      continue
+    }
     const newAchievments = possibleAchievments.map(a => ({ id: a.id, progress: a.calcNewProgress({ player, game, seasonGames }) }))
-    await db.players.updateOne({ _id: player._id }, { $set: { achievments: newAchievments } })
+    const oldSecretAchievments = player.achievments?.filter(a => secretAchievments.some(s => s.id === a.id && a.progress[0] === s.maxProgress)) ?? []
+    await db.players.updateOne({ _id: player._id }, { $set: { achievments: [...oldSecretAchievments, ...newAchievments] } })
   }
 }
 
