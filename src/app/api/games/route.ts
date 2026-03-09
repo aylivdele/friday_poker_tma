@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error }, { status: 403 })
   }
   const caller = await db.players.findOne({ telegramId: tgId })
+  console.log(JSON.stringify(caller))
 
   const newGame = {
     createdAt: Date.now(),
