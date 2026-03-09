@@ -3,9 +3,9 @@ import type { Game } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { updateAchievments } from '@/lib/achievments'
+import { checkAndUpdateAchievments } from '@/lib/achievments'
 import { nonNull } from '@/lib/helpers'
-import { deserealizeBody } from '../../../../lib/serverHelpers'
+import { deserealizeBody, getTelegramId } from '../../../../lib/serverHelpers'
 import { calculateSeasonResults } from '../../seasons/[id]/results/results'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -27,8 +27,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (updatedGame.isFinished && nonNull(updatedGame.seasonId)) {
     const seasonTable = await calculateSeasonResults(updatedGame.seasonId.toString())
     await db.seasons.updateOne({ _id: id }, { $set: { table: seasonTable } })
+    const game = await db.games.findOne({ _id: id })
 
-    await updateAchievments(id)
+    await checkAndUpdateAchievments({ gameId: id, players: game?.players.map(p => p.playerId) ?? [], date: game?.createdAt ?? updatedGame.createdAt ?? Date.now() })
   }
   return NextResponse.json(updatedGame)
 }
@@ -36,11 +37,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const id = new ObjectId((await params).id)
   const db = await getDb()
+  let telegramId
+  try {
+    telegramId = getTelegramId(req)
+  }
+  catch (error) {
+    return NextResponse.json({ error }, { status: 403 })
+  }
+  const user = await (await getDb()).players.findOne({ telegramId })
 
   const game = await db.games.findOne({ _id: id })
 
   if (!game) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
+  }
+  if ((nonNull(game.creater) && !game.creater.equals(user?._id))) {
+    return NextResponse.json({ error: 'Anauthorized' }, { status: 403 })
   }
   const session = db.client.client.startSession()
 
@@ -51,7 +63,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await db.games.deleteOne({ _id: id }, { session })
 
     await session.commitTransaction()
-    return NextResponse.json({ message: 'Game deleted successfully' })
   }
   catch (e) {
     await session.abortTransaction()
@@ -60,4 +71,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   finally {
     await session.endSession()
   }
+  await checkAndUpdateAchievments({ players: game.players.map(p => p.playerId), forceUpdate: true })
+  return NextResponse.json({ message: 'Game deleted successfully' })
 }

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { updateAchievments } from '@/lib/achievments'
+import { fullUpdateAchievments } from '@/lib/achievments'
 import { getTelegramId } from '@/lib/serverHelpers'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,10 +15,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
   const db = await getDb()
   const session = db.client.client.startSession()
+  const caller = await db.players.findOne({ telegramId: tgId })
+
   try {
     session.startTransaction()
 
-    const caller = await db.players.findOne({ telegramId: tgId })
     if (!caller) {
       return NextResponse.json({ error: 'You are not registered' }, { status: 401 })
     }
@@ -72,12 +73,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           session,
         },
       )
-      // recalc achievments
-      const games = await db.games.find({ 'players.playerId': caller._id }).toArray()
-      games.sort((a, b) => a.createdAt - b.createdAt)
-      for (const game of games) {
-        await updateAchievments(game._id, caller._id)
-      }
     }
     await session.commitTransaction()
   }
@@ -88,5 +83,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   finally {
     await session.endSession()
   }
+
+  fullUpdateAchievments(caller._id)
   return NextResponse.json({ message: 'Success' })
 }

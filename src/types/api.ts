@@ -48,6 +48,7 @@ export interface Game {
   finishedAt?: number
   seasonId?: string
   settings: GameSettings
+  creater?: string
 }
 
 export interface Season {

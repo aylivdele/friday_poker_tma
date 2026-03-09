@@ -13,6 +13,7 @@ import { api } from '@/lib/api'
 export default function NewGamePage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
   const [title, setTitle] = useState('')
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [settings, setSettings] = useState<GameSettings>({ isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -29,6 +30,7 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
         groupId,
         seasonId,
         settings,
+        createdAt: new Date(date).getTime(),
       })
 
       router.replace(
@@ -77,6 +79,15 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
           placeholder="Например: Пятничный покер"
           value={title}
           onChange={e => setTitle(e.target.value)}
+          disabled={loading}
+        />
+
+        <Input
+          className="input"
+          type="date"
+          before={<Subheadline>Дата игры</Subheadline>}
+          value={date}
+          onChange={e => setDate(e.target.value)}
           disabled={loading}
         />
 

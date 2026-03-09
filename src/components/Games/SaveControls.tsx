@@ -1,14 +1,17 @@
 'use client'
 
-import type { Game, GameResult, Player } from '@/types/api'
+import type { Game, GameResult, Group, Player } from '@/types/api'
 
 import { Avatar, Button, Cell, Chip, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
 import { mainButton, secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import useSWR from 'swr'
 import { api } from '@/lib/api'
 import { nonNull } from '@/lib/helpers'
+import { swrGetFetcher } from '@/lib/swrFetcher'
+import { usePlayerStore } from '@/stores/playerStore'
 import { confirmPopup } from '../ConfirmButton/ConfirmButton'
 
 export default function SaveControls({
@@ -27,6 +30,8 @@ export default function SaveControls({
   const [results, setResults] = useState<GameResult[]>(draft.results ?? [])
   const [maxScore, setMaxScore] = useState<number>(0)
   const [sumScore, setSumScore] = useState<number>(0)
+  const { data: group } = useSWR<Group>(`/api/groups/${draft.groupId}`, swrGetFetcher)
+  const player = usePlayerStore(p => p.player)
 
   async function save() {
     try {
@@ -89,6 +94,10 @@ export default function SaveControls({
 
     let unbound
     if (draft.isFinished) {
+      if (!player || !(player._id === group?.ownerId || player._id === draft.creater)) {
+        secondaryButton.hide()
+        return
+      }
       secondaryButton.setText('Удалить игру')
       secondaryButton.setBgColor('#FF0000')
       unbound = secondaryButton.onClick(() => confirmPopup({ description: 'Вы уверены, что хотите удалить игру?', onConfirm: deleteGame }))
@@ -109,7 +118,7 @@ export default function SaveControls({
     return () => {
       unbound()
     }
-  }, [draft, resultModalOpen, finishGame, deleteGame])
+  }, [draft, resultModalOpen, finishGame, deleteGame, group, player])
 
   useEffect(() => {
     return () => {

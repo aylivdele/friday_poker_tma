@@ -37,11 +37,17 @@ export function getInitData(req: NextRequest) {
 
 export async function deserealizeBody<T>(req: NextRequest, type: 'game' | 'player' | 'group' | 'season'): Promise<T> {
   const obj = await req.json()
+  if (isNull(obj)) {
+    return Promise.reject(new Error('Body is empty'))
+  }
   if (obj._id) {
     obj._id = new ObjectId(obj._id)
   }
   switch (type) {
     case 'game':
+      if (nonNull(obj.creater)) {
+        obj.creater = new ObjectId(obj.craeter)
+      }
       if (nonNull(obj.groupId)) {
         obj.groupId = new ObjectId(obj.groupId)
       }

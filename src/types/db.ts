@@ -52,6 +52,7 @@ export interface Game {
   finishedAt?: number
   seasonId?: ObjectId
   settings: GameSettings
+  creater?: ObjectId
 }
 
 export interface Season {

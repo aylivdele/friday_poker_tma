@@ -1,4 +1,4 @@
-import type { ObjectId } from 'mongodb'
+import type { ObjectId, WithId } from 'mongodb'
 import type { Achievment } from '@/types/api'
 import type { Game, Player } from '@/types/db'
 import { getDb } from '@/core/db'
@@ -402,6 +402,48 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
 ]
 
+export async function checkAndUpdateAchievments({ players, date, gameId, forceUpdate }: { players: ObjectId[], date?: number, gameId?: ObjectId, forceUpdate?: boolean }) {
+  const db = await getDb()
+
+  for (const playerId of players) {
+    let count = 0
+    if (forceUpdate) {
+      count = 1
+    }
+    else if (nonNull(date)) {
+      count = await db.games.countDocuments({ $and: [{ 'players.playerId': playerId }, { createdAt: { $gt: date } }] })
+    }
+    if (count > 0) {
+      await fullUpdateAchievments(playerId)
+    }
+    else if (nonNull(gameId)) {
+      await updateAchievments(gameId, playerId)
+    }
+  }
+}
+
+export async function fullUpdateAchievments(playerId: ObjectId) {
+  const db = await getDb()
+  const player = await db.players.findOne({ _id: playerId })
+  if (!player) {
+    return
+  }
+  const games = await db.games.find({ 'players.playerId': player }).toArray()
+  games.sort((a, b) => a.createdAt - b.createdAt)
+  let achievs: Player['achievments'] = []
+  const oldSecretAchievments = player.achievments?.filter(a => secretAchievments.some(s => s.id === a.id && a.progress[0] === s.maxProgress)) ?? []
+
+  for (const game of games) {
+    const seasonGames = nonNull(game.seasonId) ? await db.games.find({ $and: [{ seasonId: game.seasonId }, { createdAt: { $lt: game.createdAt } }] }).toArray() : []
+
+    const updatedPlayer: WithId<Player> = { ...player, achievments: achievs }
+    const newAchievments = possibleAchievments.map(a => ({ id: a.id, progress: a.calcNewProgress({ player: updatedPlayer, game, seasonGames }) }))
+    achievs = newAchievments
+  }
+
+  await db.players.updateOne({ _id: player._id }, { $set: { achievments: [...oldSecretAchievments, ...achievs] } })
+}
+
 export async function updateAchievments(gameId: ObjectId, playerId?: ObjectId) {
   const db = await getDb()
   const game = await db.games.findOne({ _id: gameId })
@@ -412,7 +454,7 @@ export async function updateAchievments(gameId: ObjectId, playerId?: ObjectId) {
     return
   const groupPlayers = await db.players.find({ _id: { $in: groupPlayersIds.members } }).toArray()
 
-  const seasonGames = nonNull(game.seasonId) ? await db.games.find({ seasonId: game.seasonId }).toArray() : []
+  const seasonGames = nonNull(game.seasonId) ? await db.games.find({ $and: [{ seasonId: game.seasonId }, { createdAt: { $lt: game.createdAt } }] }).toArray() : []
   for (const player of groupPlayers) {
     if (nonNull(playerId) && !player._id.equals(playerId)) {
       continue

@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
 import { isNull, nonNull } from '@/lib/helpers'
-import { deserealizeBody, getInitData } from '../../../lib/serverHelpers'
+import { deserealizeBody, getInitData, getTelegramId } from '../../../lib/serverHelpers'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -54,11 +54,22 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const db = await getDb()
+  let tgId
+  try {
+    tgId = getTelegramId(request)
+  }
+  catch (error) {
+    return NextResponse.json({ error }, { status: 403 })
+  }
+  const caller = await db.players.findOne({ telegramId: tgId })
+
   const newGame = {
     createdAt: Date.now(),
     title: '',
     isFinished: false,
     players: [],
+    creater: caller?._id,
     settings: {
       isFinal: false,
       maxReEntries: 5,
@@ -67,23 +78,17 @@ export async function POST(request: NextRequest) {
     },
     ...await deserealizeBody<Partial<Game>>(request, 'game'),
   }
-  if (!newGame.groupId) {
+  if (isNull(newGame.groupId)) {
     return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
   }
-  else {
-    newGame.groupId = new ObjectId(newGame.groupId)
-  }
-  if (!newGame.seasonId) {
+  if (isNull(newGame.seasonId)) {
     return NextResponse.json({ error: 'seasonId is required' }, { status: 400 })
-  }
-  else {
-    newGame.seasonId = new ObjectId(newGame.seasonId)
   }
 
   // @ts-expect-error group id is not undefined
-  const result = await (await getDb()).games.insertOne(newGame)
+  const result = await db.games.insertOne(newGame)
   if (nonNull(result.insertedId)) {
-    (await getDb()).seasons.updateOne(
+    await db.seasons.updateOne(
       { _id: newGame.seasonId },
       { $push: { gameIds: result.insertedId } },
     )
