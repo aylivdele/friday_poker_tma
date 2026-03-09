@@ -46,7 +46,7 @@ export async function deserealizeBody<T>(req: NextRequest, type: 'game' | 'playe
   switch (type) {
     case 'game':
       if (nonNull(obj.creater)) {
-        obj.creater = new ObjectId(obj.craeter)
+        obj.creater = new ObjectId(obj.creater)
       }
       if (nonNull(obj.groupId)) {
         obj.groupId = new ObjectId(obj.groupId)
