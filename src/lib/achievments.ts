@@ -428,7 +428,7 @@ export async function fullUpdateAchievments(playerId: ObjectId) {
   if (!player) {
     return
   }
-  const games = await db.games.find({ 'players.playerId': player }).toArray()
+  const games = await db.games.find({ 'players.playerId': player._id }).toArray()
   games.sort((a, b) => a.createdAt - b.createdAt)
   let achievs: Player['achievments'] = []
   const oldSecretAchievments = player.achievments?.filter(a => secretAchievments.some(s => s.id === a.id && a.progress[0] === s.maxProgress)) ?? []
