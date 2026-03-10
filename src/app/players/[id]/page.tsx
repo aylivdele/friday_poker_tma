@@ -11,7 +11,11 @@ import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: player, isLoading, error } = useSWR<Player>(`/api/players/${id}`, swrGetFetcher)
+  const { data: player, isLoading, error } = useSWR<Player>(`/api/players/${id}`, swrGetFetcher, {
+    revalidateOnMount: true,
+    revalidateOnFocus: true,
+    dedupingInterval: 2000,
+  })
 
   if (isNull(player)) {
     return (<Loader data={player} isLoading={isLoading} error={error} />)

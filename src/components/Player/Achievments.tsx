@@ -8,7 +8,11 @@ import { swrGetFetcher } from '@/lib/swrFetcher'
 import { ProgressBar } from '../Progress/ProgressBar'
 
 export function Achievments({ progresses }: { progresses?: Pick<Achievment, 'id' | 'progress'>[] }) {
-  const swr = useSWR<Omit<Achievment, 'progress'>[]>('/api/achievments', swrGetFetcher)
+  const swr = useSWR<Omit<Achievment, 'progress'>[]>('/api/achievments', swrGetFetcher, {
+    revalidateOnMount: true,
+    revalidateOnFocus: true,
+    dedupingInterval: 2000,
+  })
   const [achievments, setAchievments] = useState<Achievment[]>([])
 
   useEffect(() => {
