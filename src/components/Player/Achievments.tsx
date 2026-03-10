@@ -51,15 +51,25 @@ export function Achievments({ progresses }: { progresses?: Pick<Achievment, 'id'
   return (
     <List>
       {
-        achievments.map(a => (
-          <Cell
-            before={a.icon.startsWith('data:image/') ? (<Avatar src={a.icon} size={40} />) : (<span style={{ fontSize: '40px', opacity: a.progress[0] === a.progress[1] ? 1 : 0.35 }}>{a.icon}</span>)}
-            subtitle={<Caption level="2">{a.description}</Caption>}
-            description={(<ProgressBar count={a.progress[1]} progress={a.progress[0]} />)}
-          >
-            {a.name}
-          </Cell>
-        ))
+        achievments.map((a) => {
+          let icon
+
+          if (a.progress[0] === a.progress[1]) {
+            icon = a.icon.startsWith('data:image/') ? (<Avatar src={a.icon} size={40} />) : (<span style={{ fontSize: '40px' }}>{a.icon}</span>)
+          }
+          else {
+            icon = (<span style={{ fontSize: '40px', opacity: 0.35 }}>❓</span>)
+          }
+          return (
+            <Cell
+              before={icon}
+              subtitle={<Caption level="2">{a.description}</Caption>}
+              description={(<ProgressBar count={a.progress[1]} progress={a.progress[0]} />)}
+            >
+              {a.name}
+            </Cell>
+          )
+        })
       }
     </List>
   )
