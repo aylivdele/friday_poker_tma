@@ -184,7 +184,7 @@ export default function SaveControls({
           </Section>
           <Section header="Добавить игроков">
             <List>
-              {groupPlayers.filter(dp => nonNull(dp._id) && !results.some(p => p.playerId === dp._id)).map(p => (
+              {groupPlayers.filter(dp => nonNull(dp._id) && !results.some(p => p.playerId === dp._id) && draft.players.some(p => p.playerId === dp._id)).map(p => (
                 <Cell
                   key={p._id!.toString()}
                   before={(
