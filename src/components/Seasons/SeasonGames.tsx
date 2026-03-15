@@ -26,7 +26,7 @@ export function SeasonGames({ groupMembers, seasonId, groupId }: { groupMembers:
   }
 
   useEffect(() => {
-    if (!mainButton || isNull(games) || games.length >= 13 || isNull(player?._id) || !groupMembers.includes(player?._id?.toString()) || isNull(groupId))
+    if (!mainButton || isNull(games) || isNull(player?._id) || !groupMembers.includes(player?._id?.toString()) || isNull(groupId))
       return
 
     mainButton.setText('Создать новую игру')
