@@ -74,7 +74,7 @@ export default function SaveControls({
   }, [gameId])
 
   useEffect(() => {
-    if (!mainButton || resultModalOpen || draft.isFinished) {
+    if (!mainButton || resultModalOpen) {
       mainButton?.hide()
       return
     }
