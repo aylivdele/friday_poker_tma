@@ -31,7 +31,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   const { data: table, isLoading: tIsLoading, error: tError } = useSWR<SeasonTableResponse>(`/api/seasons/${seasonId}/results`, swrGetFetcher)
 
   const [draft, setDraft] = useState<Game | null>(null)
-  const isEditable = game && !game.isFinished
+  const isEditable = game
 
   useEffect(() => {
     if (game) {
