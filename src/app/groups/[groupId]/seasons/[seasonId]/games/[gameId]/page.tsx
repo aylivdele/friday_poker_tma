@@ -8,6 +8,7 @@ import {
   Headline,
   List,
   Section,
+  Subheadline,
   Text,
 } from '@telegram-apps/telegram-ui'
 import { use, useEffect, useMemo, useState } from 'react'
@@ -62,6 +63,12 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
       <Headline style={{ padding: 10, textAlign: 'center' }}>
         {draft.title}
       </Headline>
+
+      <Cell
+        before={<Subheadline>Дата игры</Subheadline>}
+      >
+        {new Date(draft?.createdAt).toISOString().slice(0, 10)}
+      </Cell>
 
       {draft.isFinished && draft.results
         ? (
