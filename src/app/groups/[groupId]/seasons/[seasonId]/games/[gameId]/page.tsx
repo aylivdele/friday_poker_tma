@@ -6,6 +6,7 @@ import {
   Cell,
   Chip,
   Headline,
+  Input,
   List,
   Section,
   Subheadline,
@@ -64,11 +65,14 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
         {draft.title}
       </Headline>
 
-      <Cell
+      <Input
+        className="input"
+        type="date"
         before={<Subheadline>Дата игры</Subheadline>}
-      >
-        {new Date(draft?.createdAt).toISOString().slice(0, 10)}
-      </Cell>
+        value={new Date(draft.createdAt).toISOString().slice(0, 10)}
+        onChange={e => setDraft({ ...draft, createdAt: new Date(e.target.value).getTime() })}
+        disabled={!isEditable}
+      />
 
       {draft.isFinished && draft.results
         ? (

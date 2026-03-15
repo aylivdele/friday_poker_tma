@@ -58,7 +58,7 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
     return () => {
       mainButton.offClick(handleSubmit)
     }
-  }, [title, loading])
+  }, [title, date, settings, loading])
 
   useEffect(() => {
     return () => {
