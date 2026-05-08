@@ -1,5 +1,5 @@
 import type { SeasonTable } from '@/types/api'
-import { ObjectId } from 'mongodb'
+import { ObjectId, WithId } from 'mongodb'
 import { getDb } from '@/core/db'
 import { Game } from '@/types/db'
 
@@ -8,14 +8,13 @@ export async function calculateSeasonResults(seasonId: string): Promise<SeasonTa
   const games = await db.games.find({
     seasonId: new ObjectId(seasonId),
     isFinished: true,
-  }).toArray() as Array<Game>
+  }).toArray() as Array<WithId<Game>>
   games.sort((a, b) => a.createdAt - b.createdAt)
 
   const playersMap = new Map()
   const cells: Record<string, Record<string, number>> = {}
   const seasonEntries: Record<string, number> = {}
   let maxSeasonEntries = 0
-  
 
   for (const game of games) {
     const gameId = game._id.toString()
