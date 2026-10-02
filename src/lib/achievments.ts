@@ -1,10 +1,16 @@
 import type { ObjectId, WithId } from 'mongodb'
 import type { Achievment } from '@/types/api'
 import type { Game, Player } from '@/types/db'
+import { getGameWinners } from '@/app/api/seasons/[id]/results/results'
 import { getDb } from '@/core/db'
 import { nonNull } from './helpers'
 
 type Checker = (params: { player: Player, game: Game, seasonGames: Game[] }) => Achievment['progress']
+
+// Победитель финала определяется так же, как 🏆 в таблице сезона
+function isFinalWinner(game: Game, playerId?: ObjectId) {
+  return game.settings.isFinal && nonNull(playerId) && getGameWinners(game).includes(playerId.toString())
+}
 
 const secretAchievments: Omit<Achievment, 'progress'>[] = [
   {
@@ -206,8 +212,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (progress[0] === this.maxProgress) {
         return progress
       }
-      const isWonFinal = game.settings.isFinal && game.results?.some(p => p.playerId.equals(player._id) && p.score > 0)
-      return [progress[0] + +!!isWonFinal, this.maxProgress]
+      return [progress[0] + +isFinalWinner(game, player._id), this.maxProgress]
     },
   },
   {
@@ -222,8 +227,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (progress[0] === this.maxProgress) {
         return progress
       }
-      const isWonFinal = game.settings.isFinal && game.results?.some(p => p.playerId.equals(player._id) && p.score > 0)
-      return [progress[0] + +!!isWonFinal, this.maxProgress]
+      return [progress[0] + +isFinalWinner(game, player._id), this.maxProgress]
     },
   },
   {
@@ -238,8 +242,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (progress[0] === this.maxProgress) {
         return progress
       }
-      const isWonFinal = game.settings.isFinal && game.results?.some(p => p.playerId.equals(player._id) && p.score > 0)
-      return [progress[0] + +!!isWonFinal, this.maxProgress]
+      return [progress[0] + +isFinalWinner(game, player._id), this.maxProgress]
     },
   },
   {
@@ -375,7 +378,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (progress[0] === this.maxProgress) {
         return progress
       }
-      if (!game.settings.isFinal || !game.results?.some(p => p.playerId.equals(player._id))) {
+      if (!isFinalWinner(game, player._id)) {
         return [0, this.maxProgress]
       }
       const lostOthers = seasonGames.reduce((acc, g) => acc && (g.settings.isFinal || !g.results?.some(p => p.playerId.equals(player._id))), true)
@@ -402,24 +405,18 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   },
 ]
 
-export async function checkAndUpdateAchievments({ players, date, gameId, forceUpdate }: { players: ObjectId[], date?: number, gameId?: ObjectId, forceUpdate?: boolean }) {
-  const db = await getDb()
-
+// Прогресс всегда пересчитывается с нуля по всем завершённым играм игрока.
+// Инкрементальное обновление не идемпотентно: повторное сохранение завершённой игры засчитывало её ещё раз.
+export async function recalculateAchievments(players: ObjectId[]) {
   for (const playerId of players) {
-    let count = 0
-    if (forceUpdate) {
-      count = 1
-    }
-    else if (nonNull(date)) {
-      count = await db.games.countDocuments({ $and: [{ 'players.playerId': playerId }, { createdAt: { $gt: date } }] })
-    }
-    if (count > 0) {
-      await fullUpdateAchievments(playerId)
-    }
-    else if (nonNull(gameId)) {
-      await updateAchievments(gameId, playerId)
-    }
+    await fullUpdateAchievments(playerId)
   }
+}
+
+export async function recalculateAllAchievments() {
+  const db = await getDb()
+  const players = await db.players.find({}, { projection: { _id: 1 } }).toArray()
+  await recalculateAchievments(players.map(p => p._id))
 }
 
 export async function fullUpdateAchievments(playerId: ObjectId) {
@@ -428,13 +425,12 @@ export async function fullUpdateAchievments(playerId: ObjectId) {
   if (!player) {
     return
   }
-  const games = await db.games.find({ 'players.playerId': player._id }).toArray()
-  games.sort((a, b) => a.createdAt - b.createdAt)
+  const games = await db.games.find({ $and: [{ 'players.playerId': player._id }, { isFinished: true }] }).sort({ createdAt: 1, _id: 1 }).toArray()
   let achievs: Player['achievments'] = []
   const oldSecretAchievments = player.achievments?.filter(a => secretAchievments.some(s => s.id === a.id && a.progress[0] === s.maxProgress)) ?? []
 
   for (const game of games) {
-    const seasonGames = nonNull(game.seasonId) ? await db.games.find({ $and: [{ seasonId: game.seasonId }, { createdAt: { $lt: game.createdAt } }] }).toArray() : []
+    const seasonGames = nonNull(game.seasonId) ? await db.games.find({ $and: [{ seasonId: game.seasonId }, { isFinished: true }, { createdAt: { $lt: game.createdAt } }] }).toArray() : []
 
     const updatedPlayer: WithId<Player> = { ...player, achievments: achievs }
     const newAchievments = possibleAchievments.map(a => ({ id: a.id, progress: a.calcNewProgress({ player: updatedPlayer, game, seasonGames }) }))
@@ -442,27 +438,6 @@ export async function fullUpdateAchievments(playerId: ObjectId) {
   }
 
   await db.players.updateOne({ _id: player._id }, { $set: { achievments: [...oldSecretAchievments, ...achievs] } })
-}
-
-export async function updateAchievments(gameId: ObjectId, playerId?: ObjectId) {
-  const db = await getDb()
-  const game = await db.games.findOne({ _id: gameId })
-  if (!game)
-    return
-  const groupPlayersIds = await db.groups.findOne({ _id: game.groupId }, { projection: { members: 1 } })
-  if (!groupPlayersIds)
-    return
-  const groupPlayers = await db.players.find({ _id: { $in: groupPlayersIds.members } }).toArray()
-
-  const seasonGames = nonNull(game.seasonId) ? await db.games.find({ $and: [{ seasonId: game.seasonId }, { createdAt: { $lt: game.createdAt } }] }).toArray() : []
-  for (const player of groupPlayers) {
-    if (nonNull(playerId) && !player._id.equals(playerId)) {
-      continue
-    }
-    const newAchievments = possibleAchievments.map(a => ({ id: a.id, progress: a.calcNewProgress({ player, game, seasonGames }) }))
-    const oldSecretAchievments = player.achievments?.filter(a => secretAchievments.some(s => s.id === a.id && a.progress[0] === s.maxProgress)) ?? []
-    await db.players.updateOne({ _id: player._id }, { $set: { achievments: [...oldSecretAchievments, ...newAchievments] } })
-  }
 }
 
 export function getAchievmentsInfo(): Omit<Achievment, 'progress'>[] {

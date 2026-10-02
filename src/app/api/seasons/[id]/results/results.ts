@@ -3,6 +3,53 @@ import { ObjectId, WithId } from 'mongodb'
 import { getDb } from '@/core/db'
 import { Game } from '@/types/db'
 
+export function calcGameBalances(game: Game): Record<string, number> {
+  const balances: Record<string, number> = {}
+
+  for (const p of game.players) {
+    const playerId = p.playerId.toString()
+
+    const cost
+      = game.settings.firstEntryCost + (p.entries * game.settings.reEntryCost)
+
+    balances[playerId] = (balances[playerId] || 0) - cost
+  }
+
+  for (const r of game.results || []) {
+    const playerId = r.playerId.toString()
+
+    if (!game.settings.isFinal) {
+      balances[playerId]
+        = (balances[playerId] || 0) + (r.score * game.settings.reEntryCost)
+    }
+    else {
+      const entries = game.players.length
+      const reEntries = r.score - entries
+      balances[playerId]
+        = (balances[playerId] || 0) + (entries * game.settings.firstEntryCost) + (reEntries * game.settings.reEntryCost)
+    }
+  }
+
+  return balances
+}
+
+export function getGameWinners(game: Game): string[] {
+  let max = -Infinity
+  let winners: string[] = []
+
+  for (const [playerId, value] of Object.entries(calcGameBalances(game))) {
+    if (value > max) {
+      max = value
+      winners = [playerId]
+    }
+    else if (value === max) {
+      winners.push(playerId)
+    }
+  }
+
+  return winners
+}
+
 export async function calculateSeasonResults(seasonId: string): Promise<SeasonTable> {
   const db = await getDb()
   const games = await db.games.find({
@@ -20,31 +67,12 @@ export async function calculateSeasonResults(seasonId: string): Promise<SeasonTa
     const gameId = game._id.toString()
 
     for (const p of game.players) {
-      const playerId = p.playerId.toString()
-      playersMap.set(playerId, true)
-
-      const cost
-      = game.settings.firstEntryCost + (p.entries * game.settings.reEntryCost)
-
-      cells[playerId] ??= {}
-      cells[playerId][gameId]
-      = (cells[playerId][gameId] || 0) - cost
+      playersMap.set(p.playerId.toString(), true)
     }
 
-    for (const r of game.results || []) {
-      const playerId = r.playerId.toString()
-
+    for (const [playerId, balance] of Object.entries(calcGameBalances(game))) {
       cells[playerId] ??= {}
-      if (!game.settings.isFinal) {
-        cells[playerId][gameId]
-      = (cells[playerId][gameId] || 0) + (r.score * game.settings.reEntryCost)
-      }
-      else {
-        const entries = game.players.length
-        const reEntries = r.score - entries
-        cells[playerId][gameId]
-      = (cells[playerId][gameId] || 0) + (entries * game.settings.firstEntryCost) + (reEntries * game.settings.reEntryCost)
-      }
+      cells[playerId][gameId] = balance
     }
 
     if (!game.settings.isFinal) {
@@ -70,23 +98,7 @@ export async function calculateSeasonResults(seasonId: string): Promise<SeasonTa
 
   const finalGame = games.find(g => g.settings.isFinal)
 
-  let finalWinners: string[] = []
-
-  if (finalGame) {
-    let max = -Infinity
-
-    for (const playerId in cells) {
-      const value = cells[playerId]?.[finalGame._id.toString()] ?? -Infinity
-
-      if (value > max) {
-        max = value
-        finalWinners = [playerId]
-      }
-      else if (value === max) {
-        finalWinners.push(playerId)
-      }
-    }
-  }
+  const finalWinners = finalGame ? getGameWinners(finalGame) : []
 
   const sorted = Object.entries(totals)
     .sort((a, b) => b[1] - a[1])

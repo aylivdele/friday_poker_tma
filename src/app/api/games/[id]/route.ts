@@ -3,7 +3,7 @@ import type { Game } from '@/types/db'
 import { ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { checkAndUpdateAchievments } from '@/lib/achievments'
+import { recalculateAchievments } from '@/lib/achievments'
 import { nonNull } from '@/lib/helpers'
 import { deserealizeBody, getTelegramId } from '../../../../lib/serverHelpers'
 import { calculateSeasonResults } from '../../seasons/[id]/results/results'
@@ -20,6 +20,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const db = await getDb()
   const id = new ObjectId(sid)
   const updatedGame = await deserealizeBody<Partial<Game>>(req, 'game')
+  const oldGame = await db.games.findOne({ _id: id })
   const result = await db.games.updateOne({ _id: id }, { $set: updatedGame })
   if (result.matchedCount === 0) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
@@ -29,7 +30,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     await db.seasons.updateOne({ _id: id }, { $set: { table: seasonTable } })
     const game = await db.games.findOne({ _id: id })
 
-    await checkAndUpdateAchievments({ gameId: id, players: game?.players.map(p => p.playerId) ?? [], date: game?.createdAt ?? updatedGame.createdAt ?? Date.now() })
+    // Включаем и игроков, которых убрали из игры при редактировании
+    const players = [...(oldGame?.players ?? []), ...(game?.players ?? [])].map(p => p.playerId)
+    await recalculateAchievments(players.filter((p, i) => players.findIndex(o => o.equals(p)) === i))
   }
   return NextResponse.json(updatedGame)
 }
@@ -71,6 +74,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   finally {
     await session.endSession()
   }
-  await checkAndUpdateAchievments({ players: game.players.map(p => p.playerId), forceUpdate: true })
+  await recalculateAchievments(game.players.map(p => p.playerId))
   return NextResponse.json({ message: 'Game deleted successfully' })
 }

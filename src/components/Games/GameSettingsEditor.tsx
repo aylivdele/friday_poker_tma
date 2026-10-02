@@ -3,11 +3,11 @@
 import type { GameSettings } from './../../types/db'
 import {
   Cell,
-  Input,
   Section,
   Subheadline,
   Switch,
 } from '@telegram-apps/telegram-ui'
+import { NumberInput } from '../NumberInput/NumberInput'
 
 export default function GameSettingsEditor({
   gameSettings,
@@ -43,37 +43,34 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <Input
+      <NumberInput
         before={<Subheadline level="1">Стоимость первого входа</Subheadline>}
         status="focused"
         className="input"
-        type="number"
         value={gameSettings.firstEntryCost}
         disabled={!editable}
-        onChange={e =>
-          updateSettings({ firstEntryCost: +e.target.value })}
+        onChange={value =>
+          updateSettings({ firstEntryCost: value })}
       />
 
-      <Input
+      <NumberInput
         before={<Subheadline level="1">Стоимость повторного входа</Subheadline>}
         status="focused"
         className="input"
-        type="number"
         value={gameSettings.reEntryCost}
         disabled={!editable}
-        onChange={e =>
-          updateSettings({ reEntryCost: +e.target.value })}
+        onChange={value =>
+          updateSettings({ reEntryCost: value })}
       />
 
-      <Input
+      <NumberInput
         before={<Subheadline level="1">Кол-во повторных входов</Subheadline>}
         status="focused"
         className="input"
-        type="number"
         value={gameSettings.maxReEntries}
         disabled={!editable}
-        onChange={e =>
-          updateSettings({ maxReEntries: +e.target.value })}
+        onChange={value =>
+          updateSettings({ maxReEntries: value })}
       />
     </Section>
   )
