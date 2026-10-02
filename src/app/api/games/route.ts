@@ -1,97 +1,58 @@
-import type { FindCursor, WithId } from 'mongodb'
-import type { NextRequest } from 'next/server'
 import type { Game } from '@/types/db'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getDb } from '@/core/db'
-import { isNull, nonNull } from '@/lib/helpers'
-import { deserealizeBody, getInitData, getTelegramId } from '../../../lib/serverHelpers'
+import { requireAuth } from '@/server/auth'
+import { toPublicGame } from '@/server/dto'
+import { badRequest, parseBody, route, toObjectId } from '@/server/http'
+import { loadGroup, loadSeason, requireMember } from '@/server/permissions'
+import { gameDateSchema, gameSettingsSchema, titleSchema, zObjectId } from '@/server/schemas'
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
-  const searchString = searchParams.get('search')
-  const seasonId = searchParams.get('seasonId')
-  const groupId = searchParams.get('groupId')
-  const useInitData = searchParams.get('useInitData') === 'true'
-
+export const GET = route(async (req) => {
+  const { player } = await requireAuth(req)
+  const params = req.nextUrl.searchParams
   const db = await getDb()
-  let games: FindCursor<WithId<Game>>
-  if (useInitData) {
-    let initData
-    try {
-      initData = getInitData(request)
-      if (isNull(initData.user?.id)) {
-        throw new Error('User id not found')
-      }
-    }
-    catch (error) {
-      return NextResponse.json({ error }, { status: 403 })
-    }
-    const tgId = initData.user.id
-    if (isNull(tgId)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    const player = await db.players.findOne({ telegramId: initData.user?.id })
-    if (!player) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    games = db.games.find({ 'players.playerId': player._id })
-  }
-  else
-    if (searchString) {
-      games = db.games.find({ title: { $regex: searchString, $options: 'i' } })
-    }
-    else if (seasonId) {
-      games = db.games.find({ seasonId: new ObjectId(seasonId) })
-    }
-    else if (groupId) {
-      games = db.games.find({ groupId: new ObjectId(groupId) })
-    }
-    else {
-      games = db.games.find({}).limit(15)
-    }
-  return NextResponse.json(await games.toArray())
-}
 
-export async function POST(request: NextRequest) {
-  const db = await getDb()
-  let tgId
-  try {
-    tgId = getTelegramId(request)
+  // useInitData — старое название параметра, оставлено для совместимости
+  if (params.get('mine') === '1' || params.get('useInitData') === 'true') {
+    const games = await db.games.find({ 'players.playerId': player._id }).sort({ createdAt: -1, _id: -1 }).toArray()
+    return games.map(toPublicGame)
   }
-  catch (error) {
-    return NextResponse.json({ error }, { status: 403 })
-  }
-  const caller = await db.players.findOne({ telegramId: tgId })
 
-  const newGame = {
-    createdAt: Date.now(),
-    title: '',
+  const seasonId = params.get('seasonId')
+  if (!seasonId) {
+    throw badRequest('Укажите сезон')
+  }
+  const games = await db.games.find({ seasonId: toObjectId(seasonId) }).sort({ createdAt: -1, _id: -1 }).toArray()
+  return games.map(toPublicGame)
+})
+
+const newGameSchema = z.object({
+  seasonId: zObjectId,
+  title: titleSchema,
+  createdAt: gameDateSchema,
+  settings: gameSettingsSchema,
+})
+
+export const POST = route(async (req) => {
+  const { player } = await requireAuth(req)
+  const body = await parseBody(req, newGameSchema)
+  const season = await loadSeason(body.seasonId)
+  const group = await loadGroup(season.groupId)
+  requireMember(group, player._id)
+
+  const game: Game = {
+    groupId: group._id,
+    seasonId: season._id,
+    title: body.title,
+    createdAt: body.createdAt,
+    settings: body.settings,
     isFinished: false,
     players: [],
-    creater: caller?._id,
-    settings: {
-      isFinal: false,
-      maxReEntries: 5,
-      firstEntryCost: 100,
-      reEntryCost: 100,
-    },
-    ...await deserealizeBody<Partial<Game>>(request, 'game'),
+    creater: player._id,
+    rev: 0,
   }
-  if (isNull(newGame.groupId)) {
-    return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
-  }
-  if (isNull(newGame.seasonId)) {
-    return NextResponse.json({ error: 'seasonId is required' }, { status: 400 })
-  }
-
-  // @ts-expect-error group id is not undefined
-  const result = await db.games.insertOne(newGame)
-  if (nonNull(result.insertedId)) {
-    await db.seasons.updateOne(
-      { _id: newGame.seasonId },
-      { $push: { gameIds: result.insertedId } },
-    )
-  }
-  return NextResponse.json(result.insertedId)
-}
+  const db = await getDb()
+  const { insertedId } = await db.games.insertOne(game)
+  await db.seasons.updateOne({ _id: season._id }, { $addToSet: { gameIds: insertedId } })
+  return insertedId.toString()
+})

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import type { PropsWithChildren } from 'react'
 
-import { FixedLayout } from '@telegram-apps/telegram-ui'
-
+import { BottomPanel } from '@/components/ActionBar/ActionBar'
 import { Root } from '@/components/Root/Root'
 import Bootstrap from './bootstrap'
 import { Navigation } from './navigation'
@@ -12,7 +11,7 @@ import './_assets/globals.css'
 
 export const metadata: Metadata = {
   title: 'Friday Poker',
-  description: 'TMA Friday Poker Bot Web Interface',
+  description: 'Учёт домашних покерных игр, сезонов и достижений',
 }
 
 export default function RootLayout({ children }: PropsWithChildren) {
@@ -22,9 +21,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
         <Root>
           <Bootstrap />
           {children}
-          <FixedLayout vertical="bottom">
+          <BottomPanel>
             <Navigation />
-          </FixedLayout>
+          </BottomPanel>
         </Root>
       </body>
     </html>

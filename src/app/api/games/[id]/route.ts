@@ -1,79 +1,108 @@
-import type { NextRequest } from 'next/server'
+import type { Filter } from 'mongodb'
 import type { Game } from '@/types/db'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { recalculateAchievments } from '@/lib/achievments'
-import { nonNull } from '@/lib/helpers'
-import { deserealizeBody, getTelegramId } from '../../../../lib/serverHelpers'
-import { calculateSeasonResults } from '../../seasons/[id]/results/results'
+import { requireAuth } from '@/server/auth'
+import { toGameDetails } from '@/server/dto'
+import { deleteGame, loadGameCaps, validateResults } from '@/server/games'
+import { badRequest, conflict, forbidden, parseBody, route, toObjectId } from '@/server/http'
+import { gameAbilities, isMember, loadGame, loadGroup } from '@/server/permissions'
+import { gameDateSchema, gamePlayerSchema, gameResultSchema, gameSettingsSchema } from '@/server/schemas'
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const games = await (await getDb()).games.findOne({ _id: new ObjectId(id) })
-  return NextResponse.json(games, { status: 200 })
-}
+export const GET = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  const game = await loadGame(toObjectId(id))
+  const group = await loadGroup(game.groupId)
+  return toGameDetails(game, group, player._id, await loadGameCaps(game, group))
+})
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id: sid } = await params
+const updateGameSchema = z.object({
+  rev: z.number().int().min(0).optional(),
+  // у старых игр название бывает пустым — пустое значение просто оставляет прежнее
+  title: z.string().trim().max(80).optional(),
+  createdAt: gameDateSchema.optional(),
+  players: z.array(gamePlayerSchema).max(100).optional(),
+  settings: gameSettingsSchema.optional(),
+  isFinished: z.boolean().optional(),
+  results: z.array(gameResultSchema).max(100).optional(),
+})
 
+export const PUT = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  const body = await parseBody(req, updateGameSchema)
+  const game = await loadGame(toObjectId(id))
+  const group = await loadGroup(game.groupId)
+
+  if (!gameAbilities(game, group, player._id).edit) {
+    throw forbidden(game.isFinished
+      ? 'Исправлять завершённую игру может только её создатель или владелец группы'
+      : 'Изменять игру могут только участники группы')
+  }
+  if (body.isFinished === false && game.isFinished) {
+    throw badRequest('Завершённую игру нельзя вернуть в работу')
+  }
+  const finishing = body.isFinished === true && !game.isFinished
+
+  const next: Pick<Game, 'title' | 'createdAt' | 'players' | 'settings'> = {
+    title: body.title || game.title,
+    createdAt: body.createdAt ?? game.createdAt,
+    players: body.players ?? game.players,
+    settings: body.settings ?? game.settings,
+  }
+
+  const ids = next.players.map(p => p.playerId.toString())
+  if (new Set(ids).size !== ids.length) {
+    throw badRequest('Игрок добавлен в игру дважды')
+  }
+  const caps = await loadGameCaps({ ...game, ...next }, group)
+  for (const p of next.players) {
+    const before = game.players.find(old => old.playerId.equals(p.playerId))
+    if (!before && !isMember(group, p.playerId)) {
+      throw badRequest('В игру можно добавлять только участников группы')
+    }
+    // Проверяем только выросшие значения, чтобы смена настроек не блокировала уже сыгранное
+    const cap = caps[p.playerId.toString()] ?? 0
+    if (p.entries > (before?.entries ?? -1) && p.entries + 1 > cap) {
+      throw badRequest(cap > 0 ? `Превышен лимит входов: не больше ${cap}` : 'Игрок не может участвовать в этом финале')
+    }
+  }
+
+  const update: Partial<Game> = { ...next }
+  if (finishing || game.isFinished) {
+    update.results = validateResults(next.players, body.results ?? game.results ?? [])
+  }
+  if (finishing) {
+    update.isFinished = true
+    update.finishedAt = Date.now()
+  }
+
+  const filter: Filter<Game> = { _id: game._id }
+  if (body.rev !== undefined) {
+    // У игр, созданных до появления rev, поля нет — считаем его нулём
+    Object.assign(filter, body.rev === 0 ? { $or: [{ rev: 0 }, { rev: { $exists: false } }] } : { rev: body.rev })
+  }
   const db = await getDb()
-  const id = new ObjectId(sid)
-  const updatedGame = await deserealizeBody<Partial<Game>>(req, 'game')
-  const oldGame = await db.games.findOne({ _id: id })
-  const result = await db.games.updateOne({ _id: id }, { $set: updatedGame })
-  if (result.matchedCount === 0) {
-    return NextResponse.json({ error: 'Game not found' }, { status: 404 })
+  const updated = await db.games.findOneAndUpdate(filter, { $set: update, $inc: { rev: 1 } }, { returnDocument: 'after' })
+  if (!updated) {
+    throw conflict('Игру изменили на другом устройстве. Данные обновлены — повторите изменения')
   }
-  if (updatedGame.isFinished && nonNull(updatedGame.seasonId)) {
-    const seasonTable = await calculateSeasonResults(updatedGame.seasonId.toString())
-    await db.seasons.updateOne({ _id: id }, { $set: { table: seasonTable } })
-    const game = await db.games.findOne({ _id: id })
 
-    // Включаем и игроков, которых убрали из игры при редактировании
-    const players = [...(oldGame?.players ?? []), ...(game?.players ?? [])].map(p => p.playerId)
-    await recalculateAchievments(players.filter((p, i) => players.findIndex(o => o.equals(p)) === i))
+  if (updated.isFinished) {
+    const affected = [...game.players, ...updated.players].map(p => p.playerId)
+    await recalculateAchievments(affected.filter((p, i) => affected.findIndex(o => o.equals(p)) === i))
   }
-  return NextResponse.json(updatedGame)
-}
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const id = new ObjectId((await params).id)
-  const db = await getDb()
-  let telegramId
-  try {
-    telegramId = getTelegramId(req)
-  }
-  catch (error) {
-    return NextResponse.json({ error }, { status: 403 })
-  }
-  const user = await (await getDb()).players.findOne({ telegramId })
+  return toGameDetails(updated, group, player._id, await loadGameCaps(updated, group))
+})
 
-  const game = await db.games.findOne({ _id: id })
-
-  if (!game) {
-    return NextResponse.json({ error: 'Game not found' }, { status: 404 })
+export const DELETE = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  const game = await loadGame(toObjectId(id))
+  const group = await loadGroup(game.groupId)
+  if (!gameAbilities(game, group, player._id).delete) {
+    throw forbidden('Удалить игру может только её создатель или владелец группы')
   }
-  if ((nonNull(game.creater) && !game.creater.equals(user?._id))) {
-    return NextResponse.json({ error: 'Anauthorized' }, { status: 403 })
-  }
-  const session = db.client.client.startSession()
-
-  try {
-    session.startTransaction()
-
-    await db.seasons.updateOne({ _id: game.seasonId }, { $pull: { gameIds: id } }, { session })
-    await db.games.deleteOne({ _id: id }, { session })
-
-    await session.commitTransaction()
-  }
-  catch (e) {
-    await session.abortTransaction()
-    throw e
-  }
-  finally {
-    await session.endSession()
-  }
-  await recalculateAchievments(game.players.map(p => p.playerId))
-  return NextResponse.json({ message: 'Game deleted successfully' })
-}
+  await deleteGame(game)
+  return { ok: true }
+})

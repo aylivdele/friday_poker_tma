@@ -1,7 +1,7 @@
 /* ===== Player ===== */
 export interface Player {
   _id: string
-  telegramId?: number
+  hasTelegram: boolean
   username?: string
   firstName?: string
   lastName?: string
@@ -11,12 +11,21 @@ export interface Player {
 }
 
 /* ===== Group ===== */
+export interface GroupAbilities {
+  join: boolean
+  leave: boolean
+  delete: boolean
+  // создавать сезоны, игры и виртуальных игроков
+  manage: boolean
+}
+
 export interface Group {
   _id: string
   title: string
   ownerId: string
   members: string[]
   createdAt: number
+  can: GroupAbilities
 }
 
 /* ===== Game ===== */
@@ -37,6 +46,12 @@ export interface GameSettings {
   maxReEntries: number
 }
 
+export interface GameAbilities {
+  edit: boolean
+  finish: boolean
+  delete: boolean
+}
+
 export interface Game {
   _id: string
   groupId: string
@@ -49,6 +64,19 @@ export interface Game {
   seasonId?: string
   settings: GameSettings
   creater?: string
+  rev: number
+}
+
+export interface GameDetails extends Game {
+  can: GameAbilities
+  // сколько всего входов доступно каждому участнику группы в этой игре
+  caps: Record<string, number>
+}
+
+/* ===== Season ===== */
+export interface SeasonAbilities {
+  createGame: boolean
+  delete: boolean
 }
 
 export interface Season {
@@ -56,6 +84,7 @@ export interface Season {
   groupId: string
   title: string
   gameIds: string[]
+  can: SeasonAbilities
 }
 
 export interface SeasonTable {

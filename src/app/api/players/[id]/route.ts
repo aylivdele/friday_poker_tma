@@ -1,25 +1,13 @@
-import type { NextRequest } from 'next/server'
-import type { Player } from '@/types/db'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { deserealizeBody } from '../../../../lib/serverHelpers'
+import { requireAuth } from '@/server/auth'
+import { toPublicPlayer } from '@/server/dto'
+import { notFound, route, toObjectId } from '@/server/http'
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const player = await (await getDb()).players.findOne({ _id: new ObjectId((await params).id) })
-  return player ? NextResponse.json(player) : NextResponse.json({ error: 'Player not found' }, { status: 404 })
-}
-
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const newPlayerData = await deserealizeBody<Partial<Player>>(request, 'player')
-  const { id } = await params
-  newPlayerData._id = new ObjectId(id)
-  const result = await (await getDb()).players.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: newPlayerData },
-  )
-  if (result.matchedCount === 0) {
-    return NextResponse.json({ error: 'Player not found' }, { status: 404 })
+export const GET = route<{ id: string }>(async (req, { id }) => {
+  await requireAuth(req)
+  const player = await (await getDb()).players.findOne({ _id: toObjectId(id) })
+  if (!player) {
+    throw notFound('Игрок не найден')
   }
-  return NextResponse.json({ message: 'Player updated successfully' })
-}
+  return toPublicPlayer(player)
+})

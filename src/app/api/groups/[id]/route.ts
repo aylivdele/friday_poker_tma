@@ -1,35 +1,18 @@
-import type { NextRequest } from 'next/server'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
-import { getDb } from '@/core/db'
-import { getTelegramId } from '@/lib/serverHelpers'
+import { requireAuth } from '@/server/auth'
+import { toPublicGroup } from '@/server/dto'
+import { deleteGroupCascade } from '@/server/games'
+import { route, toObjectId } from '@/server/http'
+import { loadGroup, requireOwner } from '@/server/permissions'
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export const GET = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  return toPublicGroup(await loadGroup(toObjectId(id)), player._id)
+})
 
-  const group = await (await getDb()).groups.findOne({ _id: new ObjectId(id) })
-  if (!group) {
-    return NextResponse.json({ error: 'Group not found' }, { status: 404 })
-  }
-  return NextResponse.json({ ...group, pin: undefined })
-}
-
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  let telegramId
-  try {
-    telegramId = getTelegramId(request)
-  }
-  catch (error) {
-    return NextResponse.json({ error }, { status: 403 })
-  }
-  const user = await (await getDb()).players.findOne({ telegramId })
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 401 })
-  }
-  const result = await (await getDb()).groups.deleteOne({ $and: [{ ownerId: user._id }, { _id: new ObjectId(id) }] })
-  if (result.deletedCount === 0) {
-    return NextResponse.json({ error: 'Group not found or you are not the owner' }, { status: 404 })
-  }
-  return NextResponse.json({ message: 'Group deleted successfully' })
-}
+export const DELETE = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  const group = await loadGroup(toObjectId(id))
+  requireOwner(group, player._id)
+  const deletedGames = await deleteGroupCascade(group)
+  return { ok: true, deletedGames }
+})

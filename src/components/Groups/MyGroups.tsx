@@ -10,7 +10,7 @@ import GroupComponent from './Group'
 
 export default function GroupsClient() {
   const swr = useSWR<Group[]>(
-    '/api/groups?useInitData=true',
+    '/api/groups?mine=1',
     swrGetFetcher,
   )
   const data = swr.data

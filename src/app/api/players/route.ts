@@ -1,107 +1,44 @@
-import type { NextRequest } from 'next/server'
 import type { Player } from '@/types/db'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getDb } from '@/core/db'
-import { nonNull } from '@/lib/helpers'
-import { deserealizeBody, getInitData, getTelegramId } from '@/lib/serverHelpers'
+import { registerTelegramPlayer, requireAuth } from '@/server/auth'
+import { toPublicPlayer } from '@/server/dto'
+import { badRequest, parseBody, route, toObjectId } from '@/server/http'
+import { loadGroup, requireMember } from '@/server/permissions'
+import { avatarSchema } from '@/server/schemas'
 
-export async function POST(req: NextRequest) {
-  let initData
-  try {
-    initData = getInitData(req)
+const newPlayerSchema = z.object({
+  firstName: z.string().trim().min(1, 'укажите имя').max(64),
+  lastName: z.string().trim().max(64).optional().default(''),
+  avatarUrl: avatarSchema.optional().default(''),
+})
+
+export const POST = route(async (req) => {
+  // Совместимость со старыми клиентами: до обновления регистрация шла через этот адрес
+  if (req.nextUrl.searchParams.get('useInitData') === 'true') {
+    return toPublicPlayer(await registerTelegramPlayer(req))
   }
-  catch (error) {
-    return NextResponse.json({ error }, { status: 403 })
-  }
-  const useInitData = req.nextUrl.searchParams.get('useInitData') === 'true'
+
+  const { player: caller } = await requireAuth(req)
+  const group = await loadGroup(toObjectId(req.nextUrl.searchParams.get('groupId')))
+  requireMember(group, caller._id)
+
+  const body = await parseBody(req, newPlayerSchema)
+  const player: Player = { ...body, createdAt: Date.now() }
+  const db = await getDb()
+  const { insertedId } = await db.players.insertOne(player)
+  await db.groups.updateOne({ _id: group._id }, { $addToSet: { members: insertedId } })
+
+  return toPublicPlayer({ ...player, _id: insertedId })
+})
+
+export const GET = route(async (req) => {
+  await requireAuth(req)
   const groupId = req.nextUrl.searchParams.get('groupId')
-
-  let caller: Player | null = null
-  if (nonNull(initData.user?.id)) {
-    caller = await (
-      await getDb()
-    ).players.findOne({ telegramId: initData.user.id })
-  }
-
-  if (useInitData) {
-    if (!caller) {
-      caller = {
-        telegramId: initData.user?.id,
-        username: initData.user?.username ?? '',
-        firstName: initData.user?.first_name ?? '',
-        lastName: initData.user?.last_name ?? '',
-        avatarUrl: initData.user?.photo_url ?? '',
-        createdAt: Date.now(),
-      }
-      const result = await (await getDb()).players.insertOne(caller)
-      caller._id = result.insertedId
-    }
-
-    return NextResponse.json(caller)
-  }
-
   if (!groupId) {
-    return NextResponse.json({ error: 'Player should be bound to group' }, { status: 400 })
+    throw badRequest('Укажите группу')
   }
-
-  const group = await (await getDb()).groups.findOne({ _id: new ObjectId(groupId) })
-  if (!group) {
-    return NextResponse.json({ error: 'Group not found' }, { status: 404 })
-  }
-  const callerIsAMember = !!caller?._id && group.members.some(m => m.equals(caller._id))
-
-  if (!callerIsAMember) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  const player: Partial<Player> & Pick<Player, 'createdAt'> = {
-    ...await deserealizeBody<Partial<Player>>(req, 'player'),
-    createdAt: Date.now(),
-  }
-
-  const result = await (await getDb()).players.insertOne(player)
-  player._id = result.insertedId
-  await (await getDb()).groups.updateOne({ _id: group._id }, { $set: { ...group, members: [...group.members, player._id] } })
-
-  return NextResponse.json(player)
-}
-
-export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams
-  const searchString = searchParams.get('search')
-  const groupId = searchParams.get('groupId')
-  const tgId = searchParams.get('telegramId')
-
-  if (tgId) {
-    let telegramId
-    try {
-      telegramId = getTelegramId(req)
-    }
-    catch (error) {
-      return NextResponse.json({ error }, { status: 403 })
-    }
-    const player = await (await getDb()).players.findOne({ telegramId })
-    return NextResponse.json(player)
-  }
-
-  let players: Player[]
-  if (searchString) {
-    players = await (await getDb()).players.find({
-      $or: [
-        { firstName: { $regex: searchString, $options: 'i' } },
-        { username: { $regex: searchString, $options: 'i' } },
-      ],
-    }).toArray()
-  }
-  else if (groupId) {
-    players = await (await getDb()).groups.findOne({ _id: new ObjectId(groupId) }).then(async group =>
-      (await getDb()).players.find({ _id: { $in: group?.members } }).toArray(),
-    )
-  }
-  else {
-    players = await (await getDb()).players.find({}).toArray()
-  }
-
-  return NextResponse.json(players)
-}
+  const group = await loadGroup(toObjectId(groupId))
+  const players = await (await getDb()).players.find({ _id: { $in: group.members } }).toArray()
+  return players.map(toPublicPlayer)
+})

@@ -1,3 +1,6 @@
+# Ограничение частоты для подбора PIN и (после этапа 1b) входа по паролю
+limit_req_zone $binary_remote_addr zone=friday_poker_auth:1m rate=5r/m;
+
 server {
     listen 80;
     server_name friday-poker.ru;
@@ -21,12 +24,28 @@ server {
     ssl_prefer_server_ciphers on;
 
     # --- Security headers ---
-    add_header X-Frame-Options "ALLOWALL" always;
+    # Встраивать приложение во фрейм можно только самому сайту и Telegram Web
+    # (X-Frame-Options "ALLOWALL" браузеры не понимают и игнорируют)
+    add_header Content-Security-Policy "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     server_name friday-poker.ru;
 
-    client_max_body_size 10M;
+    # Аватары уменьшаются в браузере, крупные тела запросов не нужны
+    client_max_body_size 1M;
+
+    location ~ ^/api/(groups/[^/]+/join|players/[^/]+/claim|auth/login)$ {
+        limit_req zone=friday_poker_auth burst=5 nodelay;
+        limit_req_status 429;
+
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:3001;

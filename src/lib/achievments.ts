@@ -1,8 +1,8 @@
 import type { ObjectId, WithId } from 'mongodb'
 import type { Achievment } from '@/types/api'
 import type { Game, Player } from '@/types/db'
-import { getGameWinners } from '@/app/api/seasons/[id]/results/results'
 import { getDb } from '@/core/db'
+import { calcGameBalances, getGameWinners } from '@/domain/balances'
 import { nonNull } from './helpers'
 
 type Checker = (params: { player: Player, game: Game, seasonGames: Game[] }) => Achievment['progress']
@@ -12,12 +12,17 @@ function isFinalWinner(game: Game, playerId?: ObjectId) {
   return game.settings.isFinal && nonNull(playerId) && getGameWinners(game).includes(playerId.toString())
 }
 
+// «В плюсе» — по деньгам, тем же расчётом, что и таблица сезона
+function isInPlus(game: Game, playerId?: ObjectId) {
+  return nonNull(playerId) && (calcGameBalances(game)[playerId.toString()] ?? 0) > 0
+}
+
 const secretAchievments: Omit<Achievment, 'progress'>[] = [
   {
     id: '-1',
     icon: '💩',
     name: 'Пожрал говна',
-    description: 'Учавствовал в альфа-тесте',
+    description: 'Участвовал в альфа-тесте',
     maxProgress: 1,
     isSecret: true,
   },
@@ -35,7 +40,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   {
     id: '0',
     icon: '🐣',
-    name: 'Посвещение',
+    name: 'Посвящение',
     description: 'Сыграть первую игру',
     maxProgress: 1,
     calcNewProgress({ player, game }) {
@@ -51,7 +56,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   {
     id: '1',
     icon: '🔰',
-    name: 'Новичек',
+    name: 'Новичок',
     description: 'Сыграть пятую игру',
     maxProgress: 5,
     calcNewProgress({ player, game }) {
@@ -124,9 +129,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (progress[0] === this.maxProgress) {
         return progress
       }
-      const entries = game.players.find(p => p.playerId.equals(player._id))?.entries ?? 0
-      const result = game.results?.find(p => p.playerId.equals(player._id))
-      if (result && result.score > (entries + 1))
+      if (isInPlus(game, player._id))
         return [progress[0] + 1, this.maxProgress]
       return [0, this.maxProgress]
     },
@@ -134,7 +137,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
   {
     id: '5',
     icon: '✌️',
-    name: 'Красаучик',
+    name: 'Красавчик',
     description: 'Закончить в плюсе две игры подряд',
     maxProgress: 2,
     calcNewProgress({ player, game }) {
@@ -147,9 +150,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (!hasPlayed) {
         return progress
       }
-      const entries = game.players.find(p => p.playerId.equals(player._id))?.entries ?? 0
-      const result = game.results?.find(p => p.playerId.equals(player._id))
-      if (result && result.score > (entries + 1))
+      if (isInPlus(game, player._id))
         return [progress[0] + 1, this.maxProgress]
       return [0, this.maxProgress]
     },
@@ -170,9 +171,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (!hasPlayed) {
         return progress
       }
-      const entries = game.players.find(p => p.playerId.equals(player._id))?.entries ?? 0
-      const result = game.results?.find(p => p.playerId.equals(player._id))
-      if (result && result.score > (entries + 1))
+      if (isInPlus(game, player._id))
         return [progress[0] + 1, this.maxProgress]
       return [0, this.maxProgress]
     },
@@ -193,9 +192,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
       if (!hasPlayed) {
         return progress
       }
-      const entries = game.players.find(p => p.playerId.equals(player._id))?.entries ?? 0
-      const result = game.results?.find(p => p.playerId.equals(player._id))
-      if (result && result.score > (entries + 1))
+      if (isInPlus(game, player._id))
         return [progress[0] + 1, this.maxProgress]
       return [0, this.maxProgress]
     },
@@ -334,7 +331,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
     id: '15',
     icon: '🧂',
     name: 'Солеварня',
-    description: 'Забрать весь выигрышь на обычной игре',
+    description: 'Забрать весь выигрыш на обычной игре',
     maxProgress: 1,
     calcNewProgress({ player, game }) {
       const achievmentId = this.id
@@ -399,7 +396,7 @@ const possibleAchievments: (Omit<Achievment, 'progress'> & { calcNewProgress: Ch
         return progress
       }
       const wonWithoutEntries = game.players.some(p => p.playerId.equals(player._id) && p.entries === 0)
-        && game.results?.some(r => r.playerId.equals(player._id) && r.score > 1)
+        && isInPlus(game, player._id)
       return [+!!wonWithoutEntries, this.maxProgress]
     },
   },

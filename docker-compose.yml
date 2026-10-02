@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 
 services:
   app:
@@ -6,7 +6,7 @@ services:
     container_name: nextjs_app
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       NODE_ENV: production
     env_file:
@@ -20,7 +20,7 @@ services:
     container_name: mongodb
     restart: unless-stopped
     ports:
-      - "27017:27017"
+      - '27017:27017'
     volumes:
       - /srv/mongodb:/data/db
       - /srv/mongodb-keyfile:/etc/mongo-keyfile:ro

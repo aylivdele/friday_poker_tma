@@ -1,6 +1,6 @@
 'use client'
 
-import type { Game, Player, SeasonTableResponse } from '@/types/api'
+import type { GameDetails, Player } from '@/types/api'
 import {
   Avatar,
   Cell,
@@ -10,54 +10,55 @@ import {
   List,
   Section,
   Subheadline,
-  Text,
 } from '@telegram-apps/telegram-ui'
-import { use, useEffect, useMemo, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import useSWR from 'swr'
 import GameSettingsEditor from '@/components/Games/GameSettingsEditor'
 import PlayersEditor from '@/components/Games/PlayersEditor'
 import SaveControls from '@/components/Games/SaveControls'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
+import { parseDateInput, toDateInputValue } from '@/lib/dates'
 import { swrGetFetcher } from '@/lib/swrFetcher'
+
+function editableFields(game: GameDetails) {
+  return JSON.stringify([game.title, game.createdAt, game.players, game.settings])
+}
 
 export default function GamePage({ params }: { params: Promise<{ gameId: string, groupId: string, seasonId: string }> }) {
   const { gameId, groupId, seasonId } = use(params)
-  const { data: game, mutate, error, isLoading } = useSWR<Game>(
-    `/api/games/${gameId}`,
-    swrGetFetcher,
-  )
+  const { data: game, mutate, error, isLoading } = useSWR<GameDetails>(`/api/games/${gameId}`, swrGetFetcher)
   const { data: groupPlayers, isLoading: pIsLoading, error: pError } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
-  const { data: table, isLoading: tIsLoading, error: tError } = useSWR<SeasonTableResponse>(`/api/seasons/${seasonId}/results`, swrGetFetcher)
 
-  const [draft, setDraft] = useState<Game | null>(null)
-  const isEditable = game
+  // base — версия с сервера, от которой начато редактирование; draft — то, что видит пользователь
+  const [base, setBase] = useState<GameDetails | null>(null)
+  const [draft, setDraft] = useState<GameDetails | null>(null)
+  const [settingsValid, setSettingsValid] = useState(true)
+  const dirty = !!draft && !!base && editableFields(draft) !== editableFields(base)
 
+  const reset = (fresh: GameDetails) => {
+    setBase(fresh)
+    setDraft(structuredClone(fresh))
+  }
+
+  // Новые данные с сервера подхватываем, только если пользователь ничего не менял
   useEffect(() => {
-    if (game) {
-      setDraft(structuredClone(game))
-    }
-    else {
-      setDraft(null)
+    if (game && (!dirty || game._id !== base?._id)) {
+      reset(game)
     }
   }, [game])
 
-  const maxPlayerEntries: Record<string, number> = useMemo(() => {
-    if (!draft || !groupPlayers) {
-      return {}
-    }
+  if (!draft) {
+    return (
+      <Page>
+        <Loader data={game} error={error} isLoading={isLoading} />
+      </Page>
+    )
+  }
 
-    return Object.fromEntries(groupPlayers.map((p) => {
-      let max = draft.settings.maxReEntries + 1
-      if (draft.settings.isFinal) {
-        max = Math.floor((max) * (table?.seasonEntries[p._id] ?? 0))
-      }
-      return [p._id, max]
-    }))
-  }, [table, draft, groupPlayers])
-
-  if (!draft)
-    return <Loader data={game} error={error} isLoading={isLoading} />
+  const canEdit = draft.can.edit
+  // Состав завершённой игры пока нельзя менять: результаты перестанут сходиться со стеками
+  const canEditPlayers = canEdit && !draft.isFinished
 
   return (
     <Page>
@@ -69,65 +70,68 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
         className="input"
         type="date"
         before={<Subheadline>Дата игры</Subheadline>}
-        value={new Date(draft.createdAt).toISOString().slice(0, 10)}
-        onChange={e => setDraft({ ...draft, createdAt: new Date(e.target.value).getTime() })}
-        disabled={!isEditable}
+        value={toDateInputValue(draft.createdAt)}
+        onChange={(e) => {
+          const createdAt = parseDateInput(e.target.value)
+          if (createdAt !== null) {
+            setDraft({ ...draft, createdAt })
+          }
+        }}
+        disabled={!canEdit}
       />
 
-      {draft.isFinished && draft.results
-        ? (
-            <Section header="Финалисты">
-              <List>
-                {draft.results.map((p) => {
-                  const playerData = groupPlayers?.find(dp => dp._id?.toString() === p.playerId.toString())
-                  return (
-                    <Cell
-                      key={p.playerId.toString()}
-                      before={(
-                        <Avatar
-                          src={playerData?.avatarUrl}
-                        />
-                      )}
-                      after={(
-                        <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
-                          <Chip>{p.score}</Chip>
-                        </div>
-                      )}
-                    >
-                      {playerData?.firstName}
-                      {' '}
-                      {playerData?.lastName}
-                    </Cell>
-                  )
-                }) || <Text>Список пуст</Text>}
-              </List>
-            </Section>
-          )
-        : null}
+      {draft.isFinished && draft.results && (
+        <Section header="Финалисты">
+          <List>
+            {draft.results.map((p) => {
+              const playerData = groupPlayers?.find(dp => dp._id === p.playerId)
+              return (
+                <Cell
+                  key={p.playerId}
+                  before={<Avatar src={playerData?.avatarUrl} />}
+                  after={<Chip>{p.score}</Chip>}
+                >
+                  {[playerData?.firstName, playerData?.lastName].filter(Boolean).join(' ')}
+                </Cell>
+              )
+            })}
+          </List>
+        </Section>
+      )}
 
       <PlayersEditor
         groupPlayers={groupPlayers}
-        isLoading={pIsLoading || tIsLoading}
-        error={pError ?? tError}
+        isLoading={pIsLoading}
+        error={pError}
         players={draft.players}
-        editable={!!isEditable}
-        onChange={players =>
-          setDraft({ ...draft, players })}
-        maxPlayerEntries={maxPlayerEntries}
+        editable={canEditPlayers}
+        onChange={players => setDraft({ ...draft, players })}
+        maxPlayerEntries={draft.caps}
       />
 
       <GameSettingsEditor
         gameSettings={draft.settings}
-        editable={!!isEditable}
-        onChange={settings =>
-          setDraft({ ...draft, settings })}
+        editable={canEdit}
+        onChange={settings => setDraft({ ...draft, settings })}
+        onValidityChange={setSettingsValid}
       />
 
       <SaveControls
-        gameId={gameId}
         draft={draft}
+        dirty={dirty}
+        valid={settingsValid}
         groupPlayers={groupPlayers}
-        onSaved={mutate}
+        seasonUrl={`/groups/${groupId}/seasons/${seasonId}`}
+        onSaved={(updated) => {
+          reset(updated)
+          mutate(updated, { revalidate: false })
+        }}
+        onConflict={async () => {
+          const fresh = await mutate()
+          if (fresh) {
+            reset(fresh)
+          }
+        }}
       />
     </Page>
   )

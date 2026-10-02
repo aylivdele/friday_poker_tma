@@ -1,89 +1,77 @@
-import type { NextRequest } from 'next/server'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { fullUpdateAchievments } from '@/lib/achievments'
-import { getTelegramId } from '@/lib/serverHelpers'
+import { requireAuth } from '@/server/auth'
+import { badRequest, conflict, forbidden, notFound, parseBody, route, toObjectId } from '@/server/http'
+import { isMember, loadGroup } from '@/server/permissions'
+import { assertNotLocked, registerFailure, resetFailures } from '@/server/rateLimit'
+import { pinSchema, zObjectId } from '@/server/schemas'
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  let tgId
-  try {
-    tgId = getTelegramId(req)
-  }
-  catch (error) {
-    return NextResponse.json({ error }, { status: 403 })
-  }
+const claimSchema = z.object({
+  groupId: zObjectId,
+  pin: pinSchema.optional(),
+})
+
+// Пользователь Telegram «занимает» виртуального игрока группы: все игры и результаты переходят к нему,
+// а виртуальный профиль удаляется
+export const PUT = route<{ id: string }>(async (req, { id }) => {
+  const { player: caller } = await requireAuth(req)
+  const { groupId, pin } = await parseBody(req, claimSchema)
   const db = await getDb()
-  const session = db.client.client.startSession()
-  const caller = await db.players.findOne({ telegramId: tgId })
 
-  try {
-    session.startTransaction()
-
-    if (!caller) {
-      return NextResponse.json({ error: 'You are not registered' }, { status: 401 })
-    }
-    const { id } = await params
-    const claimedId = new ObjectId(id)
-
-    const result = await db.players.deleteOne(
-      { _id: claimedId },
-      { session },
-    )
-    if (result.deletedCount === 0) {
-      await session.abortTransaction()
-      return NextResponse.json({ error: 'Player not found' }, { status: 404 })
-    }
-    else {
-      await db.games.updateMany(
-        { 'players.playerId': claimedId },
-        {
-          $set: {
-            'players.$[p].playerId': caller._id,
-          },
-        },
-        {
-          arrayFilters: [{ 'p.playerId': claimedId }],
-          session,
-        },
-      )
-
-      await db.games.updateMany(
-        { 'results.playerId': claimedId },
-        {
-          $set: {
-            'results.$[r].playerId': caller._id,
-          },
-        },
-        {
-          arrayFilters: [{ 'r.playerId': claimedId }],
-          session,
-        },
-      )
-
-      await db.groups.updateMany(
-        { members: claimedId },
-        {
-          $set: {
-            'members.$[m]': caller._id,
-          },
-        },
-        {
-          arrayFilters: [{ m: claimedId }],
-          session,
-        },
-      )
-    }
-    await session.commitTransaction()
+  const target = await db.players.findOne({ _id: toObjectId(id) })
+  if (!target) {
+    throw notFound('Игрок не найден')
   }
-  catch (e) {
-    await session.abortTransaction()
-    throw e
+  if (target._id.equals(caller._id)) {
+    throw badRequest('Это уже ваш профиль')
+  }
+  if (target.telegramId !== undefined && target.telegramId !== null) {
+    throw forbidden('Этот профиль уже принадлежит пользователю Telegram')
+  }
+  const group = await loadGroup(groupId)
+  if (!isMember(group, target._id)) {
+    throw badRequest('Игрок не состоит в этой группе')
+  }
+
+  if (!isMember(group, caller._id)) {
+    const limitKey = `pin:${caller._id}:${group._id}`
+    assertNotLocked(limitKey)
+    if (!group.pin || group.pin !== pin) {
+      registerFailure(limitKey)
+      throw forbidden('Неверный PIN')
+    }
+    resetFailures(limitKey)
+  }
+
+  const sharedGame = await db.games.findOne({ 'players.playerId': { $all: [caller._id, target._id] } }, { projection: { title: 1 } })
+  if (sharedGame) {
+    throw conflict(`Вы и этот игрок вместе участвовали в игре «${sharedGame.title}» — объединить профили нельзя`)
+  }
+
+  const session = db.client.client.startSession()
+  try {
+    await session.withTransaction(async () => {
+      await db.games.updateMany(
+        { 'players.playerId': target._id },
+        { $set: { 'players.$[p].playerId': caller._id } },
+        { arrayFilters: [{ 'p.playerId': target._id }], session },
+      )
+      await db.games.updateMany(
+        { 'results.playerId': target._id },
+        { $set: { 'results.$[r].playerId': caller._id } },
+        { arrayFilters: [{ 'r.playerId': target._id }], session },
+      )
+      // $addToSet и $pull по одному полю нельзя сделать одним запросом
+      await db.groups.updateMany({ members: target._id }, { $addToSet: { members: caller._id } }, { session })
+      await db.groups.updateMany({ members: target._id }, { $pull: { members: target._id } }, { session })
+      await db.players.deleteOne({ _id: target._id }, { session })
+    })
   }
   finally {
     await session.endSession()
   }
 
-  fullUpdateAchievments(caller._id)
-  return NextResponse.json({ message: 'Success' })
-}
+  await fullUpdateAchievments(caller._id)
+  return { ok: true }
+})

@@ -16,7 +16,6 @@ export async function getDb(): Promise<MongoCollectionsWithClient> {
 
   if (!_mongoClientPromise) {
     const uri = getMongoUri()
-    console.error(uri)
     const client = new MongoClient(uri)
     _mongoClientPromise = client.connect()
   }

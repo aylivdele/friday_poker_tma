@@ -62,6 +62,7 @@ export function Achievments({ progresses }: { progresses?: Pick<Achievment, 'id'
           }
           return (
             <Cell
+              key={a.id}
               before={icon}
               subtitle={<Caption level="2">{a.description}</Caption>}
               description={(<ProgressBar count={a.progress[1]} progress={a.progress[0]} />)}

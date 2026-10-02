@@ -2,30 +2,16 @@
 
 import { Section, TabsList } from '@telegram-apps/telegram-ui'
 import { TabsItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/TabsList/components/TabsItem/TabsItem'
-import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
 import { Page } from '@/components/Page'
 import AllGroups from '../../components/Groups/AllGroups'
 import MyGroups from '../../components/Groups/MyGroups'
 
-export default function groupsPage() {
+export default function GroupsPage() {
   const [selectedTab, setSelectedTab] = useState<'all' | 'my'>('all')
   const router = useRouter()
-
-  useEffect(() => {
-    if (!mainButton)
-      return
-
-    mainButton.setText('Создать группу')
-    mainButton.show()
-    const unbound = mainButton.onClick(() => router.push(`/groups/new`))
-
-    return () => {
-      unbound()
-      mainButton.hide()
-    }
-  }, [mainButton])
 
   return (
     <Page back={false}>
@@ -40,6 +26,9 @@ export default function groupsPage() {
         </TabsList>
         { selectedTab === 'all' ? <AllGroups /> : (<MyGroups />) }
       </Section>
+      <ActionBar>
+        <ActionButton onClick={() => router.push('/groups/new')}>Создать группу</ActionButton>
+      </ActionBar>
     </Page>
   )
 }

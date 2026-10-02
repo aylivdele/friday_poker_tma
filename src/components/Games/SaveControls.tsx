@@ -1,141 +1,110 @@
 'use client'
 
-import type { Game, GameResult, Group, Player } from '@/types/api'
-
+import type { GameDetails, GameResult, Player } from '@/types/api'
 import { Avatar, Button, Cell, Chip, List, Modal, Section, Text } from '@telegram-apps/telegram-ui'
-import { mainButton, secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import useSWR from 'swr'
+import { totalStacks } from '@/domain/balances'
 import { api } from '@/lib/api'
-import { nonNull } from '@/lib/helpers'
-import { swrGetFetcher } from '@/lib/swrFetcher'
-import { usePlayerStore } from '@/stores/playerStore'
-import { confirmPopup } from '../ConfirmButton/ConfirmButton'
+import { ApiError, getErrorMessage } from '@/lib/errors'
+import { ActionBar, ActionButton, ActionHint } from '../ActionBar/ActionBar'
+import { confirmAction } from '../ConfirmButton/ConfirmButton'
+
+function playerName(player?: Player) {
+  return [player?.firstName, player?.lastName].filter(Boolean).join(' ')
+}
 
 export default function SaveControls({
-  gameId,
   draft,
-  onSaved,
+  dirty,
+  valid,
   groupPlayers,
+  seasonUrl,
+  onSaved,
+  onConflict,
 }: {
-  gameId: string
-  draft: Game
-  onSaved: () => void
+  draft: GameDetails
+  dirty: boolean
+  valid: boolean
   groupPlayers?: Player[]
+  seasonUrl: string
+  onSaved: (game: GameDetails) => void
+  onConflict: () => Promise<void>
 }) {
   const router = useRouter()
   const [resultModalOpen, setResultModalOpen] = useState(false)
   const [results, setResults] = useState<GameResult[]>(draft.results ?? [])
-  const [maxScore, setMaxScore] = useState<number>(0)
-  const [sumScore, setSumScore] = useState<number>(0)
-  const { data: group } = useSWR<Group>(`/api/groups/${draft.groupId}`, swrGetFetcher)
-  const player = usePlayerStore(p => p.player)
+  const [busy, setBusy] = useState(false)
 
-  async function save() {
+  const total = totalStacks(draft)
+  const distributed = results.reduce((acc, r) => acc + r.score, 0)
+  const remaining = total - distributed
+
+  useEffect(() => {
+    // Убираем из результатов тех, кого удалили из игры
+    setResults(prev => prev.filter(r => draft.players.some(p => p.playerId === r.playerId)))
+  }, [draft.players])
+
+  async function submit(extra: Partial<GameDetails>, successMessage: string) {
+    setBusy(true)
     try {
-      await api.put(`/api/games/${gameId}`, draft)
-      onSaved()
+      const updated = await api.put<GameDetails>(`/api/games/${draft._id}`, {
+        rev: draft.rev,
+        title: draft.title,
+        createdAt: draft.createdAt,
+        players: draft.players,
+        settings: draft.settings,
+        ...extra,
+      })
+      onSaved(updated)
+      toast.success(successMessage)
+      return true
     }
     catch (e) {
-      console.error('Ошибка сохранения настроек игры', e)
-      toast.error('Ошибка сохранения')
+      toast.error(getErrorMessage(e))
+      if (e instanceof ApiError && e.status === 409) {
+        await onConflict()
+      }
+      return false
+    }
+    finally {
+      setBusy(false)
     }
   }
 
-  const finishGame = useCallback(async () => {
-    try {
-      if (!results) {
-        throw new Error('Отсутствуют результаты игры')
-      }
-      if (sumScore !== maxScore) {
-        throw new Error('Стеки не распределены до конца')
-      }
-      await api.put(`/api/games/${gameId}`, { ...draft, isFinished: true, finishedAt: Date.now(), results })
-      onSaved()
+  const save = () => submit({}, 'Сохранено')
+
+  const finishGame = async () => {
+    const confirmed = await confirmAction({
+      title: 'Завершить игру?',
+      description: 'После завершения игру сможет исправить только её создатель или владелец группы.',
+      confirmText: 'Завершить',
+    })
+    if (!confirmed) {
+      return
+    }
+    if (await submit({ isFinished: true, results: results.filter(r => r.score > 0) }, 'Игра завершена')) {
       setResultModalOpen(false)
     }
-    catch (e) {
-      console.error('Ошибка сохранения настроек игры', e)
-      toast.error(`Ошибка сохранения: ${e}`)
-    }
-  }, [draft, sumScore, maxScore, gameId, results])
+  }
 
-  const deleteGame = useCallback(async () => {
+  const deleteGame = async () => {
+    const confirmed = await confirmAction({ title: 'Удалить игру?', description: 'Это нельзя отменить.', confirmText: 'Удалить' })
+    if (!confirmed) {
+      return
+    }
+    setBusy(true)
     try {
-      await api.delete(`/api/games/${gameId}`)
-      router.back()
+      await api.delete(`/api/games/${draft._id}`)
+      toast.success('Игра удалена')
+      router.replace(seasonUrl)
     }
     catch (e) {
-      console.error('Ошибка удаления игры', e)
-      toast.error('Ошибка удаления')
+      toast.error(getErrorMessage(e))
+      setBusy(false)
     }
-  }, [gameId])
-
-  useEffect(() => {
-    if (!mainButton || resultModalOpen) {
-      mainButton?.hide()
-      return
-    }
-
-    const unbound = mainButton.onClick(save)
-    mainButton.setText('Сохранить')
-    mainButton.show()
-
-    return () => {
-      unbound()
-    }
-  }, [draft, resultModalOpen])
-
-  useEffect(() => {
-    if (!secondaryButton)
-      return
-
-    let unbound
-    if (draft.isFinished) {
-      if (!player || !(player._id === group?.ownerId || player._id === draft.creater)) {
-        secondaryButton.hide()
-        return
-      }
-      secondaryButton.setText('Удалить игру')
-      secondaryButton.setBgColor('#FF0000')
-      unbound = secondaryButton.onClick(() => confirmPopup({ description: 'Вы уверены, что хотите удалить игру?', onConfirm: deleteGame }))
-    }
-    else {
-      if (resultModalOpen) {
-        unbound = secondaryButton.onClick(() => confirmPopup({ description: 'Вы уверены, что хотите завершить игру?', onConfirm: finishGame }))
-      }
-      else {
-        unbound = secondaryButton.onClick(() => setResultModalOpen(true))
-      }
-      secondaryButton.setText('Завершить игру')
-      secondaryButton.setBgColor('#00d400')
-    }
-
-    secondaryButton.show()
-
-    return () => {
-      unbound()
-    }
-  }, [draft, resultModalOpen, finishGame, deleteGame, group, player])
-
-  useEffect(() => {
-    return () => {
-      if (mainButton)
-        mainButton.hide()
-      if (secondaryButton)
-        secondaryButton.hide()
-    }
-  }, [])
-
-  useEffect(() => {
-    setMaxScore(draft.players.reduce((acc, cv) => acc + cv.entries, draft.players.length))
-  }, [draft.players])
-
-  useEffect(() => {
-    setSumScore(results.reduce((acc, cv) => acc + cv.score, 0))
-  }, [results])
+  }
 
   const updateResult = (index: number, patch?: GameResult) => {
     const next = [...results]
@@ -148,60 +117,70 @@ export default function SaveControls({
     setResults(next)
   }
 
-  return draft.isFinished || !groupPlayers
-    ? null
-    : (
-        <Modal dismissible header={<Text>Результаты</Text>} open={resultModalOpen} onOpenChange={setResultModalOpen}>
-          <Section header="Финалисты">
+  const saveHint = !valid ? 'Заполните пустые поля' : null
+
+  return (
+    <>
+      {!resultModalOpen && (
+        <ActionBar>
+          {draft.can.edit && saveHint && <ActionHint>{saveHint}</ActionHint>}
+          {draft.can.edit && dirty && (
+            <ActionButton disabled={!valid} loading={busy} onClick={save}>Сохранить</ActionButton>
+          )}
+          {draft.can.finish && !dirty && (
+            <ActionButton disabled={!valid || draft.players.length === 0} onClick={() => setResultModalOpen(true)}>Завершить игру</ActionButton>
+          )}
+          {draft.can.delete && !dirty && (
+            <ActionButton variant="destructive" loading={busy} onClick={deleteGame}>Удалить игру</ActionButton>
+          )}
+        </ActionBar>
+      )}
+
+      {groupPlayers && !draft.isFinished && (
+        <Modal dismissible header={<Text style={{ padding: 12 }}>Результаты</Text>} open={resultModalOpen} onOpenChange={setResultModalOpen}>
+          <Section header={`Распределено ${distributed} из ${total} стеков${remaining > 0 ? ` · осталось ${remaining}` : ''}`}>
             <List>
               {results.length
                 ? results.map((p, i) => {
-                    const playerData = groupPlayers.find(dp => dp._id?.toString() === p.playerId.toString())
+                    const playerData = groupPlayers.find(dp => dp._id === p.playerId)
                     return (
                       <Cell
-                        key={p.playerId.toString()}
-                        before={(
-                          <Avatar
-                            src={playerData?.avatarUrl}
-                          />
-                        )}
+                        key={p.playerId}
+                        before={<Avatar src={playerData?.avatarUrl} />}
                         after={(
                           <div style={{ display: 'flex', gap: 8, marginRight: 0 }}>
                             <Button mode="bezeled" size="s" onClick={() => (p.score > 0) ? updateResult(i, { ...p, score: p.score - 1 }) : updateResult(i, undefined)}>-</Button>
                             <Chip>{p.score}</Chip>
-                            <Button mode="bezeled" size="s" onClick={() => (maxScore - sumScore > 0) && updateResult(i, { ...p, score: p.score + 1 })}>+</Button>
+                            <Button mode="bezeled" size="s" disabled={remaining <= 0} onClick={() => remaining > 0 && updateResult(i, { ...p, score: p.score + 1 })}>+</Button>
                           </div>
                         )}
                       >
-                        {playerData?.firstName}
-                        {' '}
-                        {playerData?.lastName}
+                        {playerName(playerData)}
                       </Cell>
                     )
                   })
-                : <Cell><Text>Список пуст</Text></Cell>}
+                : <Cell><Text>Добавьте призёров из списка ниже</Text></Cell>}
             </List>
           </Section>
-          <Section header="Добавить игроков">
+          <Section header="Добавить призёров">
             <List>
-              {groupPlayers.filter(dp => nonNull(dp._id) && !results.some(p => p.playerId === dp._id) && draft.players.some(p => p.playerId === dp._id)).map(p => (
+              {groupPlayers.filter(dp => !results.some(p => p.playerId === dp._id) && draft.players.some(p => p.playerId === dp._id)).map(p => (
                 <Cell
-                  key={p._id!.toString()}
-                  before={(
-                    <Avatar
-                      src={p.avatarUrl}
-                    />
-                  )}
+                  key={p._id}
+                  before={<Avatar src={p.avatarUrl} />}
                   after={<Button onClick={() => setResults([...results, { playerId: p._id, score: 0 }])}>Добавить</Button>}
                 >
-                  {p.firstName}
-                  {' '}
-                  {p.lastName}
+                  {playerName(p)}
                 </Cell>
-              ),
-              )}
+              ))}
             </List>
           </Section>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {remaining !== 0 && <ActionHint>Распределите все стеки, чтобы завершить игру</ActionHint>}
+            <Button stretched size="l" disabled={remaining !== 0 || busy} loading={busy} onClick={finishGame}>Завершить игру</Button>
+          </div>
         </Modal>
-      )
+      )}
+    </>
+  )
 }

@@ -1,76 +1,64 @@
 'use client'
 
-import type { Player } from '@/types/api'
 import { Avatar, Cell, FileInput, Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
-import { mainButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
-import { use, useCallback, useEffect, useState } from 'react'
+import { use, useState } from 'react'
 import toast from 'react-hot-toast'
+import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'
+import { getErrorMessage } from '@/lib/errors'
+import { resizeAvatar } from '@/lib/image'
 
 export default function NewPlayerPage({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = use(params)
   const [firstName, setFirstName] = useState<string>('')
-  const [lastName, setlastName] = useState<string>('')
+  const [lastName, setLastName] = useState<string>('')
   const [avatar, setAvatar] = useState<string>('')
+  const [saving, setSaving] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    mainButton.setText('Сохранить игрока')
-    mainButton.show()
-
-    const unbound = mainButton.onClick(() => api.post<Player>(`/api/players?groupId=${groupId}`, { firstName, lastName, avatarUrl: avatar })
-      .then(player => router.replace(`/players/${player._id}`))
-      .catch(e => toast.error(e)))
-
-    return () => {
-      unbound()
+  const save = async () => {
+    setSaving(true)
+    try {
+      await api.post(`/api/players?groupId=${groupId}`, { firstName, lastName, avatarUrl: avatar })
+      toast.success('Игрок добавлен')
+      router.replace(`/groups/${groupId}`)
     }
-  }, [mainButton, groupId, firstName, lastName, avatar])
+    catch (e) {
+      toast.error(getErrorMessage(e))
+    }
+    finally {
+      setSaving(false)
+    }
+  }
 
-  useEffect(() => {
-    return () => {
-      mainButton?.hide()
-    }
-  }, [mainButton])
-
-  const readFile = useCallback((file?: Blob) => {
-    const reader = new FileReader()
-
-    reader.onload = (event) => {
-      if (typeof event.target?.result === 'string') {
-        setAvatar(event.target.result)
-      }
-      else {
-        toast.error('Не удалось загрузить файл')
-      }
-    }
-    reader.onerror = (event) => {
-      toast.error(`Не удалось загрузить файл ${event.target?.error?.message}`)
-    }
-    if (file) {
-      reader.readAsDataURL(file)
-    }
-    else {
+  const readFile = (file?: Blob) => {
+    if (!file) {
       setAvatar('')
+      return
     }
-  }, [])
+    resizeAvatar(file)
+      .then(setAvatar)
+      .catch(e => toast.error(`Не удалось загрузить изображение: ${getErrorMessage(e)}`))
+  }
 
   return (
     <Page>
-      <Section header="Создание нового игрока">
+      <Section header="Новый игрок" footer="Игрок без Telegram. Позже он сможет занять этот профиль через «Занять профиль» в группе.">
         <Input
           className="input"
           value={firstName}
           before={<Subheadline>Имя</Subheadline>}
+          disabled={saving}
           onChange={e => setFirstName(e.target.value)}
         />
         <Input
           className="input"
           value={lastName}
           before={<Subheadline>Фамилия</Subheadline>}
-          onChange={e => setlastName(e.target.value)}
+          disabled={saving}
+          onChange={e => setLastName(e.target.value)}
         />
         { avatar
           ? (<Cell onClick={() => setAvatar('')} before={<Avatar size={48} src={avatar} />}>Удалить аватар</Cell>)
@@ -84,6 +72,9 @@ export default function NewPlayerPage({ params }: { params: Promise<{ groupId: s
             )}
       </Section>
 
+      <ActionBar>
+        <ActionButton disabled={!firstName.trim()} loading={saving} onClick={save}>Сохранить игрока</ActionButton>
+      </ActionBar>
     </Page>
   )
 }

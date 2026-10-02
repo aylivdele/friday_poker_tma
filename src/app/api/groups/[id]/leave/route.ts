@@ -1,34 +1,17 @@
-import type { NextRequest } from 'next/dist/server/web/spec-extension/request'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
 import { getDb } from '@/core/db'
-import { getTelegramId } from '@/lib/serverHelpers'
+import { requireAuth } from '@/server/auth'
+import { badRequest, route, toObjectId } from '@/server/http'
+import { isMember, isOwner, loadGroup } from '@/server/permissions'
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  let telegramId
-  try {
-    telegramId = getTelegramId(request)
+export const PUT = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  const group = await loadGroup(toObjectId(id))
+  if (!isMember(group, player._id)) {
+    throw badRequest('Вы не состоите в этой группе')
   }
-  catch (error) {
-    return NextResponse.json({ error }, { status: 403 })
+  if (isOwner(group, player._id)) {
+    throw badRequest('Владелец не может покинуть группу — её можно только удалить')
   }
-
-  const db = await getDb()
-  const group = await db.groups.findOne({ _id: new ObjectId(id) })
-  if (!group) {
-    return NextResponse.json({ error: 'Group not found' }, { status: 404 })
-  }
-  const player = await db.players.findOne({ telegramId })
-  if (!player) {
-    return NextResponse.json({ error: 'Player not found' }, { status: 404 })
-  }
-  if (!group.members.some(m => m.equals(player._id))) {
-    return NextResponse.json({ error: 'Player is not a member of the group' }, { status: 400 })
-  }
-  await db.groups.updateOne(
-    { _id: new ObjectId(id) },
-    { $pull: { members: player._id! } },
-  )
-  return NextResponse.json({ message: 'Player left the group successfully' })
-}
+  await (await getDb()).groups.updateOne({ _id: group._id }, { $pull: { members: player._id } })
+  return { ok: true }
+})

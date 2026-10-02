@@ -2,6 +2,7 @@
 
 import type { SeasonTableResponse } from '@/types/api'
 import { Badge } from '@telegram-apps/telegram-ui'
+import { Fragment } from 'react'
 import useSWR from 'swr'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
@@ -40,14 +41,14 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
           const isFinalWinner = data.finalWinners.includes(player._id)
 
           return (
-            <>
+            <Fragment key={player._id}>
               <div className="sticky-col player">
                 <Badge className="percentage-badge" mode="primary" type="number">
                   {seasonEntriesPercentage}
                 </Badge>
                 {player.firstName}
                 {' '}
-                {player.lastName?.substring(0, 3)?.concat('.') ?? ''}
+                {player.lastName ? `${player.lastName.substring(0, 3)}.` : ''}
 
                 {isFinalWinner && <span className="ml-1">🏆</span>}
 
@@ -66,15 +67,15 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
                       value > 0 ? 'win' : value < 0 ? 'lose' : ''
                     }`}
                   >
-                    {value}
+                    {Math.round(value)}
                   </div>
                 )
               })}
 
               <div className="cell total">
-                {total}
+                {Math.round(total ?? 0)}
               </div>
-            </>
+            </Fragment>
           )
         })}
 

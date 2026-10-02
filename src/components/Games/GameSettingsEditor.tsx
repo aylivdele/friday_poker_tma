@@ -1,24 +1,43 @@
 'use client'
 
-import type { GameSettings } from './../../types/db'
+import type { GameSettings } from '@/types/api'
 import {
   Cell,
   Section,
   Subheadline,
   Switch,
 } from '@telegram-apps/telegram-ui'
+import { useEffect, useState } from 'react'
 import { NumberInput } from '../NumberInput/NumberInput'
+
+type NumberField = 'firstEntryCost' | 'reEntryCost' | 'maxReEntries'
+
+const numberFields: { key: NumberField, label: string }[] = [
+  { key: 'firstEntryCost', label: 'Стоимость первого входа' },
+  { key: 'reEntryCost', label: 'Стоимость повторного входа' },
+  { key: 'maxReEntries', label: 'Макс. повторных входов' },
+]
 
 export default function GameSettingsEditor({
   gameSettings,
   editable,
   onChange,
+  onValidityChange,
 }: {
   gameSettings: GameSettings
   editable: boolean
   onChange: (gameSettings: GameSettings) => void
+  // false, пока хотя бы одно числовое поле пустое
+  onValidityChange?: (valid: boolean) => void
 }) {
-  async function updateSettings(patch: Partial<typeof gameSettings>) {
+  const [invalidFields, setInvalidFields] = useState<Partial<Record<NumberField, boolean>>>({})
+  const valid = !Object.values(invalidFields).some(Boolean)
+
+  useEffect(() => {
+    onValidityChange?.(valid)
+  }, [valid])
+
+  function updateSettings(patch: Partial<GameSettings>) {
     onChange({
       ...gameSettings,
       ...patch,
@@ -43,35 +62,17 @@ export default function GameSettingsEditor({
         Финальная игра сезона
       </Cell>
 
-      <NumberInput
-        before={<Subheadline level="1">Стоимость первого входа</Subheadline>}
-        status="focused"
-        className="input"
-        value={gameSettings.firstEntryCost}
-        disabled={!editable}
-        onChange={value =>
-          updateSettings({ firstEntryCost: value })}
-      />
-
-      <NumberInput
-        before={<Subheadline level="1">Стоимость повторного входа</Subheadline>}
-        status="focused"
-        className="input"
-        value={gameSettings.reEntryCost}
-        disabled={!editable}
-        onChange={value =>
-          updateSettings({ reEntryCost: value })}
-      />
-
-      <NumberInput
-        before={<Subheadline level="1">Кол-во повторных входов</Subheadline>}
-        status="focused"
-        className="input"
-        value={gameSettings.maxReEntries}
-        disabled={!editable}
-        onChange={value =>
-          updateSettings({ maxReEntries: value })}
-      />
+      {numberFields.map(({ key, label }) => (
+        <NumberInput
+          key={key}
+          before={<Subheadline level="1">{label}</Subheadline>}
+          className="input"
+          value={gameSettings[key]}
+          disabled={!editable}
+          onChange={value => updateSettings({ [key]: value })}
+          onInvalidChange={invalid => setInvalidFields(prev => ({ ...prev, [key]: invalid }))}
+        />
+      ))}
     </Section>
   )
 }

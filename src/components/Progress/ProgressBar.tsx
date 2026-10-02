@@ -7,7 +7,7 @@ export function ProgressBar({ progress, count }: { progress: number, count: numb
   return (
     <div className="progress-bar" style={{ gap: `${count > 15 ? 2 : 9}px` }}>
       {
-        arr.map((_v, i) => (<div className={`progress-cell ${(i < progress) ? 'filled' : ''}`} />))
+        arr.map((_v, i) => (<div key={i} className={`progress-cell ${(i < progress) ? 'filled' : ''}`} />))
       }
     </div>
   )

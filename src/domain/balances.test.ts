@@ -1,0 +1,86 @@
+import type { BalanceGame } from './balances'
+import { describe, expect, it } from 'vitest'
+import { calcEntryCaps, calcGameBalances, calcSeasonEntryShares, getGameWinners, totalStacks } from './balances'
+
+function game(players: [string, number][], results: [string, number][], settings: Partial<BalanceGame['settings']> = {}): BalanceGame {
+  return {
+    players: players.map(([playerId, entries]) => ({ playerId, entries })),
+    results: results.map(([playerId, score]) => ({ playerId, score })),
+    settings: { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5, ...settings },
+  }
+}
+
+function sum(balances: Record<string, number>) {
+  return Object.values(balances).reduce((a, b) => a + b, 0)
+}
+
+// Старая формула — только для сравнения: при равных ценах входов она должна совпадать с новой
+function oldRegularBalances(g: BalanceGame) {
+  const balances: Record<string, number> = {}
+  for (const p of g.players) {
+    balances[p.playerId.toString()] = -(g.settings.firstEntryCost + p.entries * g.settings.reEntryCost)
+  }
+  for (const r of g.results ?? []) {
+    balances[r.playerId.toString()] += r.score * g.settings.reEntryCost
+  }
+  return balances
+}
+
+describe('calcGameBalances', () => {
+  it('совпадает со старой формулой, когда цены входов равны', () => {
+    const g = game([['a', 0], ['b', 2], ['c', 1]], [['a', 5], ['b', 1]])
+    expect(calcGameBalances(g)).toEqual(oldRegularBalances(g))
+  })
+
+  it('сумма балансов всегда 0, даже при разных ценах входов', () => {
+    const g = game([['a', 0], ['b', 3], ['c', 1], ['d', 0]], [['a', 4], ['c', 3], ['d', 1]], { firstEntryCost: 150, reEntryCost: 100 })
+    expect(sum(calcGameBalances(g))).toBeCloseTo(0, 9)
+  })
+
+  it('делит банк финала пропорционально стекам', () => {
+    // 3 игрока без докупов, банк 300, победитель забирает 2 стека из 3, второй — 1
+    const g = game([['a', 0], ['b', 0], ['c', 0]], [['a', 2], ['b', 1]], { isFinal: true })
+    expect(calcGameBalances(g)).toEqual({ a: 100, b: 0, c: -100 })
+  })
+
+  it('единственный призёр финала забирает весь банк', () => {
+    const g = game([['a', 1], ['b', 0]], [['a', 3]], { isFinal: true, firstEntryCost: 200, reEntryCost: 100 })
+    // банк = 300 + 200 = 500, расход a = 300
+    expect(calcGameBalances(g)).toEqual({ a: 200, b: -200 })
+  })
+
+  it('игра без игроков не ломает расчёт', () => {
+    expect(calcGameBalances(game([], []))).toEqual({})
+    expect(totalStacks(game([], []))).toBe(0)
+  })
+})
+
+describe('getGameWinners', () => {
+  it('возвращает всех с максимальным балансом', () => {
+    const g = game([['a', 0], ['b', 0], ['c', 0], ['d', 0]], [['a', 2], ['b', 2]])
+    expect(getGameWinners(g).sort()).toEqual(['a', 'b'])
+  })
+})
+
+describe('calcEntryCaps', () => {
+  it('в обычной игре всем доступно maxReEntries + 1', () => {
+    expect(calcEntryCaps({ settings: { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 3 } }, ['a', 'b'], []))
+      .toEqual({ a: 4, b: 4 })
+  })
+
+  it('в финале без сыгранных обычных игр лимит не обнуляется', () => {
+    expect(calcEntryCaps({ settings: { isFinal: true, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 3 } }, ['a'], []))
+      .toEqual({ a: 4 })
+  })
+
+  it('в финале лимит зависит от доли входов за сезон', () => {
+    const season = [
+      game([['a', 4], ['b', 0]], [['b', 6]]), // b — призёр, ему засчитывается максимум
+      game([['a', 0]], [['a', 1]]),
+    ]
+    // максимум за сезон 6 + 6 = 12; a: 5 + 6 = 11, b: 6
+    expect(calcSeasonEntryShares(season)).toEqual({ a: 11 / 12, b: 6 / 12 })
+    expect(calcEntryCaps({ settings: { isFinal: true, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 } }, ['a', 'b', 'c'], season))
+      .toEqual({ a: 5, b: 3, c: 0 })
+  })
+})

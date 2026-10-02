@@ -4,9 +4,10 @@
 import process from 'node:process'
 import { retrieveLaunchParams } from '@tma.js/sdk-react'
 import { init } from './core/init'
-import { mockEnv } from './mockEnv'
+import { isTelegram } from './lib/platform'
 
-mockEnv().then(() => {
+// Вне Telegram SDK не инициализируется: приложение работает как обычный сайт
+if (isTelegram()) {
   try {
     const launchParams = retrieveLaunchParams()
     const { tgWebAppPlatform: platform } = launchParams
@@ -14,7 +15,6 @@ mockEnv().then(() => {
       = (launchParams.tgWebAppStartParam || '').includes('debug')
         || process.env.NODE_ENV === 'development'
 
-    // Configure all application dependencies.
     init({
       debug,
       eruda: debug && ['ios', 'android'].includes(platform),
@@ -24,4 +24,4 @@ mockEnv().then(() => {
   catch (e) {
     console.error(e)
   }
-})
+}

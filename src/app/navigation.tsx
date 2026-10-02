@@ -1,17 +1,19 @@
 'use client'
 
-import { Button, Subheadline, Tabbar } from '@telegram-apps/telegram-ui'
+import { Subheadline, Tabbar } from '@telegram-apps/telegram-ui'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { usePlayerStore } from '@/stores/playerStore'
+
+type Tab = 'profile' | 'groups' | 'games'
 
 export function Navigation() {
   const player = usePlayerStore(s => s.player)
   const router = useRouter()
   const pathname = usePathname()
-  const [currentTab, setCurrentTab] = useState<'profile' | 'groups' | 'games'>('profile')
+  const [currentTab, setCurrentTab] = useState<Tab>('profile')
 
-  const switchTab = useCallback((tab: 'profile' | 'groups' | 'games') => {
+  const switchTab = useCallback((tab: Tab) => {
     const newPath = `/${tab}`
     if (pathname === newPath) {
       return
@@ -36,7 +38,7 @@ export function Navigation() {
     return null
 
   return (
-    <Tabbar>
+    <nav className="tab-bar">
       <Tabbar.Item selected={currentTab === 'profile'} onClick={() => switchTab('profile')}>
         <Subheadline style={{ padding: '10px 5px' }}>Профиль</Subheadline>
       </Tabbar.Item>
@@ -46,6 +48,6 @@ export function Navigation() {
       <Tabbar.Item selected={currentTab === 'games'} onClick={() => switchTab('games')}>
         <Subheadline style={{ padding: '10px 5px' }}>Игры</Subheadline>
       </Tabbar.Item>
-    </Tabbar>
+    </nav>
   )
 }

@@ -1,72 +1,68 @@
 'use client'
 
-import type { Group, Season } from '@/types/api'
+import type { Season } from '@/types/api'
 import { Section, TabsList } from '@telegram-apps/telegram-ui'
-import { secondaryButton } from '@tma.js/sdk-react'
 import { useRouter } from 'next/navigation'
-import { use, useEffect, useState } from 'react'
+import { use, useState } from 'react'
 import toast from 'react-hot-toast'
 import useSWR from 'swr'
+import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
+import { confirmAction } from '@/components/ConfirmButton/ConfirmButton'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { SeasonGames } from '@/components/Seasons/SeasonGames'
 import { SeasonTable } from '@/components/Seasons/SeasonTable'
 import { api } from '@/lib/api'
+import { getErrorMessage } from '@/lib/errors'
 import { isNull } from '@/lib/helpers'
 import { swrGetFetcher } from '@/lib/swrFetcher'
-import { usePlayerStore } from '@/stores/playerStore'
 
 export default function SeasonPage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
   const seasonSwr = useSWR<Season>(`/api/seasons/${seasonId}`, swrGetFetcher)
   const season = seasonSwr.data
-  const groupSwr = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
-  const group = groupSwr.data
   const [selectedTab, setSelectedTab] = useState<'games' | 'table'>('games')
-  const player = usePlayerStore(s => s.player)
+  const [deleting, setDeleting] = useState(false)
   const router = useRouter()
 
-  const handleDelete = () => {
-    if (isNull(seasonId) || isNull(groupId)) {
+  const handleDelete = async () => {
+    if (!season) {
       return
     }
-    return api.delete(`/api/seasons/${seasonId}`).then(() => router.replace('/groups')).then(() => router.back()).catch((reason) => {
-      console.error(reason)
-      toast.error(`Ошибка: ${reason}`)
+    const gamesCount = season.gameIds.length
+    const confirmed = await confirmAction({
+      title: 'Удалить сезон?',
+      description: gamesCount > 0
+        ? `Вместе с сезоном будут удалены все его игры (${gamesCount}). Это нельзя отменить.`
+        : 'Это нельзя отменить.',
+      confirmText: 'Удалить',
     })
-  }
-
-  useEffect(() => {
-    if (!secondaryButton || isNull(season) || isNull(group) || isNull(player) || group.ownerId !== player._id) {
-      secondaryButton.hide()
+    if (!confirmed) {
       return
     }
-    secondaryButton.setText('Удалить сезон')
-    secondaryButton.setBgColor('#FF0000')
-    secondaryButton.show()
-
-    const unmount = secondaryButton.onClick(handleDelete)
-
-    return () => {
-      unmount()
+    setDeleting(true)
+    try {
+      await api.delete(`/api/seasons/${seasonId}`)
+      toast.success('Сезон удалён')
+      router.replace(`/groups/${groupId}`)
     }
-  }, [secondaryButton, season, group, player])
-
-  useEffect(() => {
-    return () => secondaryButton.hide()
-  }, [])
+    catch (e) {
+      toast.error(getErrorMessage(e))
+      setDeleting(false)
+    }
+  }
 
   if (isNull(season)) {
-    return <Loader {...seasonSwr} />
-  }
-  if (isNull(group)) {
-    return <Loader {...groupSwr} />
+    return (
+      <Page>
+        <Loader {...seasonSwr} />
+      </Page>
+    )
   }
 
   return (
     <Page>
       <Section header={`Сезон: ${season.title}`}>
-
         <TabsList>
           <TabsList.Item selected={selectedTab === 'games'} onClick={() => setSelectedTab('games')}>
             Игры
@@ -77,11 +73,19 @@ export default function SeasonPage({ params }: { params: Promise<{ seasonId: str
         </TabsList>
         {
           selectedTab === 'games'
-            ? (<SeasonGames groupMembers={group.members} seasonId={seasonId} groupId={groupId} />)
+            ? (<SeasonGames seasonId={seasonId} />)
             : (<SeasonTable seasonId={seasonId} />)
         }
-
       </Section>
+
+      <ActionBar>
+        {season.can.createGame && selectedTab === 'games' && (
+          <ActionButton onClick={() => router.push(`/groups/${groupId}/seasons/${seasonId}/games/new`)}>Новая игра</ActionButton>
+        )}
+        {season.can.delete && (
+          <ActionButton variant="destructive" loading={deleting} onClick={handleDelete}>Удалить сезон</ActionButton>
+        )}
+      </ActionBar>
     </Page>
   )
 }

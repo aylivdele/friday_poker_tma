@@ -1,43 +1,37 @@
 'use client'
 
 import type { Player } from '@/types/api'
-import { initData, useSignal } from '@tma.js/sdk-react'
 import { useEffect } from 'react'
-import { Toaster } from 'react-hot-toast'
-import { toast } from 'react-hot-toast/headless'
+import toast, { Toaster } from 'react-hot-toast'
+import { getErrorMessage } from '@/lib/errors'
+import { isTelegram } from '@/lib/platform'
 import { usePlayerStore } from '@/stores/playerStore'
 import { api } from '../lib/api'
 
 export default function Bootstrap() {
   const setPlayer = usePlayerStore(s => s.setPlayer)
-  const rawInitData = useSignal(initData.raw)
 
   useEffect(() => {
+    if (!isTelegram()) {
+      return
+    }
     let cancelled = false
 
-    async function init() {
-      try {
-        const player = await api.post<Player>('/api/players?useInitData=true')
-
-        if (cancelled)
-          return
-
-        setPlayer(player)
-      }
-      catch (e) {
+    api.post<Player>('/api/auth/telegram')
+      .then((player) => {
+        if (!cancelled) {
+          setPlayer(player)
+        }
+      })
+      .catch((e) => {
         console.error('Error fetching/creating player:', e)
-        toast.error(`Ошибка при загрузке данных игрока: ${e}`)
-      }
-    }
+        toast.error(`Не удалось загрузить профиль: ${getErrorMessage(e)}`)
+      })
 
-    if (rawInitData) {
-      init()
-
-      return () => {
-        cancelled = true
-      }
+    return () => {
+      cancelled = true
     }
-  }, [setPlayer, rawInitData])
+  }, [setPlayer])
 
   return <Toaster />
 }

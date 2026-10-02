@@ -1,31 +1,20 @@
-import type { NextRequest } from 'next/server'
-import type { SeasonTable, SeasonTableResponse } from '@/types/api'
-import { ObjectId } from 'mongodb'
-import { NextResponse } from 'next/server'
+import type { SeasonTableResponse } from '@/types/api'
 import { getDb } from '@/core/db'
-import { calculateSeasonResults } from './results'
+import { requireAuth } from '@/server/auth'
+import { toPublicPlayer } from '@/server/dto'
+import { loadSeasonTable } from '@/server/games'
+import { route, toObjectId } from '@/server/http'
+import { loadSeason } from '@/server/permissions'
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse<SeasonTableResponse>> {
-  const { id } = await params
+export const GET = route<{ id: string }>(async (req, { id }): Promise<SeasonTableResponse> => {
+  await requireAuth(req)
+  const season = await loadSeason(toObjectId(id))
+  const table = await loadSeasonTable(season._id)
 
-  const db = await getDb()
+  const playerIds = Object.keys(table.totals).map(playerId => toObjectId(playerId))
+  const players = (await (await getDb()).players.find({ _id: { $in: playerIds } }).toArray())
+    .map(toPublicPlayer)
+    .sort((a, b) => (table.totals[b._id] ?? 0) - (table.totals[a._id] ?? 0))
 
-  let table: SeasonTable | undefined = (await db.seasons.findOne({ _id: new ObjectId(id) }, { projection: { table: 1 } }))?.table
-
-  if (!table) {
-    table = await calculateSeasonResults(id)
-  }
-  const players = (await db.players.find({ _id: { $in: Object.keys(table.totals).map(id => new ObjectId(id)) } }).toArray())
-    .map(p => ({ ...p, _id: p._id.toString() }))
-    .sort((a, b) => {
-      const totalA = table.totals[a._id] ?? 0
-      const totalB = table.totals[b._id] ?? 0
-
-      return totalB - totalA
-    })
-
-  return NextResponse.json({
-    ...table,
-    players,
-  })
-}
+  return { ...table, players }
+})

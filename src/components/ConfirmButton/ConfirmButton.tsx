@@ -1,59 +1,28 @@
 'use client'
 
-import type { JSX } from 'react'
 import { popup } from '@tma.js/sdk-react'
-import { cloneElement } from 'react'
+import { isTelegram } from '@/lib/platform'
 
-interface ConfirmButtonProps {
+interface ConfirmOptions {
   title?: string
   description: string
   confirmText?: string
   cancelText?: string
-  onConfirm: () => void | Promise<void>
-  children: JSX.Element
 }
 
-export function confirmPopup({ title, description, cancelText = 'Отмена', confirmText = 'Подтвердить', onConfirm }: Omit<ConfirmButtonProps, 'children'>) {
-  return popup.show(
-    {
+// Спрашивает подтверждение: в Telegram — нативным окном, в браузере — системным диалогом
+export async function confirmAction({ title, description, cancelText = 'Отмена', confirmText = 'Подтвердить' }: ConfirmOptions): Promise<boolean> {
+  if (isTelegram()) {
+    const result = await popup.show({
       title,
       message: description,
       buttons: [
         { id: 'cancel', type: 'default', text: cancelText },
         { id: 'confirm', type: 'destructive', text: confirmText },
       ],
-    },
-  ).then((result) => {
-    if (result === 'confirm') {
-      return onConfirm()
-    }
-  })
-}
-
-export function ConfirmButton({
-  title,
-  description,
-  confirmText = 'Подтвердить',
-  cancelText = 'Отмена',
-  onConfirm,
-  children,
-}: ConfirmButtonProps) {
-  async function handleClick() {
-    if (popup) {
-      await confirmPopup({ title, description, confirmText, cancelText, onConfirm })
-      return
-    }
-
-    // eslint-disable-next-line no-alert
-    const ok = window.confirm(
-      `${title}${description ? `\n\n${description}` : ''}`,
-    )
-    if (ok) {
-      await onConfirm()
-    }
+    })
+    return result === 'confirm'
   }
-
-  return cloneElement(children, {
-    onClick: handleClick,
-  })
+  // eslint-disable-next-line no-alert
+  return window.confirm(title ? `${title}\n\n${description}` : description)
 }

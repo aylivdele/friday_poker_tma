@@ -4,13 +4,10 @@ import {
   emitEvent,
   initData,
   init as initSDK,
-  mainButton,
   miniApp,
   mockTelegramEnv,
   retrieveLaunchParams,
-  secondaryButton,
   setDebug,
-
   themeParams,
   viewport,
 } from '@tma.js/sdk-react'
@@ -69,12 +66,11 @@ export async function init(options: {
     })
   }
 
-  // Mount all components used in the project.
+  // Mount all components used in the project. Кнопки действий рисуются на странице,
+  // поэтому нативные MainButton и SecondaryButton не используются.
   backButton.mount()
-  mainButton.mount()
   initData.restore()
   themeParams.mount()
-  secondaryButton.mount()
 
   try {
     miniApp.mount()
@@ -85,13 +81,17 @@ export async function init(options: {
     console.error(e)
   }
 
-  try {
-    viewport.mount().then(() => {
+  viewport.mount()
+    .then(() => {
       viewport.bindCssVars()
+      viewport.expand()
     })
+    .catch(e => console.error(e))
+
+  try {
+    miniApp.ready()
   }
   catch (e) {
-    // viewport not available
     console.error(e)
   }
 }

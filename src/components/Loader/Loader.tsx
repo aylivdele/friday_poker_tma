@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { Cell, Spinner, Text } from '@telegram-apps/telegram-ui'
+import { getErrorMessage } from '@/lib/errors'
 import { isNull } from '@/lib/helpers'
 
 export function Loader({ data, isLoading, error, children }: PropsWithChildren<{ data: any, isLoading: boolean, error: any }>) {
@@ -7,10 +8,9 @@ export function Loader({ data, isLoading, error, children }: PropsWithChildren<{
     return (<Cell before={<Spinner size="m" />}><Text weight="2">Загрузка...</Text></Cell>)
   if (error) {
     return (
-      <Text weight="2">
-        Ошибка загрузки:
-        {error}
-      </Text>
+      <Cell multiline>
+        <Text weight="2">{`Ошибка загрузки: ${getErrorMessage(error)}`}</Text>
+      </Cell>
     )
   }
   if (isNull(data)) {

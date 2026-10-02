@@ -1,5 +1,5 @@
 import type { Collection, Db, ObjectId } from 'mongodb'
-import type { Achievment, SeasonTable } from './api'
+import type { Achievment } from './api'
 
 /* ===== Player ===== */
 export interface Player {
@@ -53,6 +53,8 @@ export interface Game {
   seasonId?: ObjectId
   settings: GameSettings
   creater?: ObjectId
+  // счётчик версий для защиты от потери изменений при одновременной правке
+  rev?: number
 }
 
 export interface Season {
@@ -60,7 +62,6 @@ export interface Season {
   groupId: ObjectId
   title: string
   gameIds: ObjectId[]
-  table?: SeasonTable
 }
 
 export interface MongoCollectionsWithClient {

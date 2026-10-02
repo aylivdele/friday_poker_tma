@@ -10,5 +10,30 @@
 }
 
 .root {
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 80px) env(safe-area-inset-left);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(var(--bottom-panel-height, 80px) + 16px) env(safe-area-inset-left);
+}
+
+.browser-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 80vh;
+  padding: 24px;
+  text-align: center;
+}
+
+.page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 12px 0;
+  padding: 6px 4px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  color: var(--tgui--link_color);
+  cursor: pointer;
 }
