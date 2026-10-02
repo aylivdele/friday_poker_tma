@@ -33,9 +33,20 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 
   const data = await response.json().catch(() => null)
   if (!response.ok) {
+    if (response.status === 401 && !isTelegram() && !url.startsWith('/api/auth/')) {
+      redirectToLogin()
+    }
     throw new ApiError(response.status, data?.error ?? `Ошибка сервера (${response.status})`)
   }
   return data as T
+}
+
+// В браузере без действующей сессии отправляем на вход и возвращаем обратно после него
+export function redirectToLogin() {
+  const { pathname, search } = window.location
+  if (pathname !== '/login') {
+    window.location.replace(`/login?next=${encodeURIComponent(pathname + search)}`)
+  }
 }
 
 export const api = {

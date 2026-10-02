@@ -1,7 +1,9 @@
 import type { ObjectId, WithId } from 'mongodb'
+import type { Auth } from './auth'
 import type * as Api from '@/types/api'
 import type { Game, Group, Player, Season } from '@/types/db'
 import { nonNull } from '@/lib/helpers'
+import { maskPhone } from '@/lib/phone'
 import { gameAbilities, groupAbilities, seasonAbilities } from './permissions'
 
 // Наружу уходят только перечисленные поля: telegramId, телефон и пароль никогда не покидают сервер
@@ -15,6 +17,15 @@ export function toPublicPlayer(player: WithId<Player>): Api.Player {
     avatarUrl: player.avatarUrl,
     createdAt: player.createdAt,
     achievments: player.achievments,
+  }
+}
+
+export function toMe(auth: Auth): Api.Me {
+  return {
+    ...toPublicPlayer(auth.player),
+    authVia: auth.via,
+    hasPassword: !!auth.player.passwordHash,
+    phone: auth.player.phone ? maskPhone(auth.player.phone) : null,
   }
 }
 

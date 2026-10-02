@@ -10,6 +10,14 @@ export interface Player {
   achievments?: Pick<Achievment, 'id' | 'progress'>[]
 }
 
+// Свой профиль: что нужно для входа из браузера
+export interface Me extends Player {
+  authVia: 'telegram' | 'session'
+  hasPassword: boolean
+  // маскированный номер, если подтверждён
+  phone: string | null
+}
+
 /* ===== Group ===== */
 export interface GroupAbilities {
   join: boolean

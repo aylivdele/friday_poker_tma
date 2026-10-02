@@ -11,6 +11,9 @@
 
 .root {
   min-height: 100vh;
+  box-sizing: border-box;
+  /* в Telegram совпадает с цветом темы Telegram, в браузере зависит от светлой/тёмной темы системы */
+  background: var(--tgui--secondary_bg_color);
   padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(var(--bottom-panel-height, 80px) + 16px) env(safe-area-inset-left);
 }
 

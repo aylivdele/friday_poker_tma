@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { Player } from '@/types/api'
 import { Avatar, Cell, List, Section, Text } from '@telegram-apps/telegram-ui'
 import { openTelegramLink } from '@tma.js/sdk-react'
@@ -14,7 +15,8 @@ function openProfile(username: string) {
   }
 }
 
-export function PlayerComponent({ player }: { player: Player }) {
+// children выводятся между карточкой игрока и достижениями
+export function PlayerComponent({ player, children }: { player: Player, children?: ReactNode }) {
   const subtitle = player.hasTelegram
     ? (player.username ? `@${player.username}` : undefined)
     : 'Профиль без Telegram'
@@ -32,6 +34,7 @@ export function PlayerComponent({ player }: { player: Player }) {
           </Cell>
         </List>
       </Section>
+      {children}
       <Section header="Достижения">
         <Achievments progresses={player.achievments} />
       </Section>

@@ -1,141 +1,68 @@
-# Telegram Mini Apps Next.js Template
+# Friday Poker
 
-This template demonstrates how developers can implement a web application on the
-Telegram Mini Apps platform using the following technologies and libraries:
+Учёт домашних покерных игр: группы, сезоны, игры с докупами, таблица сезона и достижения.
+Работает как Telegram Mini App и как обычный сайт.
 
-- [Next.js](https://nextjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [TON Connect](https://docs.ton.org/develop/dapps/ton-connect/overview)
-- [@telegram-apps SDK](https://docs.telegram-mini-apps.com/packages/telegram-apps-sdk/2-x)
-- [Telegram UI](https://github.com/Telegram-Mini-Apps/TelegramUI)
+- **В Telegram** вход автоматический: по подписанным данным Telegram (initData).
+- **В браузере** вход по номеру телефона и паролю. Их задают в Telegram: Профиль → «Вход из браузера». Номер подтверждается через Telegram, а пароль меняется оттуда же без старого, если его забыли.
 
-> The template was created using [pnpm](https://pnpm.io/). Therefore, it is
-> required to use it for this project as well. Using other package managers, you
-> will receive a corresponding error.
+Стек: Next.js 16 (app router), React 19, MongoDB 7 (replica set: нужны транзакции), SWR, zod.
 
-## Install Dependencies
+## Переменные окружения
 
-If you have just cloned this template, you should install the project
-dependencies using the command:
+См. `.env.example`.
 
-```Bash
-pnpm install
-```
+| Переменная | Зачем |
+|---|---|
+| `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_HOST`, `MONGODB_PORT`, `MONGODB_DBNAME` | подключение к MongoDB (`authSource=admin`) |
+| `TELEGRAM_BOT_TOKEN` | проверка подписи initData и номера телефона |
+| `APP_ORIGIN` | адрес сайта для защиты от CSRF; без него берётся заголовок `Host` |
 
-## Scripts
+## Локальная разработка без Telegram
 
-This project contains the following scripts:
+1. Поднимите MongoDB как replica set из одного узла, например в Docker:
 
-- `dev`. Runs the application in development mode.
-- `dev:https`. Runs the application in development mode using self-signed SSL
-  certificate.
-- `build`. Builds the application for production.
-- `start`. Starts the Next.js server in production mode.
-- `lint`. Runs [eslint](https://eslint.org/) to ensure the code quality meets
-  the required
-  standards.
+   ```bash
+   docker run -d --name fp-mongo -p 27017:27017 mongo:7 --replSet rs0
+   docker exec fp-mongo mongosh --eval "rs.initiate()"
+   ```
 
-To run a script, use the `pnpm run` command:
+   Если включаете авторизацию, создайте пользователя в базе `admin`.
+2. Заполните `.env` по образцу `.env.example`.
+3. Создайте демо-данные:
 
-```Bash
-pnpm run {script}
-# Example: pnpm run build
-```
+   ```bash
+   pnpm tsx --env-file=.env scripts/seed.ts
+   ```
 
-## Create Bot and Mini App
+   Скрипт работает только с локальной базой.
+4. Запустите `pnpm dev` и войдите на `/login`: телефон `+7 999 000-00-01`, пароль `demo-password`.
 
-Before you start, make sure you have already created a Telegram Bot. Here is
-a [comprehensive guide](https://docs.telegram-mini-apps.com/platform/creating-new-app)
-on how to do it.
+Проверять приложение внутри Telegram удобнее всего через туннель (например, cloudflared) и отдельного тестового бота.
 
-## Run
+## Скрипты
 
-Although Mini Apps are designed to be opened
-within [Telegram applications](https://docs.telegram-mini-apps.com/platform/about#supported-applications),
-you can still develop and test them outside of Telegram during the development
-process.
+- `pnpm dev`: режим разработки.
+- `pnpm build` / `pnpm start`: production-сборка и запуск.
+- `pnpm lint`: проверка ESLint.
+- `pnpm typecheck`: проверка типов TypeScript.
+- `pnpm test`: юнит-тесты (vitest) на расчёт балансов, таблицу сезона, проверку подписей Telegram, пароли и телефоны.
+- `pnpm tsx --env-file=.env scripts/compare-balances.ts`: показывает, как изменились итоги сезонов после перехода на пропорциональное деление банка. Скрипт только читает базу.
 
-To run the application in the development mode, use the `dev` script:
+## Устройство
 
-```bash
-pnpm run dev
-```
+- `src/app/api/**`: API. Каждый обработчик обёрнут в `route()` из `src/server/http.ts`. Обёртка отвечает за ошибки в JSON и защиту от CSRF.
+- `src/server/`: серверная логика.
+  - `auth.ts`: initData или cookie-сессия.
+  - `permissions.ts`: кто что может. Флаги `can` уходят в ответах API.
+  - `dto.ts`: что можно отдавать наружу.
+  - `games.ts`: таблица сезона, лимиты входов, каскадные удаления.
+- `src/domain/`: чистые функции расчёта, общие для сервера и клиента.
+- `src/lib/achievments.ts`: достижения. При каждом изменении они пересчитываются с нуля по завершённым играм, а при старте сервера — у всех игроков.
+- При старте сервера (`src/instrumentation.ts`) создаются индексы и пересчитываются достижения.
 
-After this, you will see a similar message in your terminal:
+## Деплой
 
-```bash
-▲ Next.js 14.2.3
-- Local:        http://localhost:3000
+Прод работает через `docker-compose.yml`: приложение на порту 3001 за nginx (`nginx/friday-poker`).
 
-✓ Starting...
-✓ Ready in 2.9s
-```
-
-To view the application, you need to open the `Local`
-link (`http://localhost:3000` in this example) in your browser.
-
-It is important to note that some libraries in this template, such as
-`@telegram-apps/sdk`, are not intended for use outside of Telegram.
-
-Nevertheless, they appear to function properly. This is because the
-`src/hooks/useTelegramMock.ts` file, which is imported in the application's
-`Root` component, employs the `mockTelegramEnv` function to simulate the
-Telegram environment. This trick convinces the application that it is
-running in a Telegram-based environment. Therefore, be cautious not to use this
-function in production mode unless you fully understand its implications.
-
-### Run Inside Telegram
-
-Although it is possible to run the application outside of Telegram, it is
-recommended to develop it within Telegram for the most accurate representation
-of its real-world functionality.
-
-To run the application inside Telegram, [@BotFather](https://t.me/botfather)
-requires an HTTPS link.
-
-This template already provides a solution.
-
-To retrieve a link with the HTTPS protocol, consider using the `dev:https`
-script:
-
-```bash
-$ pnpm run dev:https
-
-▲ Next.js 14.2.3
-- Local:        https://localhost:3000
-
-✓ Starting...
-✓ Ready in 2.4s
-```
-
-Visiting the `Local` link (`https://localhost:3000` in this example) in your
-browser, you will see the following warning:
-
-![SSL Warning](assets/ssl-warning.png)
-
-This browser warning is normal and can be safely ignored as long as the site is
-secure. Click the `Proceed to localhost (unsafe)` button to continue and view
-the application.
-
-Once the application is displayed correctly, submit the
-link `https://127.0.0.1:3000` (`https://localhost:3000` is considered as invalid
-by BotFather) as the Mini App link to [@BotFather](https://t.me/botfather).
-Then, navigate to [https://web.telegram.org/k/](https://web.telegram.org/k/),
-find your bot, and launch the Telegram Mini App. This approach provides the full
-development experience.
-
-## Deploy
-
-The easiest way to deploy your Next.js app is to use
-the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
-from the creators of Next.js.
-
-Check out
-the [Next.js deployment documentation](https://nextjs.org/docs/deployment) for
-more details.
-
-## Useful Links
-
-- [Platform documentation](https://docs.telegram-mini-apps.com/)
-- [@telegram-apps/sdk-react documentation](https://docs.telegram-mini-apps.com/packages/telegram-apps-sdk-react)
-- [Telegram developers community chat](https://t.me/devs)
+После обновления конфига nginx скопируйте его на сервер и выполните `nginx -t && systemctl reload nginx`.

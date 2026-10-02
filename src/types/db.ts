@@ -11,6 +11,21 @@ export interface Player {
   avatarUrl?: string
   createdAt: number
   achievments?: Pick<Achievment, 'id' | 'progress'>[]
+  // только цифры, подтверждён через Telegram; используется для входа из браузера
+  phone?: string
+  passwordHash?: string
+}
+
+/* ===== Session ===== */
+export interface Session {
+  _id?: ObjectId
+  playerId: ObjectId
+  // в базе только хеш токена: утечка базы не даёт войти по чужой сессии
+  tokenHash: string
+  createdAt: Date
+  expiresAt: Date
+  lastSeenAt: Date
+  userAgent?: string
 }
 
 /* ===== Group ===== */
@@ -69,5 +84,6 @@ export interface MongoCollectionsWithClient {
   groups: Collection<Group>
   games: Collection<Game>
   seasons: Collection<Season>
+  sessions: Collection<Session>
   client: Db
 }

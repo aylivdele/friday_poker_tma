@@ -1,7 +1,7 @@
 'use client'
 
 import type { PropsWithChildren } from 'react'
-import { AppRoot, Headline, Text } from '@telegram-apps/telegram-ui'
+import { AppRoot } from '@telegram-apps/telegram-ui'
 import {
   miniApp,
   retrieveLaunchParams,
@@ -49,15 +49,12 @@ function usePrefersDark() {
   return isDark
 }
 
-function BrowserRoot() {
+function BrowserRoot({ children }: PropsWithChildren) {
   const isDark = usePrefersDark()
 
   return (
     <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base" className="root">
-      <div className="browser-notice">
-        <Headline weight="2">Friday Poker</Headline>
-        <Text>Пока приложение работает только внутри Telegram. Вход из браузера появится в ближайшем обновлении.</Text>
-      </div>
+      {children}
     </AppRoot>
   )
 }
@@ -71,7 +68,7 @@ export function Root(props: PropsWithChildren) {
   return didMount
     ? (
         <ErrorBoundary fallback={ErrorPage}>
-          {isTelegram() ? <TelegramRoot {...props} /> : <BrowserRoot />}
+          {isTelegram() ? <TelegramRoot {...props} /> : <BrowserRoot {...props} />}
         </ErrorBoundary>
       )
     : (

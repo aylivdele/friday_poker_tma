@@ -1,20 +1,21 @@
-import type { WithId } from 'mongodb'
+import type { ObjectId, WithId } from 'mongodb'
 import type { NextRequest } from 'next/server'
 import type { Player } from '@/types/db'
 import process from 'node:process'
 import { parse, validate } from '@tma.js/init-data-node'
 import { getDb } from '@/core/db'
 import { unauthorized } from './http'
+import { findSession } from './sessions'
 
-export interface Auth {
-  player: WithId<Player>
-  via: 'telegram'
-}
+// Внутри Telegram — по подписанным initData в заголовке, в браузере — по cookie сессии
+export type Auth
+  = | { player: WithId<Player>, via: 'telegram' }
+    | { player: WithId<Player>, via: 'session', sessionId: ObjectId }
 
 // Telegram Desktop держит окно приложения открытым днями, сутки — слишком мало
 const INIT_DATA_TTL_SECONDS = 7 * 24 * 60 * 60
 
-function botToken() {
+export function botToken() {
   const token = process.env.TELEGRAM_BOT_TOKEN
   if (!token) {
     throw new Error('TELEGRAM_BOT_TOKEN is not set')
@@ -43,11 +44,12 @@ export function getTelegramUser(req: NextRequest) {
 export async function getAuth(req: NextRequest): Promise<Auth | null> {
   // Если заголовок Telegram пришёл, используем только его, даже если он невалиден
   const telegramUser = getTelegramUser(req)
-  if (!telegramUser) {
-    return null
+  if (telegramUser) {
+    const player = await (await getDb()).players.findOne({ telegramId: Number(telegramUser.id) })
+    return player ? { player, via: 'telegram' } : null
   }
-  const player = await (await getDb()).players.findOne({ telegramId: Number(telegramUser.id) })
-  return player ? { player, via: 'telegram' } : null
+  const found = await findSession(req)
+  return found ? { player: found.player, via: 'session', sessionId: found.session._id } : null
 }
 
 export async function requireAuth(req: NextRequest): Promise<Auth> {

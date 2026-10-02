@@ -1,5 +1,5 @@
 import type { Db } from 'mongodb'
-import type { Game, Group, MongoCollectionsWithClient, Player, Season } from '@/types/db'
+import type { Game, Group, MongoCollectionsWithClient, Player, Season, Session } from '@/types/db'
 import process from 'node:process'
 import { MongoClient } from 'mongodb'
 
@@ -31,6 +31,7 @@ export function getCollections(db: Db): MongoCollectionsWithClient {
     groups: db.collection<Group>('groups'),
     games: db.collection<Game>('games'),
     seasons: db.collection<Season>('seasons'),
+    sessions: db.collection<Session>('sessions'),
     client: db,
   }
 }

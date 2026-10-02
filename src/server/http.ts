@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server'
 import type { z } from 'zod'
+import process from 'node:process'
 import { BSON, ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 
@@ -18,10 +19,38 @@ export const tooManyRequests = (message = 'Слишком много попыт�
 
 type Handler<P> = (req: NextRequest, params: P) => Promise<unknown>
 
+// Защита от CSRF для запросов с cookie сессии. Запрос с заголовком x-init-data с чужого сайта
+// не отправить без preflight, поэтому его не проверяем.
+function assertSameOrigin(req: NextRequest) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || req.headers.has('x-init-data')) {
+    return
+  }
+  if (!req.headers.get('content-type')?.includes('application/json')) {
+    throw forbidden('Некорректный запрос')
+  }
+  const site = req.headers.get('sec-fetch-site')
+  if (site && site !== 'same-origin' && site !== 'none') {
+    throw forbidden('Запрос с другого сайта отклонён')
+  }
+  const origin = req.headers.get('origin')
+  if (origin) {
+    const expectedHost = process.env.APP_ORIGIN ? new URL(process.env.APP_ORIGIN).host : req.headers.get('host')
+    let originHost: string | null = null
+    try {
+      originHost = new URL(origin).host
+    }
+    catch {}
+    if (originHost !== expectedHost) {
+      throw forbidden('Запрос с другого сайта отклонён')
+    }
+  }
+}
+
 // Обёртка над обработчиком маршрута: превращает HttpError и ошибки валидации в JSON { error }
 export function route<P = object>(handler: Handler<P>) {
   return async (req: NextRequest, ctx: { params: Promise<P> }) => {
     try {
+      assertSameOrigin(req)
       const result = await handler(req, await ctx.params)
       if (result instanceof Response) {
         return result
