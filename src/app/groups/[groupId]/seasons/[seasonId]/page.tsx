@@ -1,46 +1,69 @@
 'use client'
 
-import type { Season } from '@/types/api'
-import { Section, TabsList } from '@telegram-apps/telegram-ui'
+import type { Game, Group, Season, SeasonTableResponse } from '@/types/api'
+import { Rows3Icon, Table2Icon, Trash2Icon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
 import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
+import { Section } from '@/components/app/Section'
+import { Segmented } from '@/components/app/Segmented'
 import { confirmAction } from '@/components/ConfirmButton/ConfirmButton'
+import { GameRow } from '@/components/game/GameRow'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { SeasonGames } from '@/components/Seasons/SeasonGames'
-import { SeasonTable } from '@/components/Seasons/SeasonTable'
+import { SeasonGrid, SeasonRanking } from '@/components/season/SeasonRanking'
+import { Button } from '@/components/ui/button'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/errors'
-import { isNull } from '@/lib/helpers'
+import { plural } from '@/lib/format'
 import { swrGetFetcher } from '@/lib/swrFetcher'
+import { usePlayerStore } from '@/stores/playerStore'
+
+type Tab = 'table' | 'games'
 
 export default function SeasonPage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
-  const seasonSwr = useSWR<Season>(`/api/seasons/${seasonId}`, swrGetFetcher)
-  const season = seasonSwr.data
-  const [selectedTab, setSelectedTab] = useState<'games' | 'table'>('games')
-  const [deleting, setDeleting] = useState(false)
   const router = useRouter()
+  const me = usePlayerStore(s => s.player)
+  const seasonSwr = useSWR<Season>(`/api/seasons/${seasonId}`, swrGetFetcher)
+  const { data: group } = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
+  const gamesSwr = useSWR<Game[]>(`/api/games?seasonId=${seasonId}`, swrGetFetcher)
+  const tableSwr = useSWR<SeasonTableResponse>(`/api/seasons/${seasonId}/results`, swrGetFetcher)
+  const [tab, setTab] = useState<Tab | null>(null)
+  const [detailed, setDetailed] = useState(false)
 
-  const handleDelete = async () => {
-    if (!season) {
-      return
+  const season = seasonSwr.data
+  const games = gamesSwr.data
+  const table = tableSwr.data
+
+  // По умолчанию — таблица, если уже есть сыгранные игры
+  useEffect(() => {
+    if (tab === null && games) {
+      setTab(games.some(g => g.isFinished) ? 'table' : 'games')
     }
-    const gamesCount = season.gameIds.length
+  }, [games, tab])
+
+  if (!season) {
+    return (
+      <Page title="Сезон">
+        <Loader {...seasonSwr} />
+      </Page>
+    )
+  }
+
+  const deleteSeason = async () => {
+    const count = season.gameIds.length
     const confirmed = await confirmAction({
       title: 'Удалить сезон?',
-      description: gamesCount > 0
-        ? `Вместе с сезоном будут удалены все его игры (${gamesCount}). Это нельзя отменить.`
-        : 'Это нельзя отменить.',
+      description: count > 0 ? `Вместе с сезоном удалятся все его игры (${count}). Это нельзя отменить.` : 'Это нельзя отменить.',
       confirmText: 'Удалить',
     })
     if (!confirmed) {
       return
     }
-    setDeleting(true)
     try {
       await api.delete(`/api/seasons/${seasonId}`)
       toast.success('Сезон удалён')
@@ -48,44 +71,65 @@ export default function SeasonPage({ params }: { params: Promise<{ seasonId: str
     }
     catch (e) {
       toast.error(getErrorMessage(e))
-      setDeleting(false)
     }
   }
 
-  if (isNull(season)) {
-    return (
-      <Page>
-        <Loader {...seasonSwr} />
-      </Page>
-    )
-  }
-
   return (
-    <Page>
-      <Section header={`Сезон: ${season.title}`}>
-        <TabsList>
-          <TabsList.Item selected={selectedTab === 'games'} onClick={() => setSelectedTab('games')}>
-            Игры
-          </TabsList.Item>
-          <TabsList.Item selected={selectedTab === 'table'} onClick={() => setSelectedTab('table')}>
-            Таблица
-          </TabsList.Item>
-        </TabsList>
-        {
-          selectedTab === 'games'
-            ? (<SeasonGames seasonId={seasonId} />)
-            : (<SeasonTable seasonId={seasonId} />)
-        }
-      </Section>
+    <Page
+      title={season.title}
+      subtitle={group ? `${group.title} · ${plural(games?.length ?? season.gameIds.length, ['игра', 'игры', 'игр'])}` : undefined}
+      menu={season.can.delete
+        ? (
+            <DropdownMenuItem variant="destructive" onSelect={deleteSeason}>
+              <Trash2Icon />
+              Удалить сезон
+            </DropdownMenuItem>
+          )
+        : undefined}
+    >
+      <Segmented
+        value={tab ?? 'table'}
+        onChange={setTab}
+        options={[
+          { value: 'table', label: 'Таблица' },
+          { value: 'games', label: games ? `Игры · ${games.length}` : 'Игры' },
+        ]}
+      />
 
-      <ActionBar>
-        {season.can.createGame && selectedTab === 'games' && (
+      {tab === 'games' && (
+        !games
+          ? <Loader {...gamesSwr} />
+          : (
+              <Section>
+                {games.length === 0 && <div className="px-4 py-8 text-center text-sm text-muted-foreground">Игр пока нет — создайте первую</div>}
+                {games.map(game => <GameRow key={game._id} game={game} meId={me?._id} />)}
+              </Section>
+            )
+      )}
+
+      {tab === 'table' && (
+        !table
+          ? <Loader {...tableSwr} />
+          : table.players.length === 0
+            ? <div className="px-6 py-10 text-center text-sm text-muted-foreground">Таблица появится после первой завершённой игры</div>
+            : (
+                <>
+                  {detailed ? <SeasonGrid table={table} /> : <SeasonRanking table={table} games={games} />}
+                  <div className="flex justify-center pt-3">
+                    <Button variant="ghost" className="h-10 gap-2 rounded-xl text-primary-text hover:bg-secondary hover:text-primary-text" onClick={() => setDetailed(!detailed)}>
+                      {detailed ? <Rows3Icon className="size-4" /> : <Table2Icon className="size-4" />}
+                      {detailed ? 'Рейтинг' : 'Подробно по играм'}
+                    </Button>
+                  </div>
+                </>
+              )
+      )}
+
+      {season.can.createGame && (
+        <ActionBar>
           <ActionButton onClick={() => router.push(`/groups/${groupId}/seasons/${seasonId}/games/new`)}>Новая игра</ActionButton>
-        )}
-        {season.can.delete && (
-          <ActionButton variant="destructive" loading={deleting} onClick={handleDelete}>Удалить сезон</ActionButton>
-        )}
-      </ActionBar>
+        </ActionBar>
+      )}
     </Page>
   )
 }
