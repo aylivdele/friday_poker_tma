@@ -17,9 +17,9 @@ export function settingsSummary(settings: GameSettings) {
   return `Вход ${formatMoney(settings.firstEntryCost)} · докуп ${formatMoney(settings.reEntryCost)} · до ${plural(settings.maxReEntries, ['докупа', 'докупов', 'докупов'])}${extra}`
 }
 
-// Сколько собрано в фонд за сезон — подсказка для поля фонда финала
-export function useSeasonFundCollected(seasonId: string | undefined, enabled: boolean) {
-  const { data: games } = useSWR<Game[]>(enabled && seasonId ? `/api/games?seasonId=${seasonId}` : null, swrGetFetcher)
+// Сколько собрано в фонд за сезон — значение и подсказка для поля фонда финала
+export function useSeasonFundCollected(seasonId: string | undefined) {
+  const { data: games } = useSWR<Game[]>(seasonId ? `/api/games?seasonId=${seasonId}` : null, swrGetFetcher)
   return games ? Math.round(seasonFundCollected(games)) : undefined
 }
 
@@ -33,8 +33,12 @@ export function SettingsFields({ settings, seasonId, onChange, onInvalidChange, 
   disabled?: boolean
 }) {
   const finalId = useId()
-  const collected = useSeasonFundCollected(seasonId, settings.isFinal)
+  const collected = useSeasonFundCollected(seasonId)
   const fund = settings.prizeFund ?? 0
+  // Включили финал, а фонд ещё не задан — сразу ставим собранное за сезон
+  const toggleFinal = (isFinal: boolean) => onChange(isFinal && settings.prizeFund === undefined && collected !== undefined
+    ? { isFinal, prizeFund: collected }
+    : { isFinal })
 
   return (
     <div className="divide-y">
@@ -43,7 +47,7 @@ export function SettingsFields({ settings, seasonId, onChange, onInvalidChange, 
           <span className="text-base">Финал сезона</span>
           <span className="text-[13px] text-muted-foreground">Входы зависят от того, сколько игрок сыграл за сезон</span>
         </span>
-        <Switch id={finalId} checked={settings.isFinal} disabled={disabled} onCheckedChange={isFinal => onChange({ isFinal })} />
+        <Switch id={finalId} checked={settings.isFinal} disabled={disabled} onCheckedChange={toggleFinal} />
       </label>
       {settings.isFinal && (
         <div>

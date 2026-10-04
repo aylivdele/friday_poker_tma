@@ -10,7 +10,7 @@ import { Section } from '@/components/app/Section'
 import { SettingsFields } from '@/components/game/SettingsFields'
 import { Page } from '@/components/Page'
 import { Input } from '@/components/ui/input'
-import { DEFAULT_FUND_PERCENT, seasonFundCollected } from '@/domain/balances'
+import { DEFAULT_FUND_PERCENT } from '@/domain/balances'
 import { api } from '@/lib/api'
 import { parseDateInput, todayInputValue } from '@/lib/dates'
 import { getErrorMessage } from '@/lib/errors'
@@ -85,11 +85,7 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
             settings={settings}
             seasonId={seasonId}
             disabled={loading}
-            onChange={(patch) => {
-              // Фонд финала по умолчанию — сколько собрано с игр сезона; дальше его можно поправить
-              const fund = patch.isFinal && settings.prizeFund === undefined && games ? { prizeFund: Math.round(seasonFundCollected(games)) } : {}
-              setSettings({ ...settings, ...fund, ...patch })
-            }}
+            onChange={patch => setSettings({ ...settings, ...patch })}
             onInvalidChange={(field, invalid) => setInvalidFields(prev => ({ ...prev, [field]: invalid }))}
           />
         )}

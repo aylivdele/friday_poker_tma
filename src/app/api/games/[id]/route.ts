@@ -10,7 +10,7 @@ import { requireAuth } from '@/server/auth'
 import { toGameDetails } from '@/server/dto'
 import { deleteGame, loadGameCaps, makeCapsFor, validateResults } from '@/server/games'
 import { badRequest, conflict, forbidden, parseBody, route, toObjectId } from '@/server/http'
-import { gameTransfers, notifyGameResults } from '@/server/notifications'
+import { gameTransfers, notifyGameResults, shouldNotifyCorrection } from '@/server/notifications'
 import { gameAbilities, isMember, loadGame, loadGroup } from '@/server/permissions'
 import { gameDateSchema, gamePlayerSchema, gameResultSchema, gameSettingsSchema } from '@/server/schemas'
 
@@ -98,7 +98,7 @@ export const PUT = route<{ id: string }>(async (req, { id }) => {
   }
   // Итоги в Telegram: при завершении и когда исправление поменяло, кто кому переводит
   const transfersChanged = game.isFinished && JSON.stringify(gameTransfers(game)) !== JSON.stringify(gameTransfers(updated))
-  if (finishing || transfersChanged) {
+  if (finishing || (transfersChanged && await shouldNotifyCorrection(updated))) {
     after(() => notifyGameResults(updated, { corrected: !finishing }).catch(e => console.error('Game results notification failed', e)))
   }
 

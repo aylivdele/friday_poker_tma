@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { requireAuth } from '@/server/auth'
 import { toPublicGame } from '@/server/dto'
-import { withGameContext } from '@/server/games'
+import { collectedPrizeFund, withGameContext } from '@/server/games'
 import { badRequest, parseBody, route, toObjectId } from '@/server/http'
 import { loadGroup, loadSeason, requireMember } from '@/server/permissions'
 import { gameDateSchema, gameSettingsSchema, titleSchema, zObjectId } from '@/server/schemas'
@@ -72,12 +72,18 @@ export const POST = route(async (req) => {
   const group = await loadGroup(season.groupId)
   requireMember(group, player._id)
 
+  const settings = { ...body.settings }
+  // Финал без указанного фонда (например, со старого клиента) разыгрывает собранное за сезон
+  if (settings.isFinal && settings.prizeFund === undefined) {
+    settings.prizeFund = await collectedPrizeFund(season._id)
+  }
+
   const game: Game = {
     groupId: group._id,
     seasonId: season._id,
     title: body.title,
     createdAt: body.createdAt,
-    settings: body.settings,
+    settings,
     isFinished: false,
     players: [],
     creater: player._id,

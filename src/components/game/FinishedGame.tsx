@@ -67,9 +67,13 @@ export function FinishedGame({ game, playersById, onCorrect }: {
                   {winners.has(row.playerId) && row.balance > 0 && <TrophyIcon className="size-4 text-gold" aria-label="Победитель" />}
                 </span>
               )}
-              subtitle={`Входы ${row.entries + 1} · ${formatMoney(playerCost(game, row.entries))}${row.score ? ` · стеков ${row.score}` : ''}${contributions[row.playerId] ? ` · в фонд ${formatMoney(contributions[row.playerId])}` : ''}`}
+              subtitle={`Входы ${row.entries + 1} · ${formatMoney(playerCost(game, row.entries))}${row.score ? ` · стеков ${row.score}` : ''}`}
             />
-            <MoneyText value={row.balance} />
+            {/* Взнос в фонд — под суммой, чтобы подпись слева не обрезалась */}
+            <div className="flex shrink-0 flex-col items-end gap-0.5">
+              <MoneyText value={row.balance} />
+              {!!contributions[row.playerId] && <span className="text-[12px] text-muted-foreground tabular-nums">{`в фонд ${formatMoney(contributions[row.playerId])}`}</span>}
+            </div>
           </Row>
         ))}
       </Section>

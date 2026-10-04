@@ -2,7 +2,7 @@ import type { ClientSession, ObjectId, WithId } from 'mongodb'
 import type { GameListItem } from '@/types/api'
 import type { Game, GamePlayer, GameResult, GameSettings, Group } from '@/types/db'
 import { getDb } from '@/core/db'
-import { calcEntryCaps, totalStacks } from '@/domain/balances'
+import { calcEntryCaps, seasonFundCollected, totalStacks } from '@/domain/balances'
 import { buildSeasonTable } from '@/domain/seasonTable'
 import { recalculateAchievments, recalculateForGames } from '@/lib/achievments'
 import { toPublicGame } from './dto'
@@ -11,6 +11,12 @@ import { badRequest } from './http'
 export async function loadSeasonTable(seasonId: ObjectId) {
   const games = await (await getDb()).games.find({ seasonId, isFinished: true }).toArray()
   return buildSeasonTable(games)
+}
+
+// Сколько собрано в призовой фонд с обычных игр сезона, в целых рублях
+export async function collectedPrizeFund(seasonId: ObjectId) {
+  const games = await (await getDb()).games.find({ seasonId, 'isFinished': true, 'settings.isFinal': false }).toArray()
+  return Math.round(seasonFundCollected(games))
 }
 
 // Возвращает функцию «настройки → лимиты входов»: сыгранные игры сезона загружаются один раз

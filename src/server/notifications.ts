@@ -25,6 +25,24 @@ export function gameTransfers(game: Pick<Game, 'players' | 'results' | 'settings
 }
 
 /*
+ * Об исправлении итогов сообщаем, кроме правок старых игр закрытого сезона (с сыгранным финалом):
+ * такие правки — наведение порядка в истории, а не новости. Последнюю сыгранную игру группы
+ * (например, только что прошедший финал) это не касается.
+ */
+export async function shouldNotifyCorrection(game: WithId<Game>) {
+  if (!game.seasonId) {
+    return true
+  }
+  const db = await getDb()
+  const seasonClosed = await db.games.findOne({ 'seasonId': game.seasonId, 'isFinished': true, 'settings.isFinal': true }, { projection: { _id: 1 } })
+  if (!seasonClosed) {
+    return true
+  }
+  const [latest] = await db.games.find({ groupId: game.groupId, isFinished: true }, { projection: { _id: 1 } }).sort({ createdAt: -1, _id: -1 }).limit(1).toArray()
+  return !!latest?._id.equals(game._id)
+}
+
+/*
  * Рассылает итоги игры участникам из Telegram, кроме отключивших уведомления.
  * Заодно запоминает, может ли бот писать человеку, — это видно в профиле.
  */
