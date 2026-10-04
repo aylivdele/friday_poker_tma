@@ -1,5 +1,7 @@
 import type { ResultsMessageInput } from './resultsMessage'
 import { describe, expect, it } from 'vitest'
+import { PRIZE_FUND } from '@/domain/settlement'
+import { formatMoney } from '@/lib/format'
 import { buildResultsMessage } from './resultsMessage'
 
 const base: Omit<ResultsMessageInput, 'recipientId'> = {
@@ -36,6 +38,23 @@ describe('buildResultsMessage', () => {
     expect(text).toContain('Ваш итог: <b>+700 ₽</b>')
     expect(text).toContain('Вам переведут:\n• Боб Бобов (@bob) — <b>600 ₽</b>\n• Женя — <b>100 ₽</b>')
     expect(text).not.toContain('Остальные переводы')
+  })
+
+  it('финал с фондом: фонд отдельной строкой без отправителя', () => {
+    const final = {
+      ...base,
+      prizeFund: 3000,
+      balances: { alice: 3600, bob: -600, dima: 0, zhenya: 0 },
+      transfers: [{ from: PRIZE_FUND, to: 'alice', amount: 3000 }, { from: 'bob', to: 'alice', amount: 600 }],
+    }
+    // в суммах от тысячи — неразрывный пробел, поэтому ожидания строим тем же форматом
+    const fund = formatMoney(3000)
+    const toAlice = buildResultsMessage({ ...final, recipientId: 'alice' })
+    expect(toAlice).toContain(`💰 Призовой фонд: <b>${fund}</b>`)
+    expect(toAlice).toContain(`Вам переведут:\n• Из призового фонда — <b>${fund}</b>\n• Боб Бобов (@bob) — <b>600 ₽</b>`)
+    const toDima = buildResultsMessage({ ...final, recipientId: 'dima' })
+    expect(toDima).toContain(`Из призового фонда → Алиса: ${fund}`)
+    expect(toDima).not.toContain(PRIZE_FUND)
   })
 
   it('в нуле — без переводов, имена экранируются', () => {

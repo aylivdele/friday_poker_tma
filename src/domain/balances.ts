@@ -5,7 +5,7 @@ interface Id { toString: () => string }
 export interface BalanceGame {
   players: { playerId: Id, entries: number }[]
   results?: { playerId: Id, score: number }[]
-  settings: { isFinal: boolean, firstEntryCost: number, reEntryCost: number, maxReEntries: number }
+  settings: { isFinal: boolean, firstEntryCost: number, reEntryCost: number, maxReEntries: number, prizeFund?: number }
 }
 
 export function totalStacks(game: Pick<BalanceGame, 'players'>) {
@@ -20,11 +20,24 @@ export function gameBank(game: Pick<BalanceGame, 'players' | 'settings'>) {
   return game.players.reduce((acc, p) => acc + playerCost(game, p.entries), 0)
 }
 
-// Банк делится между призёрами пропорционально их стекам, поэтому сумма балансов за игру всегда 0
+// Призовой фонд финала: копится за сезон вне приложения (процент с выигрышей) и вносится в финал
+export function prizeFund(game: Pick<BalanceGame, 'settings'>) {
+  return game.settings.isFinal ? game.settings.prizeFund ?? 0 : 0
+}
+
+// Всё, что делят призёры: взносы за входы плюс фонд финала
+export function prizePool(game: Pick<BalanceGame, 'players' | 'settings'>) {
+  return gameBank(game) + prizeFund(game)
+}
+
+/*
+ * Банк (с фондом финала) делится между призёрами пропорционально их стекам.
+ * Сумма балансов за игру равна фонду: в обычной игре — 0, сколько одни проиграли, столько другие выиграли.
+ */
 export function calcGameBalances(game: BalanceGame): Record<string, number> {
   const balances: Record<string, number> = {}
   const stacks = totalStacks(game)
-  const bank = gameBank(game)
+  const bank = prizePool(game)
 
   for (const p of game.players) {
     const playerId = p.playerId.toString()

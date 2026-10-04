@@ -61,6 +61,8 @@ export interface GameSettings {
   firstEntryCost: number
   reEntryCost: number
   maxReEntries: number
+  // призовой фонд финала: собран за сезон, делится между призёрами по стекам вместе с банком
+  prizeFund?: number
 }
 
 export interface Game {

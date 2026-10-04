@@ -1,4 +1,5 @@
 import type { Transfer } from '@/domain/settlement'
+import { PRIZE_FUND } from '@/domain/settlement'
 import { formatGameDate, formatMoney, playerName } from '@/lib/format'
 
 interface MessagePlayer {
@@ -20,6 +21,8 @@ export interface ResultsMessageInput {
   transfers: Transfer[]
   winners: string[]
   recipientId: string
+  // призовой фонд финала (0 — нет)
+  prizeFund?: number
 }
 
 const escapeHtml = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -37,6 +40,9 @@ export function buildResultsMessage(input: ResultsMessageInput): string {
 
   lines.push(`${input.corrected ? '✏️ Итоги исправлены' : '🃏 Игра завершена'}: <b>${escapeHtml(input.title || 'Игра')}</b>`)
   lines.push([input.groupTitle, input.seasonTitle, formatGameDate(input.date)].filter(Boolean).map(s => escapeHtml(s!)).join(' · '))
+  if (input.prizeFund) {
+    lines.push(`💰 Призовой фонд: <b>${formatMoney(input.prizeFund)}</b> — делится между призёрами по стекам`)
+  }
   lines.push('')
 
   const mine = balances[recipientId] ?? 0
@@ -49,7 +55,9 @@ export function buildResultsMessage(input: ResultsMessageInput): string {
   }
   if (incoming.length > 0) {
     lines.push('', 'Вам переведут:')
-    lines.push(...incoming.map(t => `• ${name(players, t.from, true)} — <b>${formatMoney(t.amount)}</b>`))
+    lines.push(...incoming.map(t => t.from === PRIZE_FUND
+      ? `• Из призового фонда — <b>${formatMoney(t.amount)}</b>`
+      : `• ${name(players, t.from, true)} — <b>${formatMoney(t.amount)}</b>`))
   }
   if (outgoing.length === 0 && incoming.length === 0) {
     lines.push('Переводов нет — вы в нуле 👌')
@@ -66,7 +74,7 @@ export function buildResultsMessage(input: ResultsMessageInput): string {
   const others = transfers.filter(t => t.from !== recipientId && t.to !== recipientId)
   if (others.length > 0) {
     lines.push('', '<b>Остальные переводы</b>')
-    lines.push(...others.map(t => `${name(players, t.from)} → ${name(players, t.to)}: ${formatMoney(t.amount)}`))
+    lines.push(...others.map(t => `${t.from === PRIZE_FUND ? 'Из призового фонда' : name(players, t.from)} → ${name(players, t.to)}: ${formatMoney(t.amount)}`))
   }
 
   return lines.join('\n')

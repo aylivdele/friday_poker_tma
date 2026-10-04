@@ -1,20 +1,22 @@
 import type { GameDetails } from '@/types/api'
-import { gameBank, totalStacks } from '@/domain/balances'
+import { prizeFund, prizePool, totalStacks } from '@/domain/balances'
 import { formatMoney } from '@/lib/format'
 
-function Stat({ label, children }: { label: string, children: React.ReactNode }) {
+function Stat({ label, hint, children }: { label: string, hint?: string, children: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="text-xl font-semibold tabular-nums">{children}</span>
+      {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
     </div>
   )
 }
 
 export function GameSummary({ game }: { game: GameDetails }) {
+  const fund = prizeFund(game)
   return (
     <div className="mx-4 grid grid-cols-3 rounded-2xl bg-card px-1.5 py-3.5">
-      <Stat label="Банк">{formatMoney(gameBank(game))}</Stat>
+      <Stat label="Банк" hint={fund > 0 ? `вкл. фонд ${formatMoney(fund)}` : undefined}>{formatMoney(prizePool(game))}</Stat>
       <Stat label="Стеков">{totalStacks(game)}</Stat>
       <div className="flex flex-col items-center gap-1.5">
         <span className="text-xs text-muted-foreground">Статус</span>

@@ -1,6 +1,6 @@
 import type { Transfer } from './settlement'
 import { describe, expect, it } from 'vitest'
-import { roundBalances, settle } from './settlement'
+import { gameSettlement, PRIZE_FUND, roundBalances, settle } from './settlement'
 
 function check(balances: Record<string, number>, transfers: Transfer[]) {
   const rounded = roundBalances(balances)
@@ -34,6 +34,45 @@ describe('roundBalances', () => {
 
   it('убирает хвосты деления', () => {
     expect(roundBalances({ a: 199.99999999, b: -199.99999999 })).toEqual({ a: 200, b: -200 })
+  })
+
+  it('сохраняет ненулевую сумму (финал с фондом)', () => {
+    // фонд 1000 на 3 равных призёра без взносов
+    const rounded = roundBalances({ a: 333.333, b: 333.333, c: 333.334 })
+    expect(Object.values(rounded).reduce((s, v) => s + v, 0)).toBe(1000)
+  })
+})
+
+describe('gameSettlement', () => {
+  const final = (results: [string, number][], prizeFund: number) => ({
+    players: [{ playerId: 'a', entries: 0 }, { playerId: 'b', entries: 2 }, { playerId: 'c', entries: 0 }],
+    results: results.map(([playerId, score]) => ({ playerId, score })),
+    settings: { isFinal: true, firstEntryCost: 200, reEntryCost: 100, maxReEntries: 2, prizeFund },
+  })
+
+  it('фонд переводится победителю отдельным переводом без отправителя-игрока', () => {
+    // банк 200 + 400 + 200 = 800, фонд 3000; один победитель забирает 3800
+    const { balances, transfers } = gameSettlement(final([['a', 5]], 3000))
+    expect(balances).toEqual({ a: 3600, b: -400, c: -200 })
+    expect(transfers).toContainEqual({ from: PRIZE_FUND, to: 'a', amount: 3000 })
+    expect(transfers).toContainEqual({ from: 'b', to: 'a', amount: 400 })
+    expect(transfers).toContainEqual({ from: 'c', to: 'a', amount: 200 })
+    expect(transfers).toHaveLength(3)
+  })
+
+  it('фонд делится между призёрами пропорционально стекам', () => {
+    // 3800 на 5 стеков = 760 за стек: a 3 стека → 2280, b 2 стека → 1520
+    const { balances, transfers } = gameSettlement(final([['a', 3], ['b', 2]], 3000))
+    expect(balances).toEqual({ a: 2080, b: 1120, c: -200 })
+    const received = (id: string) => transfers.filter(t => t.to === id).reduce((s, t) => s + t.amount, 0)
+    expect(received('a')).toBe(2080)
+    expect(received('b')).toBe(1120)
+    expect(transfers.filter(t => t.from === PRIZE_FUND).reduce((s, t) => s + t.amount, 0)).toBe(3000)
+  })
+
+  it('без фонда — обычные переводы', () => {
+    const { transfers } = gameSettlement(final([['a', 5]], 0))
+    expect(transfers.some(t => t.from === PRIZE_FUND)).toBe(false)
   })
 })
 

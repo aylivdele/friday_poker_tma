@@ -3,8 +3,8 @@ import type { InlineButton } from './telegramBot'
 import type { Game } from '@/types/db'
 import process from 'node:process'
 import { getDb } from '@/core/db'
-import { calcGameBalances, getGameWinners } from '@/domain/balances'
-import { roundBalances, settle } from '@/domain/settlement'
+import { getGameWinners, prizeFund } from '@/domain/balances'
+import { gameSettlement } from '@/domain/settlement'
 import { telegramGameLink } from '@/lib/links'
 import { buildResultsMessage } from './resultsMessage'
 import { sendTelegramMessage } from './telegramBot'
@@ -21,7 +21,7 @@ function gameButton(gameId: ObjectId): InlineButton | undefined {
 
 // Переводы по игре; по ним же решаем, изменились ли расчёты после исправления
 export function gameTransfers(game: Pick<Game, 'players' | 'results' | 'settings'>) {
-  return settle(calcGameBalances(game))
+  return gameSettlement(game).transfers
 }
 
 /*
@@ -39,7 +39,7 @@ export async function notifyGameResults(game: WithId<Game>, { corrected = false 
     db.players.find({ _id: { $in: game.players.map(p => p.playerId) } }).toArray(),
   ])
 
-  const exact = calcGameBalances(game)
+  const { balances, transfers } = gameSettlement(game)
   const common = {
     title: game.title,
     date: game.createdAt,
@@ -47,9 +47,10 @@ export async function notifyGameResults(game: WithId<Game>, { corrected = false 
     seasonTitle: season?.title,
     corrected,
     players: new Map(players.map(p => [p._id.toString(), p])),
-    balances: roundBalances(exact),
-    transfers: settle(exact),
+    balances,
+    transfers,
     winners: getGameWinners(game),
+    prizeFund: prizeFund(game),
   }
   const button = gameButton(game._id)
 

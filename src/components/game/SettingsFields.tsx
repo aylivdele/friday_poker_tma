@@ -7,7 +7,8 @@ import { Switch } from '@/components/ui/switch'
 import { formatMoney, plural } from '@/lib/format'
 
 export function settingsSummary(settings: GameSettings) {
-  return `Вход ${formatMoney(settings.firstEntryCost)} · докуп ${formatMoney(settings.reEntryCost)} · до ${plural(settings.maxReEntries, ['докупа', 'докупов', 'докупов'])}`
+  const fund = settings.isFinal && settings.prizeFund ? ` · фонд ${formatMoney(settings.prizeFund)}` : ''
+  return `Вход ${formatMoney(settings.firstEntryCost)} · докуп ${formatMoney(settings.reEntryCost)} · до ${plural(settings.maxReEntries, ['докупа', 'докупов', 'докупов'])}${fund}`
 }
 
 // Поля настроек игры; используются в шторке идущей игры, в форме новой игры и при исправлении
@@ -27,6 +28,9 @@ export function SettingsFields({ settings, onChange, onInvalidChange, disabled }
         </span>
         <Switch id={finalId} checked={settings.isFinal} disabled={disabled} onCheckedChange={isFinal => onChange({ isFinal })} />
       </label>
+      {settings.isFinal && (
+        <NumberField label="Призовой фонд" suffix="₽" value={settings.prizeFund ?? 0} max={10_000_000} disabled={disabled} onChange={prizeFund => onChange({ prizeFund })} onInvalidChange={invalid => onInvalidChange?.('prizeFund', invalid)} />
+      )}
       <NumberField label="Стоимость входа" suffix="₽" value={settings.firstEntryCost} max={1_000_000} disabled={disabled} onChange={firstEntryCost => onChange({ firstEntryCost })} onInvalidChange={invalid => onInvalidChange?.('firstEntryCost', invalid)} />
       <NumberField label="Стоимость докупа" suffix="₽" value={settings.reEntryCost} max={1_000_000} disabled={disabled} onChange={reEntryCost => onChange({ reEntryCost })} onInvalidChange={invalid => onInvalidChange?.('reEntryCost', invalid)} />
       <NumberField label="Макс. докупов" value={settings.maxReEntries} max={100} disabled={disabled} onChange={maxReEntries => onChange({ maxReEntries })} onInvalidChange={invalid => onInvalidChange?.('maxReEntries', invalid)} />

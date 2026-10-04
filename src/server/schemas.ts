@@ -12,6 +12,7 @@ export const gameSettingsSchema = z.object({
   firstEntryCost: money,
   reEntryCost: money,
   maxReEntries: z.number().int('должно быть целым').min(0, 'не может быть отрицательным').max(100),
+  prizeFund: z.number().int('должно быть целым').min(0, 'не может быть отрицательным').max(10_000_000).optional(),
 })
 
 export const gamePlayerSchema = z.object({

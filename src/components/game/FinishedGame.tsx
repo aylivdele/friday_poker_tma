@@ -1,13 +1,13 @@
 'use client'
 
 import type { GameDetails, Player } from '@/types/api'
-import { ArrowRightIcon, TrophyIcon } from 'lucide-react'
+import { ArrowRightIcon, PiggyBankIcon, TrophyIcon } from 'lucide-react'
 import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
 import { MoneyText } from '@/components/app/MoneyText'
 import { PlayerAvatar } from '@/components/app/PlayerAvatar'
 import { Row, RowText, Section } from '@/components/app/Section'
-import { calcGameBalances, getGameWinners, playerCost } from '@/domain/balances'
-import { roundBalances, settle } from '@/domain/settlement'
+import { getGameWinners, playerCost } from '@/domain/balances'
+import { gameSettlement, PRIZE_FUND } from '@/domain/settlement'
 import { formatDateTime, formatMoney, playerName, shortPlayerName } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -20,10 +20,8 @@ export function FinishedGame({ game, playersById, onCorrect }: {
   onCorrect: () => void
 }) {
   const meId = usePlayerStore(s => s.player?._id)
-  const exact = calcGameBalances(game)
   // Целые рубли, как в переводах ниже и в сообщениях бота
-  const balances = roundBalances(exact)
-  const transfers = settle(exact)
+  const { balances, transfers } = gameSettlement(game)
   const winners = new Set(getGameWinners(game))
   const rows = game.players
     .map(p => ({
@@ -79,16 +77,23 @@ export function FinishedGame({ game, playersById, onCorrect }: {
       {transfers.length > 0 && (
         <Section title="Расчёты" footer="Переводов как можно меньше: долг по возможности уходит одному человеку">
           {transfers.map((t) => {
+            const fromFund = t.from === PRIZE_FUND
             const from = playersById.get(t.from)
             const to = playersById.get(t.to)
             const mine = t.from === meId || t.to === meId
             return (
               <Row key={`${t.from}-${t.to}`} className={cn(mine && 'bg-secondary/50')}>
-                <PlayerAvatar player={from} />
+                {fromFund
+                  ? (
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold" aria-hidden>
+                        <PiggyBankIcon className="size-5" />
+                      </span>
+                    )
+                  : <PlayerAvatar player={from} />}
                 <RowText
                   title={(
                     <span className="inline-flex max-w-full items-center gap-1.5">
-                      <span className="truncate">{shortPlayerName(from)}</span>
+                      <span className="truncate">{fromFund ? 'Призовой фонд' : shortPlayerName(from)}</span>
                       <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" aria-label="переводит" />
                       <span className="truncate">{shortPlayerName(to)}</span>
                     </span>

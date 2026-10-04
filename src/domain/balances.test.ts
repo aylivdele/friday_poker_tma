@@ -37,6 +37,19 @@ describe('calcGameBalances', () => {
     expect(sum(calcGameBalances(g))).toBeCloseTo(0, 9)
   })
 
+  it('призовой фонд финала делится между призёрами по стекам вместе с банком', () => {
+    // банк 300 + фонд 3000 = 3300 на 3 стека: 1100 за стек
+    const g = game([['a', 0], ['b', 0], ['c', 0]], [['a', 2], ['b', 1]], { isFinal: true, prizeFund: 3000 })
+    expect(calcGameBalances(g)).toEqual({ a: 2100, b: 1000, c: -100 })
+    expect(sum(calcGameBalances(g))).toBe(3000)
+    expect(getGameWinners(g)).toEqual(['a'])
+  })
+
+  it('фонд в обычной игре не учитывается', () => {
+    const g = game([['a', 0], ['b', 0]], [['a', 2]], { prizeFund: 3000 })
+    expect(calcGameBalances(g)).toEqual({ a: 100, b: -100 })
+  })
+
   it('делит банк финала пропорционально стекам', () => {
     // 3 игрока без докупов, банк 300, победитель забирает 2 стека из 3, второй — 1
     const g = game([['a', 0], ['b', 0], ['c', 0]], [['a', 2], ['b', 1]], { isFinal: true })
