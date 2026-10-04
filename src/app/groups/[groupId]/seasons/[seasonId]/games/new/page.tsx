@@ -1,36 +1,62 @@
 'use client'
 
-import type { GameSettings } from '@/types/api'
-import { Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
+import type { Game, GameSettings, Season } from '@/types/api'
 import { useRouter } from 'next/navigation'
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import useSWR from 'swr'
 import { ActionBar, ActionButton, ActionHint } from '@/components/ActionBar/ActionBar'
-import GameSettingsEditor from '@/components/Games/GameSettingsEditor'
+import { Section } from '@/components/app/Section'
+import { SettingsFields } from '@/components/game/SettingsFields'
 import { Page } from '@/components/Page'
+import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { parseDateInput, todayInputValue } from '@/lib/dates'
 import { getErrorMessage } from '@/lib/errors'
+import { swrGetFetcher } from '@/lib/swrFetcher'
+
+const DEFAULT_SETTINGS: GameSettings = { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 }
+
+function defaultTitle(gamesCount: number, date: string) {
+  const [, month, day] = date.split('-')
+  return `Игра ${gamesCount + 1} · ${day}.${month}`
+}
 
 export default function NewGamePage({ params }: { params: Promise<{ seasonId: string, groupId: string }> }) {
   const { seasonId, groupId } = use(params)
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState(todayInputValue)
-  const [settings, setSettings] = useState<GameSettings>({ isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 })
-  const [settingsValid, setSettingsValid] = useState(true)
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { data: season } = useSWR<Season>(`/api/seasons/${seasonId}`, swrGetFetcher)
+  const { data: games } = useSWR<Game[]>(`/api/games?seasonId=${seasonId}`, swrGetFetcher)
 
+  const [title, setTitle] = useState<string | null>(null)
+  const [date, setDate] = useState(todayInputValue)
+  const [settings, setSettings] = useState<GameSettings | null>(null)
+  const [invalidFields, setInvalidFields] = useState<Record<string, boolean>>({})
+  const [loading, setLoading] = useState(false)
+
+  // Настройки — как в последней обычной игре сезона
+  useEffect(() => {
+    if (games && !settings) {
+      const previous = games.find(g => !g.settings.isFinal)
+      setSettings(previous ? { ...previous.settings, isFinal: false } : DEFAULT_SETTINGS)
+    }
+  }, [games, settings])
+
+  const effectiveTitle = title ?? defaultTitle(games?.length ?? 0, date)
   const createdAt = parseDateInput(date)
-  const missing = !title.trim() ? 'Укажите название игры' : createdAt === null ? 'Укажите дату игры' : !settingsValid ? 'Заполните настройки игры' : null
+  const missing = !effectiveTitle.trim()
+    ? 'Укажите название игры'
+    : createdAt === null
+      ? 'Укажите дату игры'
+      : Object.values(invalidFields).some(Boolean) ? 'Заполните настройки игры' : null
 
-  async function handleSubmit() {
-    if (missing || createdAt === null) {
+  const create = async () => {
+    if (missing || createdAt === null || !settings) {
       return
     }
     setLoading(true)
     try {
-      const gameId = await api.post<string>('/api/games', { title, seasonId, settings, createdAt })
+      const gameId = await api.post<string>('/api/games', { title: effectiveTitle.trim(), seasonId, settings, createdAt })
       router.replace(`/groups/${groupId}/seasons/${seasonId}/games/${gameId}`)
     }
     catch (e) {
@@ -40,32 +66,32 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
   }
 
   return (
-    <Page>
-      <Section header="Новая игра">
-        <Input
-          className="input"
-          before={<Subheadline>Название игры</Subheadline>}
-          placeholder="Например: Пятничный покер"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          disabled={loading}
-        />
-
-        <Input
-          className="input"
-          type="date"
-          before={<Subheadline>Дата игры</Subheadline>}
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          disabled={loading}
-        />
+    <Page title="Новая игра" subtitle={season?.title}>
+      <Section>
+        <label className="flex min-h-14 items-center gap-3 px-3.5 py-2">
+          <span className="w-24 shrink-0 text-base">Название</span>
+          <Input className="h-10 flex-1 rounded-lg text-base" maxLength={80} value={effectiveTitle} disabled={loading} onChange={e => setTitle(e.target.value)} />
+        </label>
+        <label className="flex min-h-14 items-center gap-3 px-3.5 py-2">
+          <span className="w-24 shrink-0 text-base">Дата</span>
+          <Input type="date" className="h-10 flex-1 rounded-lg text-base" value={date} disabled={loading} onChange={e => setDate(e.target.value)} />
+        </label>
       </Section>
 
-      <GameSettingsEditor gameSettings={settings} onChange={setSettings} onValidityChange={setSettingsValid} editable={!loading} />
+      <Section title="Настройки">
+        {settings && (
+          <SettingsFields
+            settings={settings}
+            disabled={loading}
+            onChange={patch => setSettings({ ...settings, ...patch })}
+            onInvalidChange={(field, invalid) => setInvalidFields(prev => ({ ...prev, [field]: invalid }))}
+          />
+        )}
+      </Section>
 
       <ActionBar>
         {missing && <ActionHint>{missing}</ActionHint>}
-        <ActionButton disabled={!!missing} loading={loading} onClick={handleSubmit}>Создать игру</ActionButton>
+        <ActionButton disabled={!!missing || !settings} loading={loading} onClick={create}>Создать игру</ActionButton>
       </ActionBar>
     </Page>
   )

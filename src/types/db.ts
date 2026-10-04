@@ -73,6 +73,9 @@ export interface Game {
   creater?: ObjectId
   // счётчик версий для защиты от потери изменений при одновременной правке
   rev?: number
+  // когда и кем игра менялась последний раз
+  updatedAt?: number
+  updatedBy?: ObjectId
 }
 
 export interface Season {

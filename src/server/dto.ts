@@ -65,6 +65,8 @@ export function toPublicGame(game: WithId<Game>): Api.Game {
     settings: game.settings,
     creater: game.creater?.toString(),
     rev: game.rev ?? 0,
+    updatedAt: game.updatedAt,
+    updatedBy: game.updatedBy?.toString(),
   }
 }
 

@@ -76,6 +76,8 @@ export interface Game {
   settings: GameSettings
   creater?: string
   rev: number
+  updatedAt?: number
+  updatedBy?: string
 }
 
 export interface GameDetails extends Game {

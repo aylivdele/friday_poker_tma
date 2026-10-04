@@ -1,141 +1,139 @@
 'use client'
 
 import type { GameDetails, Player } from '@/types/api'
-import {
-  Avatar,
-  Cell,
-  Chip,
-  Headline,
-  Input,
-  List,
-  Section,
-  Subheadline,
-} from '@telegram-apps/telegram-ui'
-import { use, useEffect, useState } from 'react'
+import { PencilIcon, Trash2Icon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { use, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import useSWR from 'swr'
-import GameSettingsEditor from '@/components/Games/GameSettingsEditor'
-import PlayersEditor from '@/components/Games/PlayersEditor'
-import SaveControls from '@/components/Games/SaveControls'
+import { SaveIndicator } from '@/components/app/SaveIndicator'
+import { confirmAction } from '@/components/ConfirmButton/ConfirmButton'
+import { CorrectionEditor } from '@/components/game/CorrectionEditor'
+import { EditMetaDialog } from '@/components/game/EditMetaDialog'
+import { FinishedGame } from '@/components/game/FinishedGame'
+import { GameSummary } from '@/components/game/GameSummary'
+import { LiveGame } from '@/components/game/LiveGame'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { useClosingConfirmation } from '@/hooks/useClosingConfirmation'
-import { parseDateInput, toDateInputValue } from '@/lib/dates'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { useGame } from '@/hooks/useGame'
+import { api } from '@/lib/api'
+import { getErrorMessage } from '@/lib/errors'
+import { formatGameDate } from '@/lib/format'
 import { swrGetFetcher } from '@/lib/swrFetcher'
-
-function editableFields(game: GameDetails) {
-  return JSON.stringify([game.title, game.createdAt, game.players, game.settings])
-}
 
 export default function GamePage({ params }: { params: Promise<{ gameId: string, groupId: string, seasonId: string }> }) {
   const { gameId, groupId, seasonId } = use(params)
-  const { data: game, mutate, error, isLoading } = useSWR<GameDetails>(`/api/games/${gameId}`, swrGetFetcher)
-  const { data: groupPlayers, isLoading: pIsLoading, error: pError } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const router = useRouter()
+  const { game, error, isLoading, status, sendOps, replace } = useGame(gameId)
+  const { data: groupPlayers } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const [correcting, setCorrecting] = useState(false)
+  const [metaOpen, setMetaOpen] = useState(false)
 
-  // base — версия с сервера, от которой начато редактирование; draft — то, что видит пользователь
-  const [base, setBase] = useState<GameDetails | null>(null)
-  const [draft, setDraft] = useState<GameDetails | null>(null)
-  const [settingsValid, setSettingsValid] = useState(true)
-  const dirty = !!draft && !!base && editableFields(draft) !== editableFields(base)
-  // Несохранённые правки: Telegram и браузер переспросят перед закрытием
-  useClosingConfirmation(dirty)
+  const playersById = useMemo(() => new Map((groupPlayers ?? []).map(p => [p._id, p])), [groupPlayers])
+  const seasonUrl = `/groups/${groupId}/seasons/${seasonId}`
 
-  const reset = (fresh: GameDetails) => {
-    setBase(fresh)
-    setDraft(structuredClone(fresh))
-  }
-
-  // Новые данные с сервера подхватываем, только если пользователь ничего не менял
-  useEffect(() => {
-    if (game && (!dirty || game._id !== base?._id)) {
-      reset(game)
-    }
-  }, [game])
-
-  if (!draft) {
+  if (!game) {
     return (
-      <Page>
+      <Page title="Игра">
         <Loader data={game} error={error} isLoading={isLoading} />
       </Page>
     )
   }
 
-  const canEdit = draft.can.edit
-  // Состав завершённой игры пока нельзя менять: результаты перестанут сходиться со стеками
-  const canEditPlayers = canEdit && !draft.isFinished
+  const saveMeta = async (meta: { title: string, createdAt: number }) => {
+    if (!game.isFinished) {
+      sendOps([{ type: 'setMeta', ...meta }])
+      return
+    }
+    try {
+      replace(await api.put<GameDetails>(`/api/games/${game._id}`, { rev: game.rev, ...meta }))
+      toast.success('Сохранено')
+    }
+    catch (e) {
+      toast.error(getErrorMessage(e))
+    }
+  }
+
+  const deleteGame = async () => {
+    const confirmed = await confirmAction({ title: 'Удалить игру?', description: 'Игра пропадёт из таблицы сезона. Это нельзя отменить.', confirmText: 'Удалить' })
+    if (!confirmed) {
+      return
+    }
+    try {
+      await api.delete(`/api/games/${game._id}`)
+      toast.success('Игра удалена')
+      router.replace(seasonUrl)
+    }
+    catch (e) {
+      toast.error(getErrorMessage(e))
+    }
+  }
+
+  const menu = (game.can.edit || game.can.delete) && !correcting
+    ? (
+        <>
+          {game.can.edit && (
+            <DropdownMenuItem onSelect={() => setMetaOpen(true)}>
+              <PencilIcon />
+              Название и дата
+            </DropdownMenuItem>
+          )}
+          {game.can.delete && (
+            <DropdownMenuItem variant="destructive" onSelect={deleteGame}>
+              <Trash2Icon />
+              Удалить игру
+            </DropdownMenuItem>
+          )}
+        </>
+      )
+    : undefined
 
   return (
-    <Page>
-      <Headline style={{ padding: 10, textAlign: 'center' }}>
-        {draft.title}
-      </Headline>
-
-      <Input
-        className="input"
-        type="date"
-        before={<Subheadline>Дата игры</Subheadline>}
-        value={toDateInputValue(draft.createdAt)}
-        onChange={(e) => {
-          const createdAt = parseDateInput(e.target.value)
-          if (createdAt !== null) {
-            setDraft({ ...draft, createdAt })
-          }
-        }}
-        disabled={!canEdit}
-      />
-
-      {draft.isFinished && draft.results && (
-        <Section header="Финалисты">
-          <List>
-            {draft.results.map((p) => {
-              const playerData = groupPlayers?.find(dp => dp._id === p.playerId)
-              return (
-                <Cell
-                  key={p.playerId}
-                  before={<Avatar src={playerData?.avatarUrl} />}
-                  after={<Chip>{p.score}</Chip>}
-                >
-                  {[playerData?.firstName, playerData?.lastName].filter(Boolean).join(' ')}
-                </Cell>
-              )
-            })}
-          </List>
-        </Section>
+    <Page
+      title={correcting ? 'Исправление итогов' : (game.title || 'Игра')}
+      subtitle={(
+        <>
+          <span>{formatGameDate(game.createdAt)}</span>
+          {!game.isFinished && status !== 'idle' && (
+            <>
+              <span aria-hidden>·</span>
+              <SaveIndicator status={status} />
+            </>
+          )}
+        </>
       )}
+      menu={menu}
+    >
+      {!correcting && <GameSummary game={game} />}
 
-      <PlayersEditor
-        groupPlayers={groupPlayers}
-        isLoading={pIsLoading}
-        error={pError}
-        players={draft.players}
-        editable={canEditPlayers}
-        onChange={players => setDraft({ ...draft, players })}
-        maxPlayerEntries={draft.caps}
-      />
+      {!groupPlayers
+        ? <Loader data={null} isLoading error={null} />
+        : game.isFinished
+          ? correcting
+            ? (
+                <CorrectionEditor
+                  game={game}
+                  playersById={playersById}
+                  onCancel={() => setCorrecting(false)}
+                  onSaved={(updated) => {
+                    replace(updated)
+                    setCorrecting(false)
+                  }}
+                />
+              )
+            : <FinishedGame game={game} playersById={playersById} onCorrect={() => setCorrecting(true)} />
+          : (
+              <LiveGame
+                game={game}
+                groupPlayers={groupPlayers}
+                playersById={playersById}
+                sendOps={sendOps}
+                onFinished={replace}
+              />
+            )}
 
-      <GameSettingsEditor
-        gameSettings={draft.settings}
-        editable={canEdit}
-        onChange={settings => setDraft({ ...draft, settings })}
-        onValidityChange={setSettingsValid}
-      />
-
-      <SaveControls
-        draft={draft}
-        dirty={dirty}
-        valid={settingsValid}
-        groupPlayers={groupPlayers}
-        seasonUrl={`/groups/${groupId}/seasons/${seasonId}`}
-        onSaved={(updated) => {
-          reset(updated)
-          mutate(updated, { revalidate: false })
-        }}
-        onConflict={async () => {
-          const fresh = await mutate()
-          if (fresh) {
-            reset(fresh)
-          }
-        }}
-      />
+      <EditMetaDialog open={metaOpen} onOpenChange={setMetaOpen} title={game.title} createdAt={game.createdAt} onSave={saveMeta} />
     </Page>
   )
 }

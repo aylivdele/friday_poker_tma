@@ -1,5 +1,5 @@
 import type { ClientSession, ObjectId, WithId } from 'mongodb'
-import type { Game, GamePlayer, GameResult, Group } from '@/types/db'
+import type { Game, GamePlayer, GameResult, GameSettings, Group } from '@/types/db'
 import { getDb } from '@/core/db'
 import { calcEntryCaps, totalStacks } from '@/domain/balances'
 import { buildSeasonTable } from '@/domain/seasonTable'
@@ -11,13 +11,17 @@ export async function loadSeasonTable(seasonId: ObjectId) {
   return buildSeasonTable(games)
 }
 
-export async function loadGameCaps(game: WithId<Game>, group: Group): Promise<Record<string, number>> {
+// Возвращает функцию «настройки → лимиты входов»: сыгранные игры сезона загружаются один раз
+export async function makeCapsFor(game: WithId<Game>, group: Group): Promise<(settings: GameSettings) => Record<string, number>> {
   const playerIds = [...new Set([...group.members, ...game.players.map(p => p.playerId)].map(id => id.toString()))]
-  if (!game.settings.isFinal || !game.seasonId) {
-    return calcEntryCaps(game, playerIds, [])
-  }
-  const seasonGames = await (await getDb()).games.find({ seasonId: game.seasonId, isFinished: true, _id: { $ne: game._id } }).toArray()
-  return calcEntryCaps(game, playerIds, seasonGames)
+  const seasonGames = game.seasonId
+    ? await (await getDb()).games.find({ seasonId: game.seasonId, isFinished: true, _id: { $ne: game._id } }).toArray()
+    : []
+  return settings => calcEntryCaps({ settings }, playerIds, seasonGames)
+}
+
+export async function loadGameCaps(game: WithId<Game>, group: Group): Promise<Record<string, number>> {
+  return (await makeCapsFor(game, group))(game.settings)
 }
 
 export function validateResults(players: GamePlayer[], results: GameResult[]): GameResult[] {

@@ -1,11 +1,13 @@
 import type { Filter } from 'mongodb'
+import type { EditableGame } from '@/domain/gameOps'
 import type { Game } from '@/types/db'
 import { z } from 'zod'
 import { getDb } from '@/core/db'
+import { applyOps, GameOpError } from '@/domain/gameOps'
 import { recalculateAchievments } from '@/lib/achievments'
 import { requireAuth } from '@/server/auth'
 import { toGameDetails } from '@/server/dto'
-import { deleteGame, loadGameCaps, validateResults } from '@/server/games'
+import { deleteGame, loadGameCaps, makeCapsFor, validateResults } from '@/server/games'
 import { badRequest, conflict, forbidden, parseBody, route, toObjectId } from '@/server/http'
 import { gameAbilities, isMember, loadGame, loadGroup } from '@/server/permissions'
 import { gameDateSchema, gamePlayerSchema, gameResultSchema, gameSettingsSchema } from '@/server/schemas'
@@ -106,3 +108,79 @@ export const DELETE = route<{ id: string }>(async (req, { id }) => {
   await deleteGame(game)
   return { ok: true }
 })
+
+const objectIdString = z.string().regex(/^[0-9a-f]{24}$/i, 'некорректный идентификатор')
+
+const gameOpSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('addPlayer'), playerId: objectIdString }),
+  z.object({ type: z.literal('removePlayer'), playerId: objectIdString }),
+  z.object({ type: z.literal('setEntries'), playerId: objectIdString, from: z.number().int().min(0), to: z.number().int().min(0).max(1000) }),
+  z.object({ type: z.literal('setSettings'), settings: gameSettingsSchema.partial() }),
+  z.object({ type: z.literal('setMeta'), title: z.string().max(80).optional(), createdAt: gameDateSchema.optional() }),
+])
+
+const patchGameSchema = z.object({ ops: z.array(gameOpSchema).min(1).max(50) })
+
+// Автосохранение идущей игры: операции применяются к свежему состоянию из базы,
+// поэтому правки с нескольких телефонов сливаются. При гонке записи — до трёх попыток.
+export const PATCH = route<{ id: string }>(async (req, { id }) => {
+  const { player } = await requireAuth(req)
+  const { ops } = await parseBody(req, patchGameSchema)
+  const gameId = toObjectId(id)
+  const db = await getDb()
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const game = await loadGame(gameId)
+    const group = await loadGroup(game.groupId)
+    if (game.isFinished) {
+      throw conflict('Игра уже завершена')
+    }
+    if (!gameAbilities(game, group, player._id).edit) {
+      throw forbidden('Изменять игру могут только участники группы')
+    }
+
+    const capsFor = await makeCapsFor(game, group)
+    let next: EditableGame
+    try {
+      next = applyOps(toEditable(game), ops, {
+        capsFor,
+        canAdd: playerId => isMember(group, toObjectId(playerId)),
+      })
+    }
+    catch (e) {
+      if (e instanceof GameOpError) {
+        throw e.kind === 'conflict' ? conflict(e.message) : badRequest(e.message)
+      }
+      throw e
+    }
+
+    const updated = await db.games.findOneAndUpdate(
+      { _id: game._id, ...(game.rev === undefined ? { rev: { $exists: false } } : { rev: game.rev }) },
+      {
+        $set: {
+          title: next.title,
+          createdAt: next.createdAt,
+          settings: next.settings,
+          players: next.players.map(p => ({ playerId: toObjectId(p.playerId), entries: p.entries })),
+          updatedAt: Date.now(),
+          updatedBy: player._id,
+        },
+        $inc: { rev: 1 },
+      },
+      { returnDocument: 'after' },
+    )
+    if (updated) {
+      return toGameDetails(updated, group, player._id, capsFor(updated.settings))
+    }
+  }
+  throw conflict('Игру одновременно меняют несколько человек, попробуйте ещё раз')
+})
+
+function toEditable(game: Game): EditableGame {
+  return {
+    title: game.title,
+    createdAt: game.createdAt,
+    settings: game.settings,
+    players: game.players.map(p => ({ playerId: p.playerId.toString(), entries: p.entries })),
+  }
+}
