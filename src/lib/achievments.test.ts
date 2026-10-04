@@ -101,6 +101,17 @@ describe('новые достижения', () => {
     expect(progressOf(compute(losses), 'Инвестор')).toEqual([0, 5000])
   })
 
+  it('полученный Меценат остаётся, даже если потом итог стал +5 000', () => {
+    // −100 × 50 = −5 000, затем +200 × 75 = +15 000: итог +10 000
+    const games = [...Array.from({ length: 50 }, (_, i) => loss(i)), ...Array.from({ length: 75 }, (_, i) => win(50 + i))]
+    const result = compute(games)
+    expect(earned(result, 'Меценат')).toBe(true)
+    expect(earned(result, 'Инвестор')).toBe(true)
+    // пока порог не достигнут, прогресс идёт за текущим итогом: −3 000, потом отыгрался до −1 000
+    const partial = [...Array.from({ length: 30 }, (_, i) => loss(i)), ...Array.from({ length: 10 }, (_, i) => win(30 + i))]
+    expect(progressOf(compute(partial), 'Меценат')).toEqual([1000, 5000])
+  })
+
   it('феникс и Банкомат — все возможные докупы', () => {
     const phoenix = game({ players: [[me, 5], [a, 5]], results: [[me, 12]] })
     expect(earned(compute([phoenix]), 'Феникс')).toBe(true)
