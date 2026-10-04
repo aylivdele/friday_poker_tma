@@ -143,6 +143,10 @@ export interface Achievment {
   maxProgress: number
   progress: [number, number]
   isSecret?: boolean
+  // прогресс в рублях, а не в штуках
+  unit?: 'money'
+  // доля игроков (0…1), у которых оно есть
+  earnedShare?: number
 }
 
 export interface GroupStats {

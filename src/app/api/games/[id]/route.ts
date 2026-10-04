@@ -5,7 +5,7 @@ import { after } from 'next/server'
 import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { applyOps, GameOpError } from '@/domain/gameOps'
-import { recalculateAchievments } from '@/lib/achievments'
+import { recalculateForGames } from '@/lib/achievments'
 import { requireAuth } from '@/server/auth'
 import { toGameDetails } from '@/server/dto'
 import { deleteGame, loadGameCaps, makeCapsFor, validateResults } from '@/server/games'
@@ -93,8 +93,8 @@ export const PUT = route<{ id: string }>(async (req, { id }) => {
   }
 
   if (updated.isFinished) {
-    const affected = [...game.players, ...updated.players].map(p => p.playerId)
-    await recalculateAchievments(affected.filter((p, i) => affected.findIndex(o => o.equals(p)) === i))
+    // Старый и новый состав: убранные из игры тоже должны потерять её достижения
+    await recalculateForGames([game, updated])
   }
   // Итоги в Telegram: при завершении и когда исправление поменяло, кто кому переводит
   const transfersChanged = game.isFinished && JSON.stringify(gameTransfers(game)) !== JSON.stringify(gameTransfers(updated))

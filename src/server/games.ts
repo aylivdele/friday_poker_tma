@@ -4,7 +4,7 @@ import type { Game, GamePlayer, GameResult, GameSettings, Group } from '@/types/
 import { getDb } from '@/core/db'
 import { calcEntryCaps, totalStacks } from '@/domain/balances'
 import { buildSeasonTable } from '@/domain/seasonTable'
-import { recalculateAchievments } from '@/lib/achievments'
+import { recalculateAchievments, recalculateForGames } from '@/lib/achievments'
 import { toPublicGame } from './dto'
 import { badRequest } from './http'
 
@@ -76,7 +76,7 @@ export async function deleteGame(game: WithId<Game>) {
     }
     await db.games.deleteOne({ _id: game._id }, { session })
   })
-  await recalculateAchievments(collectPlayers([game]))
+  await recalculateForGames([game])
 }
 
 export async function deleteSeasonCascade(seasonId: ObjectId) {
