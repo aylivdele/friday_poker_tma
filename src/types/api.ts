@@ -1,3 +1,5 @@
+import type { Appearance } from '@/lib/appearance'
+
 /* ===== Player ===== */
 export interface Player {
   _id: string
@@ -16,6 +18,7 @@ export interface Me extends Player {
   hasPassword: boolean
   // маскированный номер, если подтверждён
   phone: string | null
+  appearance: Appearance | null
 }
 
 /* ===== Group ===== */

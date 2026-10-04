@@ -18,18 +18,18 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
   }
 
   return (
-    <div className="container">
-      <div className="grid-table" style={{ gridTemplateColumns: `160px repeat(${data.games.length}, minmax(80px, 1fr)) 110px` }}>
-        <div className="sticky-col header">Игрок</div>
+    <div className="st-scroll">
+      <div className="st-grid" style={{ gridTemplateColumns: `160px repeat(${data.games.length}, minmax(80px, 1fr)) 110px` }}>
+        <div className="st-sticky-col st-header">Игрок</div>
 
         {data.games.map(g => (
-          <div key={g._id} className="header">
+          <div key={g._id} className="st-header">
             {g.isFinal && <span className="ml-1">🏆</span>}
             {g.title}
           </div>
         ))}
 
-        <div className="header total">Итого</div>
+        <div className="st-header st-total">Итого</div>
 
         {data.players.map((player) => {
           const seasonEntries = ((data.seasonEntries[player._id] ?? 0) * 100).toString()
@@ -42,8 +42,8 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
 
           return (
             <Fragment key={player._id}>
-              <div className="sticky-col player">
-                <Badge className="percentage-badge" mode="primary" type="number">
+              <div className="st-sticky-col st-player">
+                <Badge className="st-percentage-badge" mode="primary" type="number">
                   {seasonEntriesPercentage}
                 </Badge>
                 {player.firstName}
@@ -63,8 +63,8 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
                 return (
                   <div
                     key={game._id}
-                    className={`cell ${
-                      value > 0 ? 'win' : value < 0 ? 'lose' : ''
+                    className={`st-cell ${
+                      value > 0 ? 'st-win' : value < 0 ? 'st-lose' : ''
                     }`}
                   >
                     {Math.round(value)}
@@ -72,7 +72,7 @@ export function SeasonTable({ seasonId }: { seasonId: string }) {
                 )
               })}
 
-              <div className="cell total">
+              <div className="st-cell st-total">
                 {Math.round(total ?? 0)}
               </div>
             </Fragment>

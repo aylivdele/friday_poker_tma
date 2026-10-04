@@ -5,7 +5,7 @@ import { Cell, Headline, List, Modal, TabsList, Text } from '@telegram-apps/tele
 import { TabsItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/TabsList/components/TabsItem/TabsItem'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import useSWR from 'swr'
 import { api } from '@/lib/api'
 import { ApiError, getErrorMessage } from '@/lib/errors'

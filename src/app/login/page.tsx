@@ -4,10 +4,10 @@ import type { Me } from '@/types/api'
 import { Button, Headline, Input, Section, Subheadline, Text } from '@telegram-apps/telegram-ui'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
+import { useSetMe } from '@/hooks/useSetMe'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/errors'
 import { isTelegram } from '@/lib/platform'
-import { usePlayerStore } from '@/stores/playerStore'
 import './login.css'
 
 // Возвращаем только на свои страницы: «//evil.com» и полные адреса не принимаем
@@ -18,7 +18,7 @@ function safeNext(next: string | null) {
 function LoginForm() {
   const router = useRouter()
   const next = safeNext(useSearchParams().get('next'))
-  const setPlayer = usePlayerStore(s => s.setPlayer)
+  const setMe = useSetMe()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -36,7 +36,7 @@ function LoginForm() {
     setError(null)
     setLoading(true)
     try {
-      setPlayer(await api.post<Me>('/api/auth/login', { phone, password }))
+      setMe(await api.post<Me>('/api/auth/login', { phone, password }))
       router.replace(next)
     }
     catch (err) {

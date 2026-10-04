@@ -3,6 +3,7 @@
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { PlayerComponent } from '@/components/Player/Player'
+import { AppearanceSettings } from '@/components/Profile/AppearanceSettings'
 import { BrowserAccess } from '@/components/Profile/BrowserAccess'
 import { isNull } from '@/lib/helpers'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   return (
     <Page back={false}>
       <PlayerComponent player={profilePlayer}>
+        <AppearanceSettings />
         <BrowserAccess />
       </PlayerComponent>
     </Page>

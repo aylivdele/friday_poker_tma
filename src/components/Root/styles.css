@@ -7,13 +7,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--muted-foreground);
 }
 
 .root {
   min-height: 100vh;
   box-sizing: border-box;
-  /* в Telegram совпадает с цветом темы Telegram, в браузере зависит от светлой/тёмной темы системы */
-  background: var(--tgui--secondary_bg_color);
+  background: var(--background);
+  color: var(--foreground);
   padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(var(--bottom-panel-height, 80px) + 16px) env(safe-area-inset-left);
 }
 
@@ -26,17 +27,4 @@
   min-height: 80vh;
   padding: 24px;
   text-align: center;
-}
-
-.page-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin: 8px 12px 0;
-  padding: 6px 4px;
-  border: none;
-  background: none;
-  font-size: 16px;
-  color: var(--tgui--link_color);
-  cursor: pointer;
 }

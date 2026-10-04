@@ -1,5 +1,6 @@
 import type { Collection, Db, ObjectId } from 'mongodb'
 import type { Achievment } from './api'
+import type { Appearance } from '@/lib/appearance'
 
 /* ===== Player ===== */
 export interface Player {
@@ -14,6 +15,8 @@ export interface Player {
   // только цифры, подтверждён через Telegram; используется для входа из браузера
   phone?: string
   passwordHash?: string
+  // выбранное оформление, общее для Telegram и браузера
+  appearance?: Appearance
 }
 
 /* ===== Session ===== */

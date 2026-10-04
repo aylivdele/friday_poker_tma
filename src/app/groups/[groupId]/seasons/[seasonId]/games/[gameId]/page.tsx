@@ -18,6 +18,7 @@ import PlayersEditor from '@/components/Games/PlayersEditor'
 import SaveControls from '@/components/Games/SaveControls'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
+import { useClosingConfirmation } from '@/hooks/useClosingConfirmation'
 import { parseDateInput, toDateInputValue } from '@/lib/dates'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
@@ -35,6 +36,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   const [draft, setDraft] = useState<GameDetails | null>(null)
   const [settingsValid, setSettingsValid] = useState(true)
   const dirty = !!draft && !!base && editableFields(draft) !== editableFields(base)
+  // Несохранённые правки: Telegram и браузер переспросят перед закрытием
+  useClosingConfirmation(dirty)
 
   const reset = (fresh: GameDetails) => {
     setBase(fresh)

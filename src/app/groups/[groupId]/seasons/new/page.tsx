@@ -3,7 +3,7 @@
 import { Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
 import { useRouter } from 'next/navigation'
 import { use, useState } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
 import { Page } from '@/components/Page'
 import { api } from '@/lib/api'

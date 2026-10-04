@@ -1,22 +1,23 @@
 'use client'
 
-import { Cell, Spinner, Text } from '@telegram-apps/telegram-ui'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
 import { usePlayerStore } from '@/stores/playerStore'
 
+// Стартовая страница: после загрузки профиля открывается вкладка «Игры»
 export default function Root() {
   const router = useRouter()
   const player = usePlayerStore(s => s.player)
   useEffect(() => {
     if (player) {
-      router.replace(`/profile`)
+      router.replace('/games')
     }
   }, [router, player])
   return (
     <Page back={false}>
-      <Cell before={<Spinner size="m" />}><Text weight="2">Загрузка профиля</Text></Cell>
+      <Loader data={null} isLoading={true} error={null} />
     </Page>
   )
 }

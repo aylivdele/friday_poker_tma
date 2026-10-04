@@ -1,53 +1,47 @@
 'use client'
 
-import { Subheadline, Tabbar } from '@telegram-apps/telegram-ui'
-import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import { SpadeIcon, UserRoundIcon, UsersRoundIcon } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { haptic } from '@/lib/haptics'
+import { cn } from '@/lib/utils'
 import { usePlayerStore } from '@/stores/playerStore'
 
-type Tab = 'profile' | 'groups' | 'games'
+const tabs: { href: string, label: string, icon: LucideIcon }[] = [
+  { href: '/games', label: 'Игры', icon: SpadeIcon },
+  { href: '/groups', label: 'Группы', icon: UsersRoundIcon },
+  { href: '/profile', label: 'Профиль', icon: UserRoundIcon },
+]
 
 export function Navigation() {
   const player = usePlayerStore(s => s.player)
-  const router = useRouter()
   const pathname = usePathname()
-  const [currentTab, setCurrentTab] = useState<Tab>('profile')
-
-  const switchTab = useCallback((tab: Tab) => {
-    const newPath = `/${tab}`
-    if (pathname === newPath) {
-      return
-    }
-    setCurrentTab(tab)
-    router.push(newPath)
-  }, [router, pathname])
-
-  useEffect(() => {
-    if (pathname.startsWith('/profile')) {
-      setCurrentTab('profile')
-    }
-    if (pathname.startsWith('/groups')) {
-      setCurrentTab('groups')
-    }
-    if (pathname.startsWith('/games')) {
-      setCurrentTab('games')
-    }
-  }, [pathname])
 
   if (!player)
     return null
 
   return (
-    <nav className="tab-bar">
-      <Tabbar.Item selected={currentTab === 'profile'} onClick={() => switchTab('profile')}>
-        <Subheadline style={{ padding: '10px 5px' }}>Профиль</Subheadline>
-      </Tabbar.Item>
-      <Tabbar.Item selected={currentTab === 'groups'} onClick={() => switchTab('groups')}>
-        <Subheadline style={{ padding: '10px 5px' }}>Группы</Subheadline>
-      </Tabbar.Item>
-      <Tabbar.Item selected={currentTab === 'games'} onClick={() => switchTab('games')}>
-        <Subheadline style={{ padding: '10px 5px' }}>Игры</Subheadline>
-      </Tabbar.Item>
+    <nav className="grid grid-cols-3 px-2 pt-1 pb-1">
+      {tabs.map(({ href, label, icon: Icon }) => {
+        const active = pathname.startsWith(href)
+        return (
+          <Link
+            key={href}
+            href={href}
+            replace
+            aria-current={active ? 'page' : undefined}
+            onClick={() => haptic('select')}
+            className={cn(
+              'flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-medium transition-colors',
+              active ? 'text-primary-text' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Icon className="size-6" strokeWidth={active ? 2.2 : 1.8} />
+            {label}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

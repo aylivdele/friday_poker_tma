@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-bar: var(--bar);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-silver: var(--silver);
+  --color-silver-soft: var(--silver-soft);
+  --color-bronze: var(--bronze);
+  --color-bronze-soft: var(--bronze-soft);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Темы. На <html> ставятся data-theme (felt | chip | graphite | caramel | telegram) и класс dark.
+ * Нейтральные цвета общие для холодных тем, у Карамели свои тёплые.
+ */
+:root {
+  --radius: 0.75rem;
+
+  --background: #F1F2F4;
+  --foreground: #14171C;
+  --card: #FFFFFF;
+  --muted: #E4E6EA;
+  --muted-foreground: #5F6774;
+  --border: #E3E6EB;
+  --input: #E3E6EB;
+  --bar: #FFFFFF;
+  --destructive: #C2352B;
+  --gain: #15803D;
+  --loss: #C2352B;
+  --gold: #A87A1F;
+  --gold-soft: #F6EDD9;
+  --silver: #69717E;
+  --silver-soft: #ECEEF1;
+  --bronze: #A2582A;
+  --bronze-soft: #F5E6DA;
+
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --accent: var(--secondary);
+  --accent-foreground: var(--secondary-foreground);
+  --ring: var(--primary);
+}
+
+.dark {
+  --background: #0E1012;
+  --foreground: #ECEEF1;
+  --card: #191C20;
+  --muted: #22262B;
+  --muted-foreground: #99A1AD;
+  --border: #2A2E35;
+  --input: #2A2E35;
+  --bar: #15181B;
+  --destructive: #F87171;
+  --gain: #4ADE80;
+  --loss: #F87171;
+  --gold: #E0B34F;
+  --gold-soft: #3A2F17;
+  --silver: #B8C0CB;
+  --silver-soft: #2A2F36;
+  --bronze: #E09A68;
+  --bronze-soft: #3A2618;
+}
+
+/* Сукно — по умолчанию */
+:root,
+[data-theme='felt'] {
+  --primary: #1D7A52;
+  --primary-foreground: #FFFFFF;
+  --primary-text: #1A6E4A;
+  --secondary: #E4F1EA;
+  --secondary-foreground: #1A6E4A;
+}
+.dark,
+.dark[data-theme='felt'] {
+  --primary: #1E8256;
+  --primary-foreground: #FFFFFF;
+  --primary-text: #5BC995;
+  --secondary: #173324;
+  --secondary-foreground: #7ED8AC;
+}
+
+/* Фишка */
+[data-theme='chip'] {
+  --primary: #3152D4;
+  --primary-foreground: #FFFFFF;
+  --primary-text: #2F4FCC;
+  --secondary: #E8EDFC;
+  --secondary-foreground: #2A47BF;
+}
+.dark[data-theme='chip'] {
+  --primary: #3A5AE0;
+  --primary-foreground: #FFFFFF;
+  --primary-text: #93A8FF;
+  --secondary: #1C2547;
+  --secondary-foreground: #A7B8FF;
+}
+
+/* Графит */
+[data-theme='graphite'] {
+  --primary: #1B1E23;
+  --primary-foreground: #FFFFFF;
+  --primary-text: #1B1E23;
+  --secondary: #E9EAED;
+  --secondary-foreground: #1B1E23;
+}
+.dark[data-theme='graphite'] {
+  --primary: #EEF0F3;
+  --primary-foreground: #111316;
+  --primary-text: #EEF0F3;
+  --secondary: #272B32;
+  --secondary-foreground: #EEF0F3;
+}
+
+/* Карамель — тёплые нейтральные цвета */
+[data-theme='caramel'] {
+  --background: #F4F2EE;
+  --foreground: #1C1A17;
+  --card: #FFFFFF;
+  --muted: #E8E4DD;
+  --muted-foreground: #6A645B;
+  --border: #E7E3DC;
+  --input: #E7E3DC;
+  --bar: #FFFFFF;
+  --primary: #E2A23B;
+  --primary-foreground: #2A1A05;
+  --primary-text: #94600F;
+  --secondary: #FBF0DC;
+  --secondary-foreground: #87560C;
+}
+.dark[data-theme='caramel'] {
+  --background: #12100D;
+  --foreground: #F1ECE4;
+  --card: #1C1915;
+  --muted: #26221C;
+  --muted-foreground: #A39B8F;
+  --border: #2F2A23;
+  --input: #2F2A23;
+  --bar: #191612;
+  --primary: #E8A93F;
+  --primary-foreground: #1F1404;
+  --primary-text: #F0BC63;
+  --secondary: #3A2C14;
+  --secondary-foreground: #F3C677;
+}
+
+/*
+ * «Как в Telegram»: цвета из темы клиента. SDK пишет их в --tgc-* (см. src/core/init.ts).
+ * Плюс, минус и золото остаются нашими.
+ */
+[data-theme='telegram'] {
+  --background: var(--tgc-secondary-bg-color, #EFEFF4);
+  --foreground: var(--tgc-text-color, #000000);
+  --card: var(--tgc-section-bg-color, var(--tgc-bg-color, #FFFFFF));
+  --muted-foreground: var(--tgc-hint-color, #8E8E93);
+  --muted: color-mix(in oklab, var(--muted-foreground) 16%, var(--card));
+  --border: var(--tgc-section-separator-color, color-mix(in oklab, var(--muted-foreground) 25%, transparent));
+  --input: var(--border);
+  --bar: var(--tgc-bottom-bar-bg-color, var(--card));
+  --primary: var(--tgc-button-color, #2481CC);
+  --primary-foreground: var(--tgc-button-text-color, #FFFFFF);
+  --primary-text: var(--tgc-link-color, var(--primary));
+  --secondary: color-mix(in oklab, var(--primary) 14%, var(--card));
+  --secondary-foreground: var(--primary-text);
+  --destructive: var(--tgc-destructive-text-color, #E53935);
+  --loss: var(--destructive);
+}
+
+/*
+ * Мост для экранов, которые пока на telegram-ui: её цвета берутся из --tg-theme-*,
+ * поэтому подставляем туда наши токены — выбранная тема применяется ко всему приложению.
+ */
+:root {
+  --tg-theme-bg-color: var(--card);
+  --tg-theme-secondary-bg-color: var(--background);
+  --tg-theme-section-bg-color: var(--card);
+  --tg-theme-header-bg-color: var(--background);
+  --tg-theme-text-color: var(--foreground);
+  --tg-theme-hint-color: var(--muted-foreground);
+  --tg-theme-subtitle-text-color: var(--muted-foreground);
+  --tg-theme-section-header-text-color: var(--muted-foreground);
+  --tg-theme-link-color: var(--primary-text);
+  --tg-theme-accent-text-color: var(--primary-text);
+  --tg-theme-button-color: var(--primary);
+  --tg-theme-button-text-color: var(--primary-foreground);
+  --tg-theme-destructive-text-color: var(--destructive);
+}
+
+.root {
+  --tgui--font-family: var(--font-sans);
+  --tgui--divider: var(--border);
+  --tgui--outline: var(--border);
+  --tgui--secondary_fill: var(--secondary);
+  --tgui--tertiary_bg_color: var(--muted);
+  --tgui--quartenary_bg_color: var(--muted);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+  }
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Поля telegram-ui, пока экраны не переведены на новые компоненты */
+.input {
+  justify-content: space-between;
+  input[type='number'] {
+    width: 100px;
+  }
+  input[type='text'] {
+    width: 200px;
+  }
+}

@@ -1,6 +1,7 @@
 import type { ThemeParams } from '@tma.js/sdk-react'
 import {
   backButton,
+  closingBehavior,
   emitEvent,
   initData,
   init as initSDK,
@@ -8,6 +9,7 @@ import {
   mockTelegramEnv,
   retrieveLaunchParams,
   setDebug,
+  swipeBehavior,
   themeParams,
   viewport,
 } from '@tma.js/sdk-react'
@@ -74,10 +76,28 @@ export async function init(options: {
 
   try {
     miniApp.mount()
-    themeParams.bindCssVars()
+    // Цвета темы клиента кладём в свои переменные --tgc-*: их читает тема «Как в Telegram»,
+    // а стандартные --tg-theme-* заняты мостом к нашим темам (см. globals.css)
+    themeParams.bindCssVars(key => `--tgc-${key.replace(/_/g, '-').replace(/([A-Z])/g, '-$1').toLowerCase()}`)
   }
   catch (e) {
     // miniApp not available
+    console.error(e)
+  }
+
+  try {
+    // Иначе вертикальный свайп по шторкам и спискам сворачивает приложение
+    swipeBehavior.mount()
+    swipeBehavior.disableVertical()
+  }
+  catch (e) {
+    console.error(e)
+  }
+
+  try {
+    closingBehavior.mount()
+  }
+  catch (e) {
     console.error(e)
   }
 

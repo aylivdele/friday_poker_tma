@@ -7,36 +7,19 @@ import {
   retrieveLaunchParams,
   useSignal,
 } from '@tma.js/sdk-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 
+import { ConfirmHost } from '@/components/ConfirmButton/ConfirmButton'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ErrorPage } from '@/components/ErrorPage'
+import { Toaster } from '@/components/ui/sonner'
 import { useDidMount } from '@/hooks/useDidMount'
+import { resolveAppearance } from '@/lib/appearance'
 import { isTelegram } from '@/lib/platform'
+import { useAppearanceStore } from '@/stores/appearanceStore'
+import { applyAppearance } from './applyAppearance'
 
 import './styles.css'
-
-function TelegramRoot({ children }: PropsWithChildren) {
-  const isDark = useSignal(miniApp.isDark)
-  const platform = useMemo(() => {
-    try {
-      return retrieveLaunchParams().tgWebAppPlatform
-    }
-    catch {
-      return 'unknown'
-    }
-  }, [])
-
-  return (
-    <AppRoot
-      appearance={isDark ? 'dark' : 'light'}
-      platform={['macos', 'ios'].includes(platform) ? 'ios' : 'base'}
-      className="root"
-    >
-      {children}
-    </AppRoot>
-  )
-}
 
 function usePrefersDark() {
   const [isDark, setDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -49,13 +32,56 @@ function usePrefersDark() {
   return isDark
 }
 
-function BrowserRoot({ children }: PropsWithChildren) {
-  const isDark = usePrefersDark()
+// Применяет выбранное оформление и рисует корень приложения.
+// Экраны на telegram-ui пока требуют AppRoot; её цвета берутся из наших токенов (см. globals.css).
+function AppFrame({ children, telegramDark, systemDark, platform }: PropsWithChildren<{ telegramDark: boolean, systemDark: boolean, platform: 'ios' | 'base' }>) {
+  const appearance = useAppearanceStore(s => s.appearance)
+  const setResolved = useAppearanceStore(s => s.setResolved)
+  const resolved = useMemo(
+    () => resolveAppearance(appearance, { inTelegram: isTelegram(), telegramDark, systemDark }),
+    [appearance, telegramDark, systemDark],
+  )
+
+  useLayoutEffect(() => {
+    applyAppearance(resolved)
+    setResolved(resolved)
+  }, [resolved, setResolved])
 
   return (
-    <AppRoot appearance={isDark ? 'dark' : 'light'} platform="base" className="root">
+    <AppRoot appearance={resolved.dark ? 'dark' : 'light'} platform={platform} className="root">
       {children}
+      <Toaster />
+      <ConfirmHost />
     </AppRoot>
+  )
+}
+
+function TelegramRoot({ children }: PropsWithChildren) {
+  const telegramDark = useSignal(miniApp.isDark)
+  const systemDark = usePrefersDark()
+  const platform = useMemo(() => {
+    try {
+      return retrieveLaunchParams().tgWebAppPlatform
+    }
+    catch {
+      return 'unknown'
+    }
+  }, [])
+
+  return (
+    <AppFrame telegramDark={telegramDark} systemDark={systemDark} platform={['macos', 'ios'].includes(platform) ? 'ios' : 'base'}>
+      {children}
+    </AppFrame>
+  )
+}
+
+function BrowserRoot({ children }: PropsWithChildren) {
+  const systemDark = usePrefersDark()
+
+  return (
+    <AppFrame telegramDark={false} systemDark={systemDark} platform="base">
+      {children}
+    </AppFrame>
   )
 }
 

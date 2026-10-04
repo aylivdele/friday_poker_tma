@@ -26,6 +26,7 @@ export function toMe(auth: Auth): Api.Me {
     authVia: auth.via,
     hasPassword: !!auth.player.passwordHash,
     phone: auth.player.phone ? maskPhone(auth.player.phone) : null,
+    appearance: auth.player.appearance ?? null,
   }
 }
 

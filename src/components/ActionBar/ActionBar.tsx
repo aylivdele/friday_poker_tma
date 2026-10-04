@@ -1,10 +1,12 @@
 'use client'
 
 import type { PropsWithChildren, ReactNode } from 'react'
-import { Button } from '@telegram-apps/telegram-ui'
+import { Loader2Icon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import './ActionBar.css'
+import { Button } from '@/components/ui/button'
+import { haptic } from '@/lib/haptics'
+import { cn } from '@/lib/utils'
 
 const SLOT_ID = 'action-bar-slot'
 
@@ -26,9 +28,12 @@ export function BottomPanel({ children }: PropsWithChildren) {
   }, [])
 
   return (
-    <div ref={ref} className="bottom-panel">
-      <div id={SLOT_ID} />
-      {children}
+    // z-index ниже модальных окон telegram-ui (3) и диалогов (50), выше обычного контента
+    <div ref={ref} className="fixed inset-x-0 bottom-0 z-2 border-t bg-bar pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-2xl">
+        <div id={SLOT_ID} />
+        {children}
+      </div>
     </div>
   )
 }
@@ -44,7 +49,7 @@ export function ActionBar({ children }: PropsWithChildren) {
   if (!slot) {
     return null
   }
-  return createPortal(<div className="action-bar">{children}</div>, slot)
+  return createPortal(<div className="flex flex-col gap-2 px-4 py-3 empty:hidden">{children}</div>, slot)
 }
 
 export function ActionButton({
@@ -62,25 +67,25 @@ export function ActionButton({
 }) {
   return (
     <Button
-      stretched
-      size="l"
-      mode={variant === 'primary' ? 'filled' : 'bezeled'}
-      className={variant === 'destructive' ? 'action-button--destructive' : undefined}
-      loading={loading}
+      size="lg"
+      variant={variant === 'primary' ? 'default' : variant === 'secondary' ? 'secondary' : 'destructive'}
+      className={cn('h-12 w-full rounded-xl text-base font-semibold')}
       disabled={disabled || loading}
       onClick={() => {
         // Снимаем фокус с поля ввода, чтобы оно успело отдать значение до действия
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur()
         }
+        haptic('tap')
         onClick()
       }}
     >
+      {loading && <Loader2Icon className="size-5 animate-spin" />}
       {children}
     </Button>
   )
 }
 
 export function ActionHint({ children }: PropsWithChildren) {
-  return <div className="action-hint">{children}</div>
+  return <p className="text-center text-sm text-muted-foreground">{children}</p>
 }

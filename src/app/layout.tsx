@@ -1,22 +1,33 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import type { PropsWithChildren } from 'react'
 
 import { BottomPanel } from '@/components/ActionBar/ActionBar'
 import { Root } from '@/components/Root/Root'
+import { APPEARANCE_BOOT_SCRIPT } from '@/lib/appearance'
 import Bootstrap from './bootstrap'
 import { Navigation } from './navigation'
+import '@fontsource-variable/onest'
 import '@telegram-apps/telegram-ui/dist/styles.css'
-import 'normalize.css/normalize.css'
-import './_assets/globals.css'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Friday Poker',
   description: 'Учёт домашних покерных игр, сезонов и достижений',
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
+
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="ru" data-theme="felt" suppressHydrationWarning>
+      <head>
+        {/* Тема до первой отрисовки, чтобы не мигала светлая */}
+        <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOT_SCRIPT }} />
+      </head>
       <body>
         <Root>
           <Bootstrap />

@@ -2,8 +2,10 @@
 
 import type { PropsWithChildren } from 'react'
 import { backButton } from '@tma.js/sdk-react'
+import { ChevronLeftIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import { isTelegram } from '@/lib/platform'
 
 interface PageProps {
@@ -41,13 +43,16 @@ function BrowserPage({ children, back = true }: PropsWithChildren<PageProps>) {
   return (
     <>
       {back && (
-        <button
-          type="button"
-          className="page-back"
-          onClick={() => window.history.length > 1 ? router.back() : router.push('/')}
-        >
-          ‹ Назад
-        </button>
+        <div className="sticky top-0 z-2 bg-background/90 px-2 py-1 backdrop-blur supports-backdrop-filter:bg-background/75">
+          <Button
+            variant="ghost"
+            className="h-11 gap-1 px-2 text-base font-medium text-primary-text hover:bg-secondary hover:text-primary-text"
+            onClick={() => window.history.length > 1 ? router.back() : router.push('/')}
+          >
+            <ChevronLeftIcon className="size-6" />
+            Назад
+          </Button>
+        </div>
       )}
       {children}
     </>
@@ -55,5 +60,9 @@ function BrowserPage({ children, back = true }: PropsWithChildren<PageProps>) {
 }
 
 export function Page(props: PropsWithChildren<PageProps>) {
-  return isTelegram() ? <TelegramPage {...props} /> : <BrowserPage {...props} />
+  return (
+    <div className="mx-auto w-full max-w-2xl">
+      {isTelegram() ? <TelegramPage {...props} /> : <BrowserPage {...props} />}
+    </div>
+  )
 }
