@@ -28,7 +28,7 @@ export function BottomPanel({ children }: PropsWithChildren) {
   }, [])
 
   return (
-    // z-index ниже модальных окон telegram-ui (3) и диалогов (50), выше обычного контента
+    // z-index ниже диалогов и шторок (50), выше обычного контента
     <div ref={ref} className="fixed inset-x-0 bottom-0 z-2 border-t bg-bar pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto max-w-2xl">
         <div id={SLOT_ID} />

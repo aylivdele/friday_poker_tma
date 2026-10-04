@@ -76,8 +76,7 @@ export async function init(options: {
 
   try {
     miniApp.mount()
-    // Цвета темы клиента кладём в свои переменные --tgc-*: их читает тема «Как в Telegram»,
-    // а стандартные --tg-theme-* заняты мостом к нашим темам (см. globals.css)
+    // Цвета темы клиента кладём в переменные --tgc-*: их читает тема «Как в Telegram» (см. globals.css)
     themeParams.bindCssVars(key => `--tgc-${key.replace(/_/g, '-').replace(/([A-Z])/g, '-$1').toLowerCase()}`)
   }
   catch (e) {

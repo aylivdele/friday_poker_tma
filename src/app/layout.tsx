@@ -7,7 +7,6 @@ import { APPEARANCE_BOOT_SCRIPT } from '@/lib/appearance'
 import Bootstrap from './bootstrap'
 import { Navigation } from './navigation'
 import '@fontsource-variable/onest'
-import '@telegram-apps/telegram-ui/dist/styles.css'
 import './globals.css'
 
 export const metadata: Metadata = {

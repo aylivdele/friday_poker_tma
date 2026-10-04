@@ -203,35 +203,6 @@
   --loss: var(--destructive);
 }
 
-/*
- * Мост для экранов, которые пока на telegram-ui: её цвета берутся из --tg-theme-*,
- * поэтому подставляем туда наши токены — выбранная тема применяется ко всему приложению.
- */
-:root {
-  --tg-theme-bg-color: var(--card);
-  --tg-theme-secondary-bg-color: var(--background);
-  --tg-theme-section-bg-color: var(--card);
-  --tg-theme-header-bg-color: var(--background);
-  --tg-theme-text-color: var(--foreground);
-  --tg-theme-hint-color: var(--muted-foreground);
-  --tg-theme-subtitle-text-color: var(--muted-foreground);
-  --tg-theme-section-header-text-color: var(--muted-foreground);
-  --tg-theme-link-color: var(--primary-text);
-  --tg-theme-accent-text-color: var(--primary-text);
-  --tg-theme-button-color: var(--primary);
-  --tg-theme-button-text-color: var(--primary-foreground);
-  --tg-theme-destructive-text-color: var(--destructive);
-}
-
-.root {
-  --tgui--font-family: var(--font-sans);
-  --tgui--divider: var(--border);
-  --tgui--outline: var(--border);
-  --tgui--secondary_fill: var(--secondary);
-  --tgui--tertiary_bg_color: var(--muted);
-  --tgui--quartenary_bg_color: var(--muted);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -247,16 +218,5 @@
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
-  }
-}
-
-/* Поля telegram-ui, пока экраны не переведены на новые компоненты */
-.input {
-  justify-content: space-between;
-  input[type='number'] {
-    width: 100px;
-  }
-  input[type='text'] {
-    width: 200px;
   }
 }

@@ -1,15 +1,10 @@
 'use client'
 
 import type { PropsWithChildren } from 'react'
-import { AppRoot } from '@telegram-apps/telegram-ui'
-import {
-  miniApp,
-  retrieveLaunchParams,
-  useSignal,
-} from '@tma.js/sdk-react'
+import { miniApp, useSignal } from '@tma.js/sdk-react'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 
-import { ConfirmHost } from '@/components/ConfirmButton/ConfirmButton'
+import { ConfirmHost } from '@/components/app/confirm'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ErrorPage } from '@/components/ErrorPage'
 import { Toaster } from '@/components/ui/sonner'
@@ -32,9 +27,8 @@ function usePrefersDark() {
   return isDark
 }
 
-// Применяет выбранное оформление и рисует корень приложения.
-// Экраны на telegram-ui пока требуют AppRoot; её цвета берутся из наших токенов (см. globals.css).
-function AppFrame({ children, telegramDark, systemDark, platform }: PropsWithChildren<{ telegramDark: boolean, systemDark: boolean, platform: 'ios' | 'base' }>) {
+// Применяет выбранное оформление и рисует корень приложения
+function AppFrame({ children, telegramDark, systemDark }: PropsWithChildren<{ telegramDark: boolean, systemDark: boolean }>) {
   const appearance = useAppearanceStore(s => s.appearance)
   const setResolved = useAppearanceStore(s => s.setResolved)
   const resolved = useMemo(
@@ -48,41 +42,25 @@ function AppFrame({ children, telegramDark, systemDark, platform }: PropsWithChi
   }, [resolved, setResolved])
 
   return (
-    <AppRoot appearance={resolved.dark ? 'dark' : 'light'} platform={platform} className="root">
+    <div className="root">
       {children}
       <Toaster />
       <ConfirmHost />
-    </AppRoot>
+    </div>
   )
 }
 
 function TelegramRoot({ children }: PropsWithChildren) {
   const telegramDark = useSignal(miniApp.isDark)
   const systemDark = usePrefersDark()
-  const platform = useMemo(() => {
-    try {
-      return retrieveLaunchParams().tgWebAppPlatform
-    }
-    catch {
-      return 'unknown'
-    }
-  }, [])
 
-  return (
-    <AppFrame telegramDark={telegramDark} systemDark={systemDark} platform={['macos', 'ios'].includes(platform) ? 'ios' : 'base'}>
-      {children}
-    </AppFrame>
-  )
+  return <AppFrame telegramDark={telegramDark} systemDark={systemDark}>{children}</AppFrame>
 }
 
 function BrowserRoot({ children }: PropsWithChildren) {
   const systemDark = usePrefersDark()
 
-  return (
-    <AppFrame telegramDark={false} systemDark={systemDark} platform="base">
-      {children}
-    </AppFrame>
-  )
+  return <AppFrame telegramDark={false} systemDark={systemDark}>{children}</AppFrame>
 }
 
 export function Root(props: PropsWithChildren) {

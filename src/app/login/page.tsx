@@ -1,14 +1,17 @@
 'use client'
 
 import type { Me } from '@/types/api'
-import { Button, Headline, Input, Section, Subheadline, Text } from '@telegram-apps/telegram-ui'
+import { CircleAlertIcon, Loader2Icon, SpadeIcon } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useSetMe } from '@/hooks/useSetMe'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/errors'
+import { haptic } from '@/lib/haptics'
 import { isTelegram } from '@/lib/platform'
-import './login.css'
 
 // Возвращаем только на свои страницы: «//evil.com» и полные адреса не принимаем
 function safeNext(next: string | null) {
@@ -40,42 +43,66 @@ function LoginForm() {
       router.replace(next)
     }
     catch (err) {
+      haptic('error')
       setError(getErrorMessage(err))
       setLoading(false)
     }
   }
 
   return (
-    <form className="login" onSubmit={submit}>
-      <Headline weight="1" className="login__title">Friday Poker</Headline>
-      <Section footer={error ? <Text className="login__error">{error}</Text> : undefined}>
+    <form className="mx-auto flex w-full max-w-sm flex-col gap-5 px-4 pt-[12vh] pb-8" onSubmit={submit}>
+      <div className="flex flex-col items-center gap-3 pb-2 text-center">
+        <span className="flex size-16 items-center justify-center rounded-[20px] bg-primary text-primary-foreground shadow-sm">
+          <SpadeIcon className="size-8" fill="currentColor" />
+        </span>
+        <h1 className="text-[28px] leading-tight font-bold tracking-tight">Friday Poker</h1>
+        <p className="text-[15px] text-muted-foreground">Вход по номеру телефона и паролю</p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="login-phone">Телефон</Label>
         <Input
-          className="input"
+          id="login-phone"
           type="tel"
-          autoComplete="username"
           inputMode="tel"
-          before={<Subheadline>Телефон</Subheadline>}
+          autoComplete="username"
           placeholder="+7 900 000-00-00"
+          className="h-12 rounded-xl bg-card text-base"
           value={phone}
           onChange={e => setPhone(e.target.value)}
           disabled={loading}
+          aria-invalid={!!error}
         />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="login-password">Пароль</Label>
         <Input
-          className="input"
+          id="login-password"
           type="password"
           autoComplete="current-password"
-          before={<Subheadline>Пароль</Subheadline>}
+          className="h-12 rounded-xl bg-card text-base"
           value={password}
           onChange={e => setPassword(e.target.value)}
           disabled={loading}
+          aria-invalid={!!error}
         />
-      </Section>
-      <div className="login__actions">
-        <Button type="submit" stretched size="l" loading={loading} disabled={!phone.trim() || !password}>Войти</Button>
       </div>
-      <Text className="login__hint">
-        Нет пароля? Откройте приложение в Telegram → Профиль → «Вход из браузера»: подтвердите номер и задайте пароль.
-      </Text>
+
+      {error && (
+        <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
+          <CircleAlertIcon className="mt-0.5 size-4 shrink-0" />
+          {error}
+        </p>
+      )}
+
+      <Button type="submit" size="lg" className="h-12 rounded-xl text-base" disabled={loading || !phone.trim() || !password}>
+        {loading && <Loader2Icon className="size-4 animate-spin" />}
+        Войти
+      </Button>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Нет пароля? Откройте приложение в Telegram → «Профиль» → «Вход из браузера»: подтвердите номер и задайте пароль.
+      </p>
     </form>
   )
 }
