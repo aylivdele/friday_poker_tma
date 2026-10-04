@@ -133,3 +133,19 @@ export interface GroupStats {
   games: number
   players: Record<string, { games: number, balance: number, finalWins: number }>
 }
+
+// Игра в общих списках — с названиями группы и сезона
+export interface GameListItem extends Game {
+  groupTitle?: string
+  seasonTitle?: string
+}
+
+export interface FinishedGamesPage {
+  items: GameListItem[]
+  nextCursor: string | null
+}
+
+// Последний сезон каждой из моих групп — куда добавлять новую игру
+export interface CurrentSeason extends Season {
+  groupTitle: string
+}

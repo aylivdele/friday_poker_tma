@@ -21,7 +21,7 @@ export function LiveBadge() {
   )
 }
 
-// Строка игры в списках: название, дата и состав; справа — мой итог или «Идёт»
+// Строка игры в списках: название, дата и состав (или группа и сезон); справа — мой итог или «Идёт»
 export function GameRow({ game, meId, meta }: { game: Game, meId?: string, meta?: string }) {
   const router = useRouter()
   const myBalance = game.isFinished && meId && game.players.some(p => p.playerId === meId)
@@ -36,7 +36,8 @@ export function GameRow({ game, meId, meta }: { game: Game, meId?: string, meta?
           {game.settings.isFinal && <FinalBadge />}
         </span>
         <span className="truncate text-[13px] text-muted-foreground">
-          {[formatShortDate(game.createdAt), meta, plural(game.players.length, ['игрок', 'игрока', 'игроков'])].filter(Boolean).join(' · ')}
+          {/* в общих списках важнее группа и сезон, в списке сезона — состав */}
+          {[formatShortDate(game.createdAt), meta || plural(game.players.length, ['игрок', 'игрока', 'игроков'])].join(' · ')}
         </span>
       </div>
       {!game.isFinished
