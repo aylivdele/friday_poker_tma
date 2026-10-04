@@ -1,29 +1,42 @@
 'use client'
 
-import type { Player } from '@/types/api'
-import { use } from 'react'
-import useSWR from 'swr'
+import type { PlayerDetails, PlayerStats } from '@/types/api'
+import { use, useState } from 'react'
+import useSWR, { mutate } from 'swr'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { PlayerComponent } from '@/components/Player/Player'
-import { isNull } from '@/lib/helpers'
+import { EditPlayerDialog } from '@/components/player/EditPlayerDialog'
+import { PlayerProfile } from '@/components/player/PlayerProfile'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
-export default function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: player, isLoading, error } = useSWR<Player>(`/api/players/${id}`, swrGetFetcher, {
-    revalidateOnMount: true,
-    revalidateOnFocus: true,
-    dedupingInterval: 2000,
-  })
-
-  if (isNull(player)) {
-    return (<Loader data={player} isLoading={isLoading} error={error} />)
-  }
+  const playerSwr = useSWR<PlayerDetails>(`/api/players/${id}`, swrGetFetcher)
+  const { data: stats } = useSWR<PlayerStats>(`/api/players/${id}/stats`, swrGetFetcher)
+  const [editOpen, setEditOpen] = useState(false)
+  const player = playerSwr.data
 
   return (
-    <Page>
-      <PlayerComponent player={player} />
+    <Page title="Игрок">
+      {player
+        ? (
+            <>
+              <PlayerProfile player={player} stats={stats} onEdit={player.can.edit ? () => setEditOpen(true) : undefined} />
+              {player.can.edit && (
+                <EditPlayerDialog
+                  open={editOpen}
+                  onOpenChange={setEditOpen}
+                  player={player}
+                  onSaved={(updated) => {
+                    playerSwr.mutate({ ...player, ...updated }, { revalidate: false })
+                    // Составы групп покажут новое имя сразу
+                    mutate(key => typeof key === 'string' && key.startsWith('/api/players?'))
+                  }}
+                />
+              )}
+            </>
+          )
+        : <Loader {...playerSwr} />}
     </Page>
   )
 }

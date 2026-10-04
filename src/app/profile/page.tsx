@@ -1,30 +1,31 @@
 'use client'
 
+import type { Me, PlayerStats } from '@/types/api'
+import useSWR from 'swr'
+import { TabHeader } from '@/components/app/TabHeader'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
-import { PlayerComponent } from '@/components/Player/Player'
-import { AppearanceSettings } from '@/components/Profile/AppearanceSettings'
-import { BrowserAccess } from '@/components/Profile/BrowserAccess'
-import { isNull } from '@/lib/helpers'
-import { usePlayerStore } from '@/stores/playerStore'
+import { PlayerProfile } from '@/components/player/PlayerProfile'
+import { AppearanceSettings } from '@/components/profile/AppearanceSettings'
+import { BrowserAccess } from '@/components/profile/BrowserAccess'
+import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function ProfilePage() {
-  const profilePlayer = usePlayerStore(s => s.player)
-
-  if (isNull(profilePlayer)) {
-    return (
-      <Page back={false}>
-        <Loader data={profilePlayer} isLoading={true} error={null} />
-      </Page>
-    )
-  }
+  const meSwr = useSWR<Me>('/api/me', swrGetFetcher)
+  const me = meSwr.data
+  const { data: stats } = useSWR<PlayerStats>(me ? `/api/players/${me._id}/stats` : null, swrGetFetcher)
 
   return (
     <Page back={false}>
-      <PlayerComponent player={profilePlayer}>
-        <AppearanceSettings />
-        <BrowserAccess />
-      </PlayerComponent>
+      <TabHeader title="Профиль" />
+      {me
+        ? (
+            <PlayerProfile player={me} stats={stats}>
+              <AppearanceSettings />
+              <BrowserAccess />
+            </PlayerProfile>
+          )
+        : <Loader {...meSwr} />}
     </Page>
   )
 }

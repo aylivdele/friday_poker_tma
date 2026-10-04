@@ -1,9 +1,11 @@
 import type { ClientSession, ObjectId, WithId } from 'mongodb'
+import type { GameListItem } from '@/types/api'
 import type { Game, GamePlayer, GameResult, GameSettings, Group } from '@/types/db'
 import { getDb } from '@/core/db'
 import { calcEntryCaps, totalStacks } from '@/domain/balances'
 import { buildSeasonTable } from '@/domain/seasonTable'
 import { recalculateAchievments } from '@/lib/achievments'
+import { toPublicGame } from './dto'
 import { badRequest } from './http'
 
 export async function loadSeasonTable(seasonId: ObjectId) {
@@ -115,4 +117,19 @@ export async function deleteGroupCascade(group: WithId<Group>) {
 
 export async function countGames(filter: { seasonId?: ObjectId, groupId?: ObjectId }) {
   return (await getDb()).games.countDocuments(filter)
+}
+
+// Добавляет к играм названия группы и сезона — для общих списков
+export async function withGameContext(games: WithId<Game>[]): Promise<GameListItem[]> {
+  const db = await getDb()
+  const groups = await db.groups.find({ _id: { $in: [...new Set(games.map(g => g.groupId))] } }, { projection: { title: 1 } }).toArray()
+  const seasonIds = games.map(g => g.seasonId).filter((id): id is ObjectId => !!id)
+  const seasons = await db.seasons.find({ _id: { $in: seasonIds } }, { projection: { title: 1 } }).toArray()
+  const groupTitles = new Map(groups.map(g => [g._id.toString(), g.title]))
+  const seasonTitles = new Map(seasons.map(s => [s._id.toString(), s.title]))
+  return games.map(g => ({
+    ...toPublicGame(g),
+    groupTitle: groupTitles.get(g.groupId.toString()),
+    seasonTitle: g.seasonId ? seasonTitles.get(g.seasonId.toString()) : undefined,
+  }))
 }

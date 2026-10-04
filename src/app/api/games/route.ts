@@ -1,30 +1,16 @@
-import type { Filter, ObjectId, WithId } from 'mongodb'
-import type { FinishedGamesPage, GameListItem } from '@/types/api'
+import type { Filter } from 'mongodb'
+import type { FinishedGamesPage } from '@/types/api'
 import type { Game } from '@/types/db'
 import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { requireAuth } from '@/server/auth'
 import { toPublicGame } from '@/server/dto'
+import { withGameContext } from '@/server/games'
 import { badRequest, parseBody, route, toObjectId } from '@/server/http'
 import { loadGroup, loadSeason, requireMember } from '@/server/permissions'
 import { gameDateSchema, gameSettingsSchema, titleSchema, zObjectId } from '@/server/schemas'
 
 const PAGE_SIZE = 20
-
-// Добавляет к играм названия группы и сезона — для общих списков
-async function withContext(games: WithId<Game>[]): Promise<GameListItem[]> {
-  const db = await getDb()
-  const groups = await db.groups.find({ _id: { $in: [...new Set(games.map(g => g.groupId))] } }, { projection: { title: 1 } }).toArray()
-  const seasonIds = games.map(g => g.seasonId).filter((id): id is ObjectId => !!id)
-  const seasons = await db.seasons.find({ _id: { $in: seasonIds } }, { projection: { title: 1 } }).toArray()
-  const groupTitles = new Map(groups.map(g => [g._id.toString(), g.title]))
-  const seasonTitles = new Map(seasons.map(s => [s._id.toString(), s.title]))
-  return games.map(g => ({
-    ...toPublicGame(g),
-    groupTitle: groupTitles.get(g.groupId.toString()),
-    seasonTitle: g.seasonId ? seasonTitles.get(g.seasonId.toString()) : undefined,
-  }))
-}
 
 export const GET = route(async (req) => {
   const { player } = await requireAuth(req)
@@ -36,7 +22,7 @@ export const GET = route(async (req) => {
   if (scope === 'live') {
     const groups = await db.groups.find({ members: player._id }, { projection: { _id: 1 } }).toArray()
     const games = await db.games.find({ groupId: { $in: groups.map(g => g._id) }, isFinished: false }).sort({ createdAt: -1, _id: -1 }).toArray()
-    return withContext(games)
+    return withGameContext(games)
   }
 
   // Мои сыгранные игры постранично; курсор — «дата_id» последней игры страницы
@@ -52,7 +38,7 @@ export const GET = route(async (req) => {
     const page = games.slice(0, PAGE_SIZE)
     const last = page.at(-1)
     const result: FinishedGamesPage = {
-      items: await withContext(page),
+      items: await withGameContext(page),
       nextCursor: games.length > PAGE_SIZE && last ? `${last.createdAt}_${last._id}` : null,
     }
     return result

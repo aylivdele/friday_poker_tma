@@ -12,6 +12,11 @@ export interface Player {
   achievments?: Pick<Achievment, 'id' | 'progress'>[]
 }
 
+// Страница игрока
+export interface PlayerDetails extends Player {
+  can: { edit: boolean }
+}
+
 // Свой профиль: что нужно для входа из браузера
 export interface Me extends Player {
   authVia: 'telegram' | 'session'
@@ -148,4 +153,14 @@ export interface FinishedGamesPage {
 // Последний сезон каждой из моих групп — куда добавлять новую игру
 export interface CurrentSeason extends Season {
   groupTitle: string
+}
+
+export interface PlayerStats {
+  games: number
+  gamesInPlus: number
+  finalWins: number
+  balance: number
+  best: { game: GameListItem, balance: number } | null
+  groups: { groupId: string, title: string, games: number, balance: number }[]
+  recent: GameListItem[]
 }

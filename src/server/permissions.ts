@@ -1,7 +1,8 @@
 import type { ObjectId, WithId } from 'mongodb'
 import type { GameAbilities, GroupAbilities, SeasonAbilities } from '@/types/api'
-import type { Game, Group, Season } from '@/types/db'
+import type { Game, Group, Player, Season } from '@/types/db'
 import { getDb } from '@/core/db'
+import { nonNull } from '@/lib/helpers'
 import { forbidden, notFound } from './http'
 
 export function isMember(group: Group, playerId: ObjectId) {
@@ -74,4 +75,14 @@ export function requireOwner(group: Group, playerId: ObjectId) {
   if (!isOwner(group, playerId)) {
     throw forbidden('Действие доступно только владельцу группы')
   }
+}
+
+// Имя и фото игрока без Telegram может поправить любой участник его группы.
+// Профили пользователей Telegram берут данные из самого Telegram
+export async function canEditPlayer(target: WithId<Player>, callerId: ObjectId) {
+  if (nonNull(target.telegramId)) {
+    return false
+  }
+  const shared = await (await getDb()).groups.findOne({ members: { $all: [callerId, target._id] } }, { projection: { _id: 1 } })
+  return !!shared
 }
