@@ -1,7 +1,7 @@
 // Кто кому переводит деньги после игры. Чистая логика: работает и на сервере, и в интерфейсе.
 
 import type { BalanceGame } from './balances'
-import { calcGameBalances, prizeFund } from './balances'
+import { calcFundContributions, calcGrossBalances, prizeFund } from './balances'
 
 export interface Transfer {
   from: string
@@ -101,15 +101,25 @@ function settleGroup(parties: Party[]): Transfer[] {
 }
 
 /*
- * Итоги игры для показа и переводов: балансы игроков в целых рублях и кто кому переводит.
- * Фонд финала выплачивает призёрам как ещё один «должник» (from === PRIZE_FUND).
+ * Итоги игры для показа и переводов, в целых рублях:
+ * - игроки рассчитываются друг с другом по выплате до взноса в фонд;
+ * - в обычной игре каждый призёр отдельно переводит свой процент в фонд (to === PRIZE_FUND);
+ * - в финале фонд выплачивает призёрам как ещё один «должник» (from === PRIZE_FUND).
+ * balances — итог игрока после взноса, contributions — сколько он отдал в фонд.
  */
 export function gameSettlement(game: BalanceGame) {
-  const exact = calcGameBalances(game)
+  const gross = calcGrossBalances(game)
   const fund = prizeFund(game)
-  const parties = fund > 0 ? { ...exact, [PRIZE_FUND]: -fund } : exact
-  const { [PRIZE_FUND]: _, ...balances } = roundBalances(parties)
-  return { balances, transfers: settle(parties) }
+  const parties = fund > 0 ? { ...gross, [PRIZE_FUND]: -fund } : gross
+  const { [PRIZE_FUND]: _, ...grossRubles } = roundBalances(parties)
+  const contributions = roundBalances(calcFundContributions(game))
+
+  const balances = Object.fromEntries(Object.entries(grossRubles).map(([id, value]) => [id, value - (contributions[id] ?? 0)]))
+  const toFund = Object.entries(contributions)
+    .filter(([, amount]) => amount > 0)
+    .map(([from, amount]) => ({ from, to: PRIZE_FUND, amount }))
+    .sort((a, b) => b.amount - a.amount || a.from.localeCompare(b.from))
+  return { balances, contributions, transfers: [...settle(parties), ...toFund] }
 }
 
 // Переводы, которые закрывают все долги по игре: от проигравших к выигравшим, в целых рублях.

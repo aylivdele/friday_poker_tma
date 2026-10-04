@@ -50,8 +50,11 @@ export function buildResultsMessage(input: ResultsMessageInput): string {
   const outgoing = transfers.filter(t => t.from === recipientId)
   const incoming = transfers.filter(t => t.to === recipientId)
   if (outgoing.length > 0) {
-    lines.push('', outgoing.length === 1 ? 'Переведите:' : 'Переведите (выигрыша одного человека не хватает на весь долг):')
-    lines.push(...outgoing.map(t => `• ${name(players, t.to, true)} — <b>${formatMoney(t.amount)}</b>`))
+    const toPlayers = outgoing.filter(t => t.to !== PRIZE_FUND).length
+    lines.push('', toPlayers > 1 ? 'Переведите (выигрыша одного человека не хватает на весь долг):' : 'Переведите:')
+    lines.push(...outgoing.map(t => t.to === PRIZE_FUND
+      ? `• В призовой фонд — <b>${formatMoney(t.amount)}</b>`
+      : `• ${name(players, t.to, true)} — <b>${formatMoney(t.amount)}</b>`))
   }
   if (incoming.length > 0) {
     lines.push('', 'Вам переведут:')
@@ -74,7 +77,10 @@ export function buildResultsMessage(input: ResultsMessageInput): string {
   const others = transfers.filter(t => t.from !== recipientId && t.to !== recipientId)
   if (others.length > 0) {
     lines.push('', '<b>Остальные переводы</b>')
-    lines.push(...others.map(t => `${t.from === PRIZE_FUND ? 'Из призового фонда' : name(players, t.from)} → ${name(players, t.to)}: ${formatMoney(t.amount)}`))
+    const party = (id: string) => id === PRIZE_FUND ? 'призовой фонд' : name(players, id)
+    lines.push(...others.map(t => t.from === PRIZE_FUND
+      ? `Из призового фонда → ${name(players, t.to)}: ${formatMoney(t.amount)}`
+      : `${party(t.from)} → ${party(t.to)}: ${formatMoney(t.amount)}`))
   }
 
   return lines.join('\n')

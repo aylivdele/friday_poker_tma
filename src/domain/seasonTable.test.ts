@@ -2,7 +2,8 @@ import type { TableGame } from './seasonTable'
 import { describe, expect, it } from 'vitest'
 import { buildSeasonTable } from './seasonTable'
 
-const settings = { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 }
+// Без взноса в фонд: здесь проверяем саму таблицу
+const settings = { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5, fundPercent: 0 }
 
 function game(id: string, createdAt: number, players: string[], winner: string, isFinal = false): TableGame {
   return {

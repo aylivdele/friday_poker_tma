@@ -57,6 +57,22 @@ describe('buildResultsMessage', () => {
     expect(toDima).not.toContain(PRIZE_FUND)
   })
 
+  it('обычная игра: процент призёра — отдельной строкой в фонд', () => {
+    const regular = {
+      ...base,
+      balances: { alice: 530, bob: -300, dima: 0, zhenya: -300 },
+      transfers: [
+        { from: 'bob', to: 'alice', amount: 300 },
+        { from: 'zhenya', to: 'alice', amount: 300 },
+        { from: 'alice', to: PRIZE_FUND, amount: 70 },
+      ],
+    }
+    const toAlice = buildResultsMessage({ ...regular, recipientId: 'alice' })
+    expect(toAlice).toContain('Переведите:\n• В призовой фонд — <b>70 ₽</b>')
+    expect(toAlice).toContain('Вам переведут:\n• Боб Бобов (@bob) — <b>300 ₽</b>')
+    expect(buildResultsMessage({ ...regular, recipientId: 'bob' })).toContain('Алиса → призовой фонд: 70 ₽')
+  })
+
   it('в нуле — без переводов, имена экранируются', () => {
     const text = buildResultsMessage({ ...base, recipientId: 'dima', corrected: true })
     expect(text).toContain('✏️ Итоги исправлены')

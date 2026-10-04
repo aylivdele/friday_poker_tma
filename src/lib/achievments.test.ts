@@ -23,6 +23,8 @@ interface GameSpec {
   isFinal?: boolean
   seasonId?: ObjectId
   maxReEntries?: number
+  // по умолчанию без взноса в фонд, чтобы суммы в проверках были круглыми
+  fundPercent?: number
 }
 
 let counter = 0
@@ -36,7 +38,7 @@ function game(spec: GameSpec): WithId<Game> {
     createdAt: spec.createdAt ?? friday(spec.week ?? counter),
     finishedAt: spec.finishedAt,
     seasonId: spec.seasonId,
-    settings: { isFinal: spec.isFinal ?? false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: spec.maxReEntries ?? 5 },
+    settings: { isFinal: spec.isFinal ?? false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: spec.maxReEntries ?? 5, fundPercent: spec.fundPercent ?? 0 },
     players: spec.players.map(([playerId, entries]) => ({ playerId, entries })),
     results: spec.results.map(([playerId, score]) => ({ playerId, score })),
   }

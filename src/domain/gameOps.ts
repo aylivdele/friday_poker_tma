@@ -7,6 +7,7 @@ export interface GameSettingsShape {
   reEntryCost: number
   maxReEntries: number
   prizeFund?: number
+  fundPercent?: number
 }
 
 export interface EditableGame {

@@ -5,8 +5,18 @@ interface Id { toString: () => string }
 export interface BalanceGame {
   players: { playerId: Id, entries: number }[]
   results?: { playerId: Id, score: number }[]
-  settings: { isFinal: boolean, firstEntryCost: number, reEntryCost: number, maxReEntries: number, prizeFund?: number }
+  settings: {
+    isFinal: boolean
+    firstEntryCost: number
+    reEntryCost: number
+    maxReEntries: number
+    prizeFund?: number
+    fundPercent?: number
+  }
 }
+
+// Сколько процентов выплаты по стекам уходит в призовой фонд финала, если в игре не указано иное
+export const DEFAULT_FUND_PERCENT = 10
 
 export function totalStacks(game: Pick<BalanceGame, 'players'>) {
   return game.players.reduce((acc, p) => acc + 1 + p.entries, 0)
@@ -20,9 +30,14 @@ export function gameBank(game: Pick<BalanceGame, 'players' | 'settings'>) {
   return game.players.reduce((acc, p) => acc + playerCost(game, p.entries), 0)
 }
 
-// Призовой фонд финала: копится за сезон вне приложения (процент с выигрышей) и вносится в финал
+// Призовой фонд финала: собран за сезон (с процентами по вкладу и т. п.) и вносится в финал вручную
 export function prizeFund(game: Pick<BalanceGame, 'settings'>) {
   return game.settings.isFinal ? game.settings.prizeFund ?? 0 : 0
+}
+
+// Процент в фонд берётся только с обычных игр: финал сам разыгрывает фонд
+export function fundPercent(game: Pick<BalanceGame, 'settings'>) {
+  return game.settings.isFinal ? 0 : game.settings.fundPercent ?? DEFAULT_FUND_PERCENT
 }
 
 // Всё, что делят призёры: взносы за входы плюс фонд финала
@@ -30,28 +45,64 @@ export function prizePool(game: Pick<BalanceGame, 'players' | 'settings'>) {
   return gameBank(game) + prizeFund(game)
 }
 
-/*
- * Банк (с фондом финала) делится между призёрами пропорционально их стекам.
- * Сумма балансов за игру равна фонду: в обычной игре — 0, сколько одни проиграли, столько другие выиграли.
- */
-export function calcGameBalances(game: BalanceGame): Record<string, number> {
-  const balances: Record<string, number> = {}
+// Выплата по стекам: банк (с фондом финала) делится между призёрами пропорционально их стекам
+export function calcPayouts(game: BalanceGame): Record<string, number> {
+  const payouts: Record<string, number> = {}
   const stacks = totalStacks(game)
-  const bank = prizePool(game)
+  const pool = prizePool(game)
+  if (stacks > 0) {
+    for (const r of game.results ?? []) {
+      const playerId = r.playerId.toString()
+      payouts[playerId] = (payouts[playerId] ?? 0) + pool * r.score / stacks
+    }
+  }
+  return payouts
+}
 
+/*
+ * Взнос в призовой фонд с обычной игры: процент от выплаты по стекам, без вычета того,
+ * что игрок заплатил за входы. 19 стеков по 100 ₽ при 10% — 190 ₽, сколько бы он ни докупался.
+ */
+export function calcFundContributions(game: BalanceGame): Record<string, number> {
+  const percent = fundPercent(game)
+  if (percent <= 0) {
+    return {}
+  }
+  return Object.fromEntries(Object.entries(calcPayouts(game))
+    .filter(([, payout]) => payout > 0)
+    .map(([playerId, payout]) => [playerId, payout * percent / 100]))
+}
+
+// Выплата минус стоимость входов — до взноса в фонд; по этим суммам игроки рассчитываются друг с другом
+export function calcGrossBalances(game: BalanceGame): Record<string, number> {
+  const balances: Record<string, number> = {}
   for (const p of game.players) {
     const playerId = p.playerId.toString()
     balances[playerId] = (balances[playerId] ?? 0) - playerCost(game, p.entries)
   }
-
-  if (stacks > 0) {
-    for (const r of game.results ?? []) {
-      const playerId = r.playerId.toString()
-      balances[playerId] = (balances[playerId] ?? 0) + bank * r.score / stacks
-    }
+  for (const [playerId, payout] of Object.entries(calcPayouts(game))) {
+    balances[playerId] = (balances[playerId] ?? 0) + payout
   }
-
   return balances
+}
+
+/*
+ * Итог игрока за игру: выплата по стекам минус взнос в фонд минус стоимость входов.
+ * Сумма итогов: в обычной игре — минус собранное в фонд, в финале — плюс разыгранный фонд.
+ */
+export function calcGameBalances(game: BalanceGame): Record<string, number> {
+  const balances = calcGrossBalances(game)
+  for (const [playerId, contribution] of Object.entries(calcFundContributions(game))) {
+    balances[playerId] -= contribution
+  }
+  return balances
+}
+
+// Сколько собрано в призовой фонд за сезон: взносы с завершённых обычных игр
+export function seasonFundCollected(games: (BalanceGame & { isFinished: boolean })[]) {
+  return games
+    .filter(g => g.isFinished && !g.settings.isFinal)
+    .reduce((acc, g) => acc + Object.values(calcFundContributions(g)).reduce((a, b) => a + b, 0), 0)
 }
 
 export function getGameWinners(game: BalanceGame): string[] {

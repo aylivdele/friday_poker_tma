@@ -1,14 +1,14 @@
 'use client'
 
 import type { Game, Group, Season, SeasonTableResponse } from '@/types/api'
-import { Rows3Icon, Table2Icon, Trash2Icon } from 'lucide-react'
+import { PiggyBankIcon, Rows3Icon, Table2Icon, Trash2Icon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import useSWR from 'swr'
 import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
 import { confirmAction } from '@/components/app/confirm'
-import { Section } from '@/components/app/Section'
+import { Row, RowText, Section } from '@/components/app/Section'
 import { Segmented } from '@/components/app/Segmented'
 import { GameRow } from '@/components/game/GameRow'
 import { Loader } from '@/components/Loader/Loader'
@@ -16,9 +16,10 @@ import { Page } from '@/components/Page'
 import { SeasonGrid, SeasonRanking } from '@/components/season/SeasonRanking'
 import { Button } from '@/components/ui/button'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { seasonFundCollected } from '@/domain/balances'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/errors'
-import { plural } from '@/lib/format'
+import { formatMoney, plural } from '@/lib/format'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 import { usePlayerStore } from '@/stores/playerStore'
 
@@ -38,6 +39,8 @@ export default function SeasonPage({ params }: { params: Promise<{ seasonId: str
   const season = seasonSwr.data
   const games = gamesSwr.data
   const table = tableSwr.data
+  const fundCollected = games ? Math.round(seasonFundCollected(games)) : 0
+  const playedFinal = games?.find(g => g.settings.isFinal && g.isFinished)
 
   // По умолчанию — таблица, если уже есть сыгранные игры
   useEffect(() => {
@@ -95,6 +98,21 @@ export default function SeasonPage({ params }: { params: Promise<{ seasonId: str
           { value: 'games', label: games ? `Игры · ${games.length}` : 'Игры' },
         ]}
       />
+
+      {fundCollected > 0 && (
+        <Section>
+          <Row>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold" aria-hidden>
+              <PiggyBankIcon className="size-5" />
+            </span>
+            <RowText
+              title="Призовой фонд"
+              subtitle={playedFinal?.settings.prizeFund ? `Собрано за сезон · в финале разыграно ${formatMoney(playedFinal.settings.prizeFund)}` : 'Собрано за сезон, разыгрывается в финале'}
+            />
+            <span className="shrink-0 font-semibold tabular-nums">{formatMoney(fundCollected)}</span>
+          </Row>
+        </Section>
+      )}
 
       {tab === 'games' && (
         !games

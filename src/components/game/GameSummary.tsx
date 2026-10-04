@@ -1,5 +1,5 @@
 import type { GameDetails } from '@/types/api'
-import { prizeFund, prizePool, totalStacks } from '@/domain/balances'
+import { calcFundContributions, prizeFund, prizePool, totalStacks } from '@/domain/balances'
 import { formatMoney } from '@/lib/format'
 
 function Stat({ label, hint, children }: { label: string, hint?: string, children: React.ReactNode }) {
@@ -14,9 +14,11 @@ function Stat({ label, hint, children }: { label: string, hint?: string, childre
 
 export function GameSummary({ game }: { game: GameDetails }) {
   const fund = prizeFund(game)
+  const toFund = game.isFinished ? Object.values(calcFundContributions(game)).reduce((a, b) => a + b, 0) : 0
+  const hint = fund > 0 ? `вкл. фонд ${formatMoney(fund)}` : toFund > 0 ? `в фонд ${formatMoney(toFund)}` : undefined
   return (
     <div className="mx-4 grid grid-cols-3 rounded-2xl bg-card px-1.5 py-3.5">
-      <Stat label="Банк" hint={fund > 0 ? `вкл. фонд ${formatMoney(fund)}` : undefined}>{formatMoney(prizePool(game))}</Stat>
+      <Stat label="Банк" hint={hint}>{formatMoney(prizePool(game))}</Stat>
       <Stat label="Стеков">{totalStacks(game)}</Stat>
       <div className="flex flex-col items-center gap-1.5">
         <span className="text-xs text-muted-foreground">Статус</span>

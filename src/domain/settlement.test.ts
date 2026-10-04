@@ -74,6 +74,23 @@ describe('gameSettlement', () => {
     const { transfers } = gameSettlement(final([['a', 5]], 0))
     expect(transfers.some(t => t.from === PRIZE_FUND)).toBe(false)
   })
+
+  it('обычная игра: игроки рассчитываются по выплате, призёр отдельно переводит процент в фонд', () => {
+    // банк 700 на 7 стеков: a забирает все (700), в фонд 10% — 70; итог 700 − 70 − 100
+    const regular = {
+      players: [{ playerId: 'a', entries: 0 }, { playerId: 'b', entries: 2 }, { playerId: 'c', entries: 2 }],
+      results: [{ playerId: 'a', score: 7 }],
+      settings: { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5, fundPercent: 10 },
+    }
+    const { balances, contributions, transfers } = gameSettlement(regular)
+    expect(balances).toEqual({ a: 530, b: -300, c: -300 })
+    expect(contributions).toEqual({ a: 70 })
+    expect(transfers).toEqual([
+      { from: 'b', to: 'a', amount: 300 },
+      { from: 'c', to: 'a', amount: 300 },
+      { from: 'a', to: PRIZE_FUND, amount: 70 },
+    ])
+  })
 })
 
 describe('settle', () => {

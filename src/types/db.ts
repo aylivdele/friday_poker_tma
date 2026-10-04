@@ -63,6 +63,8 @@ export interface GameSettings {
   maxReEntries: number
   // призовой фонд финала: собран за сезон, делится между призёрами по стекам вместе с банком
   prizeFund?: number
+  // сколько процентов выплаты по стекам уходит в призовой фонд (только обычные игры; нет поля — 10%)
+  fundPercent?: number
 }
 
 export interface Game {

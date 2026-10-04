@@ -153,7 +153,7 @@ export function LiveGame({ game, groupPlayers, playersById, sendOps, onFinished 
             <DrawerTitle>Настройки игры</DrawerTitle>
           </DrawerHeader>
           <div className="mx-4 overflow-hidden rounded-2xl border">
-            <SettingsFields settings={game.settings} onChange={changeSettings} disabled={!canEdit} />
+            <SettingsFields settings={game.settings} seasonId={game.seasonId} onChange={changeSettings} disabled={!canEdit} />
           </div>
           <DrawerFooter>
             <Button

@@ -10,12 +10,13 @@ import { Section } from '@/components/app/Section'
 import { SettingsFields } from '@/components/game/SettingsFields'
 import { Page } from '@/components/Page'
 import { Input } from '@/components/ui/input'
+import { DEFAULT_FUND_PERCENT, seasonFundCollected } from '@/domain/balances'
 import { api } from '@/lib/api'
 import { parseDateInput, todayInputValue } from '@/lib/dates'
 import { getErrorMessage } from '@/lib/errors'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
-const DEFAULT_SETTINGS: GameSettings = { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5 }
+const DEFAULT_SETTINGS: GameSettings = { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5, fundPercent: DEFAULT_FUND_PERCENT }
 
 function defaultTitle(gamesCount: number, date: string) {
   const [, month, day] = date.split('-')
@@ -82,8 +83,13 @@ export default function NewGamePage({ params }: { params: Promise<{ seasonId: st
         {settings && (
           <SettingsFields
             settings={settings}
+            seasonId={seasonId}
             disabled={loading}
-            onChange={patch => setSettings({ ...settings, ...patch })}
+            onChange={(patch) => {
+              // Фонд финала по умолчанию — сколько собрано с игр сезона; дальше его можно поправить
+              const fund = patch.isFinal && settings.prizeFund === undefined && games ? { prizeFund: Math.round(seasonFundCollected(games)) } : {}
+              setSettings({ ...settings, ...fund, ...patch })
+            }}
             onInvalidChange={(field, invalid) => setInvalidFields(prev => ({ ...prev, [field]: invalid }))}
           />
         )}

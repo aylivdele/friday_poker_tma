@@ -109,6 +109,7 @@ export function CorrectionEditor({ game, playersById, onSaved, onCancel }: {
       <Section title="Настройки">
         <SettingsFields
           settings={draft.settings}
+          seasonId={game.seasonId}
           onChange={patch => setDraft({ ...draft, settings: { ...draft.settings, ...patch } })}
           onInvalidChange={(field, value) => setInvalidFields(prev => ({ ...prev, [field]: value }))}
         />

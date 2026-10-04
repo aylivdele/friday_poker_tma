@@ -1,12 +1,12 @@
 import type { BalanceGame } from './balances'
 import { describe, expect, it } from 'vitest'
-import { calcEntryCaps, calcGameBalances, calcSeasonEntryShares, getGameWinners, totalStacks } from './balances'
+import { calcEntryCaps, calcFundContributions, calcGameBalances, calcSeasonEntryShares, fundPercent, getGameWinners, seasonFundCollected, totalStacks } from './balances'
 
 function game(players: [string, number][], results: [string, number][], settings: Partial<BalanceGame['settings']> = {}): BalanceGame {
   return {
     players: players.map(([playerId, entries]) => ({ playerId, entries })),
     results: results.map(([playerId, score]) => ({ playerId, score })),
-    settings: { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5, ...settings },
+    settings: { isFinal: false, firstEntryCost: 100, reEntryCost: 100, maxReEntries: 5, fundPercent: 0, ...settings },
   }
 }
 
@@ -43,6 +43,27 @@ describe('calcGameBalances', () => {
     expect(calcGameBalances(g)).toEqual({ a: 2100, b: 1000, c: -100 })
     expect(sum(calcGameBalances(g))).toBe(3000)
     expect(getGameWinners(g)).toEqual(['a'])
+  })
+
+  it('в фонд уходит процент выплаты по стекам, без учёта входов', () => {
+    // 19 стеков по 100 ₽, у победителя 3 докупа: в фонд 190 ₽, итог 1900 − 190 − 400
+    const g = game([['a', 3], ['b', 5], ['c', 5], ['d', 2]], [['a', 19]], { fundPercent: 10 })
+    expect(calcFundContributions(g)).toEqual({ a: 190 })
+    expect(calcGameBalances(g).a).toBe(1310)
+    expect(sum(calcGameBalances(g))).toBeCloseTo(-190, 9)
+  })
+
+  it('без поля — 10%, в финале процент не берётся', () => {
+    const { fundPercent: _, ...noField } = game([], []).settings
+    expect(fundPercent({ settings: noField })).toBe(10)
+    expect(fundPercent({ settings: { ...noField, isFinal: true, fundPercent: 10 } })).toBe(0)
+  })
+
+  it('собрано за сезон — со всех завершённых обычных игр', () => {
+    const regular = { ...game([['a', 0], ['b', 0]], [['a', 2]], { fundPercent: 10 }), isFinished: true }
+    const live = { ...regular, isFinished: false }
+    const final = { ...game([['a', 0], ['b', 0]], [['a', 2]], { isFinal: true, fundPercent: 10 }), isFinished: true }
+    expect(seasonFundCollected([regular, regular, live, final])).toBe(40)
   })
 
   it('фонд в обычной игре не учитывается', () => {

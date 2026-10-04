@@ -21,7 +21,7 @@ export function FinishedGame({ game, playersById, onCorrect }: {
 }) {
   const meId = usePlayerStore(s => s.player?._id)
   // Целые рубли, как в переводах ниже и в сообщениях бота
-  const { balances, transfers } = gameSettlement(game)
+  const { balances, contributions, transfers } = gameSettlement(game)
   const winners = new Set(getGameWinners(game))
   const rows = game.players
     .map(p => ({
@@ -67,7 +67,7 @@ export function FinishedGame({ game, playersById, onCorrect }: {
                   {winners.has(row.playerId) && row.balance > 0 && <TrophyIcon className="size-4 text-gold" aria-label="Победитель" />}
                 </span>
               )}
-              subtitle={`Входы ${row.entries + 1} · ${formatMoney(playerCost(game, row.entries))}${row.score ? ` · стеков ${row.score}` : ''}`}
+              subtitle={`Входы ${row.entries + 1} · ${formatMoney(playerCost(game, row.entries))}${row.score ? ` · стеков ${row.score}` : ''}${contributions[row.playerId] ? ` · в фонд ${formatMoney(contributions[row.playerId])}` : ''}`}
             />
             <MoneyText value={row.balance} />
           </Row>
@@ -78,6 +78,7 @@ export function FinishedGame({ game, playersById, onCorrect }: {
         <Section title="Расчёты" footer="Переводов как можно меньше: долг по возможности уходит одному человеку">
           {transfers.map((t) => {
             const fromFund = t.from === PRIZE_FUND
+            const toFund = t.to === PRIZE_FUND
             const from = playersById.get(t.from)
             const to = playersById.get(t.to)
             const mine = t.from === meId || t.to === meId
@@ -95,10 +96,10 @@ export function FinishedGame({ game, playersById, onCorrect }: {
                     <span className="inline-flex max-w-full items-center gap-1.5">
                       <span className="truncate">{fromFund ? 'Призовой фонд' : shortPlayerName(from)}</span>
                       <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground" aria-label="переводит" />
-                      <span className="truncate">{shortPlayerName(to)}</span>
+                      <span className="truncate">{toFund ? 'Призовой фонд' : shortPlayerName(to)}</span>
                     </span>
                   )}
-                  subtitle={t.from === meId ? 'Вы переводите' : t.to === meId ? 'Вам переводят' : undefined}
+                  subtitle={t.from === meId ? (toFund ? 'Ваш взнос в фонд' : 'Вы переводите') : t.to === meId ? 'Вам переводят' : undefined}
                 />
                 <span className="shrink-0 font-semibold tabular-nums">{formatMoney(t.amount)}</span>
               </Row>
