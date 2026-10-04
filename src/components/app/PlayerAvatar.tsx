@@ -12,7 +12,7 @@ const COLORS = [
   'bg-[#F4F1DA] text-[#7A6512] dark:bg-[#38341A] dark:text-[#E2D27A]',
 ]
 
-function colorFor(id: string) {
+export function colorFor(id: string) {
   let hash = 0
   for (const char of id) {
     hash = (hash * 31 + char.charCodeAt(0)) | 0

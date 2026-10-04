@@ -18,7 +18,9 @@ export function Navigation() {
   const player = usePlayerStore(s => s.player)
   const pathname = usePathname()
 
-  if (!player)
+  // На формах и в редакторе игры вкладки только занимают место над кнопками действий
+  const isEditor = /\/new$|\/games\/[0-9a-f]{24}$/.test(pathname)
+  if (!player || isEditor)
     return null
 
   return (
