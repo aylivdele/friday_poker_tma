@@ -11,7 +11,12 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Friday Poker',
+  applicationName: 'Friday Poker',
   description: 'Учёт домашних покерных игр, сезонов и достижений',
+  // Не индексировать: приложение только для своих
+  robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
+  // Запуск с экрана «Домой» на iPhone — без адресной строки
+  appleWebApp: { capable: true, title: 'Friday Poker', statusBarStyle: 'default' },
 }
 
 export const viewport: Viewport = {

@@ -37,8 +37,10 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
   const { groupId } = use(params)
   const router = useRouter()
   const groupSwr = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
-  const { data: seasons } = useSWR<Season[]>(`/api/seasons?groupId=${groupId}`, swrGetFetcher)
-  const { data: players, mutate: mutatePlayers } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const seasonsSwr = useSWR<Season[]>(`/api/seasons?groupId=${groupId}`, swrGetFetcher)
+  const seasons = seasonsSwr.data
+  const playersSwr = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const { data: players, mutate: mutatePlayers } = playersSwr
   const { data: stats } = useSWR<GroupStats>(`/api/groups/${groupId}/stats`, swrGetFetcher)
   const current = seasons?.[0]
   const { data: currentTable } = useSWR<SeasonTableResponse>(current ? `/api/seasons/${current._id}/results` : null, swrGetFetcher)
@@ -174,7 +176,7 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
         title="Сезоны"
         action={group.can.manage && <SectionAction onClick={() => router.push(`/groups/${groupId}/seasons/new`)}>Новый</SectionAction>}
       >
-        {!seasons && <Loader data={null} isLoading error={null} />}
+        {!seasons && <Loader {...seasonsSwr} />}
         {seasons?.length === 0 && <EmptyRow>Сезонов пока нет</EmptyRow>}
         {seasons?.map(season => (
           <Row key={season._id} onClick={() => router.push(`/groups/${groupId}/seasons/${season._id}`)}>
@@ -189,7 +191,7 @@ export default function GroupPage({ params }: { params: Promise<{ groupId: strin
         action={group.can.manage && <SectionAction onClick={() => router.push(`/groups/${groupId}/players/new`)}>Добавить</SectionAction>}
         footer={stats && stats.games > 0 ? `Итоги за все сезоны, ${plural(stats.games, ['игра', 'игры', 'игр'])}` : undefined}
       >
-        {!players && <Loader data={null} isLoading error={null} />}
+        {!players && <Loader {...playersSwr} />}
         {sortedPlayers.map((player) => {
           const s = stats?.players[player._id]
           return (

@@ -57,7 +57,14 @@ export default function GamesPage() {
         )}
       />
 
-      {loading && <Loader data={null} isLoading error={live.error ?? finished.error} />}
+      {loading && (
+        <Loader
+          data={null}
+          isLoading={!live.error && !finished.error}
+          error={live.error ?? finished.error}
+          mutate={() => Promise.all([live.mutate(), finished.mutate()])}
+        />
+      )}
 
       {empty && (
         <div className="flex flex-col items-center gap-3 px-8 pt-14 text-center">

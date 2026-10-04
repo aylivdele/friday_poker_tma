@@ -29,6 +29,8 @@ server {
     add_header Content-Security-Policy "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    # Не индексировать ничего, включая API и статику (в приложении ещё robots.txt и meta robots)
+    add_header X-Robots-Tag "noindex, nofollow, noarchive" always;
     server_name friday-poker.ru;
 
     # Аватары уменьшаются в браузере, крупные тела запросов не нужны

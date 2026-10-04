@@ -4,7 +4,7 @@ import type { Me } from '@/types/api'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { useSetMe } from '@/hooks/useSetMe'
-import { getErrorMessage } from '@/lib/errors'
+import { ApiError, getErrorMessage, TELEGRAM_EXPIRED } from '@/lib/errors'
 import { isTelegram } from '@/lib/platform'
 import { api } from '../lib/api'
 
@@ -27,7 +27,8 @@ export default function Bootstrap() {
         }
       })
       .catch((e) => {
-        if (!isTelegram()) {
+        // В браузере api сам отправит на вход, а про устаревшие данные Telegram расскажет SessionExpired
+        if (!isTelegram() || (e instanceof ApiError && e.code === TELEGRAM_EXPIRED)) {
           return
         }
         console.error('Error fetching/creating player:', e)

@@ -4,6 +4,7 @@ import type { Player } from '@/types/db'
 import process from 'node:process'
 import { parse, validate } from '@tma.js/init-data-node'
 import { getDb } from '@/core/db'
+import { TELEGRAM_EXPIRED } from '@/lib/errors'
 import { unauthorized } from './http'
 import { findSession } from './sessions'
 
@@ -32,7 +33,7 @@ export function getTelegramUser(req: NextRequest) {
     validate(raw, botToken(), { expiresIn: INIT_DATA_TTL_SECONDS })
   }
   catch {
-    throw unauthorized('Данные Telegram устарели, перезапустите приложение')
+    throw unauthorized('Данные Telegram устарели, перезапустите приложение', TELEGRAM_EXPIRED)
   }
   const user = parse(raw).user
   if (!user?.id) {

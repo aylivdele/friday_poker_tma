@@ -5,13 +5,14 @@ import { BSON, ObjectId } from 'mongodb'
 import { NextResponse } from 'next/server'
 
 export class HttpError extends Error {
-  constructor(public status: number, message: string) {
+  // code — машинный признак ошибки для клиента, если одного статуса мало
+  constructor(public status: number, message: string, public code?: string) {
     super(message)
   }
 }
 
 export const badRequest = (message = 'Некорректный запрос') => new HttpError(400, message)
-export const unauthorized = (message = 'Требуется авторизация') => new HttpError(401, message)
+export const unauthorized = (message = 'Требуется авторизация', code?: string) => new HttpError(401, message, code)
 export const forbidden = (message = 'Недостаточно прав') => new HttpError(403, message)
 export const notFound = (message = 'Не найдено') => new HttpError(404, message)
 export const conflict = (message: string) => new HttpError(409, message)
@@ -59,7 +60,7 @@ export function route<P = object>(handler: Handler<P>) {
     }
     catch (e) {
       if (e instanceof HttpError) {
-        return NextResponse.json({ error: e.message }, { status: e.status })
+        return NextResponse.json({ error: e.message, code: e.code }, { status: e.status })
       }
       if (e instanceof BSON.BSONError) {
         return NextResponse.json({ error: 'Некорректный идентификатор' }, { status: 400 })

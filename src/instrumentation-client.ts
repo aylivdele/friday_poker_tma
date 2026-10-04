@@ -4,7 +4,11 @@
 import process from 'node:process'
 import { retrieveLaunchParams } from '@tma.js/sdk-react'
 import { init } from './core/init'
+import { installHistoryTracking } from './lib/navigation'
 import { isTelegram } from './lib/platform'
+
+// До запуска роутера, чтобы он писал историю уже через наши обёртки
+installHistoryTracking()
 
 // Вне Telegram SDK не инициализируется: приложение работает как обычный сайт
 if (isTelegram()) {

@@ -3,10 +3,11 @@
 import type { PropsWithChildren, ReactNode } from 'react'
 import { backButton } from '@tma.js/sdk-react'
 import { ChevronLeftIcon, EllipsisIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { canGoBack, parentPath } from '@/lib/navigation'
 import { isTelegram } from '@/lib/platform'
 
 interface PageProps {
@@ -21,9 +22,21 @@ interface PageProps {
   menu?: ReactNode
 }
 
-function useTelegramBackButton(back: boolean) {
+// Назад по истории приложения, а если открыли сразу эту страницу — к родительскому экрану
+function useGoBack() {
   const router = useRouter()
+  const pathname = usePathname()
+  return useCallback(() => {
+    if (canGoBack()) {
+      router.back()
+    }
+    else {
+      router.replace(parentPath(pathname))
+    }
+  }, [router, pathname])
+}
 
+function useTelegramBackButton(back: boolean, goBack: () => void) {
   useEffect(() => {
     if (!isTelegram()) {
       return
@@ -40,24 +53,13 @@ function useTelegramBackButton(back: boolean) {
     if (!isTelegram()) {
       return
     }
-    return backButton.onClick(() => {
-      router.back()
-    })
-  }, [router])
-}
-
-function goBack(router: ReturnType<typeof useRouter>) {
-  if (window.history.length > 1) {
-    router.back()
-  }
-  else {
-    router.push('/')
-  }
+    return backButton.onClick(goBack)
+  }, [goBack])
 }
 
 export function Page({ children, back = true, title, subtitle, menu }: PropsWithChildren<PageProps>) {
-  const router = useRouter()
-  useTelegramBackButton(back)
+  const goBack = useGoBack()
+  useTelegramBackButton(back, goBack)
   // В Telegram «назад» — нативная кнопка клиента, в браузере — своя в шапке
   const showBack = back && !isTelegram()
 
@@ -68,7 +70,7 @@ export function Page({ children, back = true, title, subtitle, menu }: PropsWith
             <header className="sticky top-0 z-2 grid min-h-14 grid-cols-[44px_1fr_44px] items-center gap-1 bg-background/90 px-1.5 py-1 backdrop-blur supports-backdrop-filter:bg-background/75">
               {showBack
                 ? (
-                    <Button variant="ghost" size="icon" className="size-11 rounded-xl text-primary-text hover:bg-secondary hover:text-primary-text" aria-label="Назад" onClick={() => goBack(router)}>
+                    <Button variant="ghost" size="icon" className="size-11 rounded-xl text-primary-text hover:bg-secondary hover:text-primary-text" aria-label="Назад" onClick={goBack}>
                       <ChevronLeftIcon className="size-6" />
                     </Button>
                   )
@@ -96,7 +98,7 @@ export function Page({ children, back = true, title, subtitle, menu }: PropsWith
             <Button
               variant="ghost"
               className="h-11 gap-1 px-2 text-base font-medium text-primary-text hover:bg-secondary hover:text-primary-text"
-              onClick={() => goBack(router)}
+              onClick={goBack}
             >
               <ChevronLeftIcon className="size-6" />
               Назад

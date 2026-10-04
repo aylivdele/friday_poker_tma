@@ -5,6 +5,7 @@ import { miniApp, useSignal } from '@tma.js/sdk-react'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 
 import { ConfirmHost } from '@/components/app/confirm'
+import { SessionExpired } from '@/components/app/SessionExpired'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ErrorPage } from '@/components/ErrorPage'
 import { Toaster } from '@/components/ui/sonner'
@@ -46,6 +47,7 @@ function AppFrame({ children, telegramDark, systemDark }: PropsWithChildren<{ te
       {children}
       <Toaster />
       <ConfirmHost />
+      <SessionExpired />
     </div>
   )
 }

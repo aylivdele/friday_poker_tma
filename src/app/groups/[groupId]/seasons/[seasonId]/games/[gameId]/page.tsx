@@ -1,7 +1,7 @@
 'use client'
 
-import type { GameDetails, Player } from '@/types/api'
-import { PencilIcon, Trash2Icon } from 'lucide-react'
+import type { AppConfig, GameDetails, Player } from '@/types/api'
+import { PencilIcon, Share2Icon, Trash2Icon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -20,13 +20,16 @@ import { useGame } from '@/hooks/useGame'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/errors'
 import { formatGameDate } from '@/lib/format'
+import { gameLink, shareLink } from '@/lib/share'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function GamePage({ params }: { params: Promise<{ gameId: string, groupId: string, seasonId: string }> }) {
   const { gameId, groupId, seasonId } = use(params)
   const router = useRouter()
-  const { game, error, isLoading, status, sendOps, replace } = useGame(gameId)
-  const { data: groupPlayers } = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const { game, error, isLoading, mutate, status, sendOps, replace } = useGame(gameId)
+  const groupPlayersSwr = useSWR<Player[]>(`/api/players?groupId=${groupId}`, swrGetFetcher)
+  const groupPlayers = groupPlayersSwr.data
+  const { data: config } = useSWR<AppConfig>('/api/config', swrGetFetcher, { revalidateOnFocus: false })
   const [correcting, setCorrecting] = useState(false)
   const [metaOpen, setMetaOpen] = useState(false)
 
@@ -36,7 +39,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
   if (!game) {
     return (
       <Page title="Игра">
-        <Loader data={game} error={error} isLoading={isLoading} />
+        <Loader data={game} error={error} isLoading={isLoading} mutate={mutate} />
       </Page>
     )
   }
@@ -70,9 +73,25 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
     }
   }
 
-  const menu = (game.can.edit || game.can.delete) && !correcting
+  const share = async () => {
+    const text = [game.title || 'Игра', formatGameDate(game.createdAt)].join(' · ')
+    try {
+      if (await shareLink(gameLink(game._id, config?.telegramAppUrl), text) === 'copied') {
+        toast.success('Ссылка на игру скопирована')
+      }
+    }
+    catch {
+      toast.error('Не удалось поделиться ссылкой')
+    }
+  }
+
+  const menu = !correcting
     ? (
         <>
+          <DropdownMenuItem onSelect={share}>
+            <Share2Icon />
+            Поделиться
+          </DropdownMenuItem>
           {game.can.edit && (
             <DropdownMenuItem onSelect={() => setMetaOpen(true)}>
               <PencilIcon />
@@ -108,7 +127,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string,
       {!correcting && <GameSummary game={game} />}
 
       {!groupPlayers
-        ? <Loader data={null} isLoading error={null} />
+        ? <Loader {...groupPlayersSwr} />
         : game.isFinished
           ? correcting
             ? (

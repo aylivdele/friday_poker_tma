@@ -1,5 +1,6 @@
 import { retrieveRawInitData } from '@tma.js/sdk-react'
-import { ApiError } from './errors'
+import { useSessionStore } from '@/stores/sessionStore'
+import { ApiError, TELEGRAM_EXPIRED } from './errors'
 import { isTelegram } from './platform'
 
 function authHeaders(): Record<string, string> {
@@ -36,7 +37,10 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
     if (response.status === 401 && !isTelegram() && !url.startsWith('/api/auth/')) {
       redirectToLogin()
     }
-    throw new ApiError(response.status, data?.error ?? `Ошибка сервера (${response.status})`)
+    if (response.status === 401 && data?.code === TELEGRAM_EXPIRED) {
+      useSessionStore.getState().expireTelegram()
+    }
+    throw new ApiError(response.status, data?.error ?? `Ошибка сервера (${response.status})`, data?.code)
   }
   return data as T
 }

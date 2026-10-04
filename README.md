@@ -17,6 +17,7 @@
 | `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_HOST`, `MONGODB_PORT`, `MONGODB_DBNAME` | подключение к MongoDB (`authSource=admin`) |
 | `TELEGRAM_BOT_TOKEN` | проверка подписи initData и номера телефона |
 | `APP_ORIGIN` | адрес сайта для защиты от CSRF; без него берётся заголовок `Host` |
+| `TELEGRAM_APP_URL` | ссылка на мини-приложение (`https://t.me/<бот>/<приложение>`): по ней «Поделиться» открывает игру прямо в Telegram (`?startapp=game_<id>`); без неё делится ссылкой на сайт |
 
 ## Локальная разработка без Telegram
 

@@ -12,6 +12,12 @@ export interface Player {
   achievments?: Pick<Achievment, 'id' | 'progress'>[]
 }
 
+// Настройки клиента из окружения сервера
+export interface AppConfig {
+  // ссылка на мини-приложение вида https://t.me/<бот>/<приложение>
+  telegramAppUrl: string | null
+}
+
 // Страница игрока
 export interface PlayerDetails extends Player {
   can: { edit: boolean }
