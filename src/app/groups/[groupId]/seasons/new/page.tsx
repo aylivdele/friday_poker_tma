@@ -1,24 +1,31 @@
 'use client'
 
-import { Input, Section, Subheadline } from '@telegram-apps/telegram-ui'
+import type { Group } from '@/types/api'
 import { useRouter } from 'next/navigation'
 import { use, useState } from 'react'
 import { toast } from 'sonner'
+import useSWR from 'swr'
 import { ActionBar, ActionButton } from '@/components/ActionBar/ActionBar'
+import { Section } from '@/components/app/Section'
 import { Page } from '@/components/Page'
+import { Input } from '@/components/ui/input'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/errors'
+import { defaultSeasonTitle } from '@/lib/format'
+import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function NewSeasonPage({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = use(params)
-  const [title, setTitle] = useState<string>('')
-  const [saving, setSaving] = useState(false)
   const router = useRouter()
+  const { data: group } = useSWR<Group>(`/api/groups/${groupId}`, swrGetFetcher)
+  const [title, setTitle] = useState(defaultSeasonTitle)
+  const [saving, setSaving] = useState(false)
 
-  const save = async () => {
+  const create = async () => {
     setSaving(true)
     try {
-      const seasonId = await api.post<string>(`/api/seasons`, { title, groupId })
+      const seasonId = await api.post<string>('/api/seasons', { title: title.trim(), groupId })
+      toast.success('Сезон создан')
       router.replace(`/groups/${groupId}/seasons/${seasonId}`)
     }
     catch (e) {
@@ -28,20 +35,16 @@ export default function NewSeasonPage({ params }: { params: Promise<{ groupId: s
   }
 
   return (
-    <Page>
-      <Section header="Новый сезон" footer="Если оставить название пустым, оно будет создано по текущему месяцу">
-        <Input
-          className="input"
-          value={title}
-          before={<Subheadline>Название</Subheadline>}
-          disabled={saving}
-          onChange={e => setTitle(e.target.value)}
-          placeholder="Весна 25 г."
-        />
+    <Page title="Новый сезон" subtitle={group?.title}>
+      <Section footer="Сезон объединяет игры: по ним считается таблица и финал">
+        <label className="flex min-h-14 items-center gap-3 px-3.5 py-2">
+          <span className="w-24 shrink-0 text-base">Название</span>
+          <Input className="h-10 flex-1 rounded-lg text-base" maxLength={80} value={title} disabled={saving} onChange={e => setTitle(e.target.value)} />
+        </label>
       </Section>
 
       <ActionBar>
-        <ActionButton loading={saving} onClick={save}>Создать сезон</ActionButton>
+        <ActionButton disabled={!title.trim()} loading={saving} onClick={create}>Создать сезон</ActionButton>
       </ActionBar>
     </Page>
   )

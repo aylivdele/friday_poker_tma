@@ -127,3 +127,9 @@ export interface Achievment {
   progress: [number, number]
   isSecret?: boolean
 }
+
+export interface GroupStats {
+  // завершённых игр в группе
+  games: number
+  players: Record<string, { games: number, balance: number, finalWins: number }>
+}

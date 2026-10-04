@@ -34,3 +34,12 @@ describe('даты и имена', () => {
     expect(plural(22, ['игра', 'игры', 'игр'])).toBe('22 игры')
   })
 })
+
+describe('defaultSeasonTitle', () => {
+  it('время года и год', async () => {
+    const { defaultSeasonTitle } = await import('./format')
+    expect(defaultSeasonTitle(new Date(2026, 9, 4))).toBe('Осень 2026')
+    expect(defaultSeasonTitle(new Date(2026, 0, 10))).toBe('Зима 2026')
+    expect(defaultSeasonTitle(new Date(2026, 5, 1))).toBe('Лето 2026')
+  })
+})

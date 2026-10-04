@@ -52,3 +52,9 @@ export function plural(n: number, [one, few, many]: [string, string, string]) {
   const word = mod10 === 1 && mod100 !== 11 ? one : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? few : many
   return `${n} ${word}`
 }
+
+// Название сезона по умолчанию: «Осень 2026»
+export function defaultSeasonTitle(date = new Date()) {
+  const seasons = ['Зима', 'Зима', 'Весна', 'Весна', 'Весна', 'Лето', 'Лето', 'Лето', 'Осень', 'Осень', 'Осень', 'Зима']
+  return `${seasons[date.getMonth()]} ${date.getFullYear()}`
+}
