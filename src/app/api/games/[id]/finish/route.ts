@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { recalculateAchievments } from '@/lib/achievments'
@@ -5,6 +6,7 @@ import { requireAuth } from '@/server/auth'
 import { toGameDetails } from '@/server/dto'
 import { loadGameCaps, validateResults } from '@/server/games'
 import { conflict, forbidden, parseBody, route, toObjectId } from '@/server/http'
+import { notifyGameResults } from '@/server/notifications'
 import { gameAbilities, loadGame, loadGroup } from '@/server/permissions'
 import { gameResultSchema } from '@/server/schemas'
 
@@ -42,5 +44,7 @@ export const POST = route<{ id: string }>(async (req, { id }) => {
   }
 
   await recalculateAchievments(updated.players.map(p => p.playerId))
+  // Итоги в Telegram — после ответа, чтобы не задерживать завершение
+  after(() => notifyGameResults(updated).catch(e => console.error('Game results notification failed', e)))
   return toGameDetails(updated, group, player._id, await loadGameCaps(updated, group))
 })

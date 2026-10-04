@@ -8,6 +8,7 @@ import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
 import { Row, RowText, Section } from '@/components/app/Section'
 import { TabHeader } from '@/components/app/TabHeader'
+import { BotMessagesPrompt } from '@/components/game/BotMessagesPrompt'
 import { GameRow } from '@/components/game/GameRow'
 import { Loader } from '@/components/Loader/Loader'
 import { Page } from '@/components/Page'
@@ -56,6 +57,8 @@ export default function GamesPage() {
           </Button>
         )}
       />
+
+      <BotMessagesPrompt />
 
       {loading && (
         <Loader

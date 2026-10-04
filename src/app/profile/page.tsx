@@ -8,6 +8,7 @@ import { Page } from '@/components/Page'
 import { PlayerProfile } from '@/components/player/PlayerProfile'
 import { AppearanceSettings } from '@/components/profile/AppearanceSettings'
 import { BrowserAccess } from '@/components/profile/BrowserAccess'
+import { NotificationSettings } from '@/components/profile/NotificationSettings'
 import { swrGetFetcher } from '@/lib/swrFetcher'
 
 export default function ProfilePage() {
@@ -21,6 +22,7 @@ export default function ProfilePage() {
       {me
         ? (
             <PlayerProfile player={me} stats={stats}>
+              <NotificationSettings />
               <AppearanceSettings />
               <BrowserAccess />
             </PlayerProfile>

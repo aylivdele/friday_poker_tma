@@ -30,6 +30,12 @@ export interface Me extends Player {
   // маскированный номер, если подтверждён
   phone: string | null
   appearance: Appearance | null
+  notifications: {
+    // присылать итоги игр в Telegram
+    games: boolean
+    // может ли бот писать: null — пока неизвестно
+    botCanWrite: boolean | null
+  }
 }
 
 /* ===== Group ===== */

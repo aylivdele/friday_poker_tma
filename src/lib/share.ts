@@ -1,16 +1,11 @@
 import { shareURL } from '@tma.js/sdk-react'
-import { gameStartParam } from './navigation'
+import { telegramGameLink } from './links'
 import { isTelegram } from './platform'
 
 // Ссылка на игру: через мини-приложение, если его адрес настроен (друзья откроют её прямо в Telegram),
 // иначе — на сайт
 export function gameLink(gameId: string, telegramAppUrl: string | null | undefined) {
-  if (telegramAppUrl) {
-    const url = new URL(telegramAppUrl)
-    url.searchParams.set('startapp', gameStartParam(gameId))
-    return url.toString()
-  }
-  return `${window.location.origin}/games/${gameId}`
+  return telegramAppUrl ? telegramGameLink(telegramAppUrl, gameId) : `${window.location.origin}/games/${gameId}`
 }
 
 export type ShareResult = 'shared' | 'copied' | 'cancelled'

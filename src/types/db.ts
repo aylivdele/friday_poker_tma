@@ -17,6 +17,10 @@ export interface Player {
   passwordHash?: string
   // выбранное оформление, общее для Telegram и браузера
   appearance?: Appearance
+  // присылать итоги игр в Telegram (по умолчанию — да)
+  notifyGames?: boolean
+  // может ли бот писать человеку: true — разрешил или сообщение дошло, false — не дошло, нет поля — неизвестно
+  botCanWrite?: boolean
 }
 
 /* ===== Session ===== */

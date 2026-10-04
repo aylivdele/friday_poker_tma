@@ -75,6 +75,10 @@ export async function registerTelegramPlayer(req: NextRequest): Promise<WithId<P
   if (user.photo_url) {
     profile.avatarUrl = user.photo_url
   }
+  // Отказ отсюда не узнать: флага нет и у тех, кто просто запускал бота
+  if (user.allows_write_to_pm) {
+    profile.botCanWrite = true
+  }
   const player = await (await getDb()).players.findOneAndUpdate(
     { telegramId: Number(user.id) },
     { $set: profile, $setOnInsert: { telegramId: Number(user.id), createdAt: Date.now() } },

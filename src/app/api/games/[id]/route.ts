@@ -1,6 +1,7 @@
 import type { Filter } from 'mongodb'
 import type { EditableGame } from '@/domain/gameOps'
 import type { Game } from '@/types/db'
+import { after } from 'next/server'
 import { z } from 'zod'
 import { getDb } from '@/core/db'
 import { applyOps, GameOpError } from '@/domain/gameOps'
@@ -9,6 +10,7 @@ import { requireAuth } from '@/server/auth'
 import { toGameDetails } from '@/server/dto'
 import { deleteGame, loadGameCaps, makeCapsFor, validateResults } from '@/server/games'
 import { badRequest, conflict, forbidden, parseBody, route, toObjectId } from '@/server/http'
+import { gameTransfers, notifyGameResults } from '@/server/notifications'
 import { gameAbilities, isMember, loadGame, loadGroup } from '@/server/permissions'
 import { gameDateSchema, gamePlayerSchema, gameResultSchema, gameSettingsSchema } from '@/server/schemas'
 
@@ -93,6 +95,11 @@ export const PUT = route<{ id: string }>(async (req, { id }) => {
   if (updated.isFinished) {
     const affected = [...game.players, ...updated.players].map(p => p.playerId)
     await recalculateAchievments(affected.filter((p, i) => affected.findIndex(o => o.equals(p)) === i))
+  }
+  // Итоги в Telegram: при завершении и когда исправление поменяло, кто кому переводит
+  const transfersChanged = game.isFinished && JSON.stringify(gameTransfers(game)) !== JSON.stringify(gameTransfers(updated))
+  if (finishing || transfersChanged) {
+    after(() => notifyGameResults(updated, { corrected: !finishing }).catch(e => console.error('Game results notification failed', e)))
   }
 
   return toGameDetails(updated, group, player._id, await loadGameCaps(updated, group))

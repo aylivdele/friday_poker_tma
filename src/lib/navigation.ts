@@ -1,4 +1,5 @@
 import { retrieveLaunchParams } from '@tma.js/sdk-react'
+import { gameIdFromStartParam } from './links'
 import { isTelegram } from './platform'
 
 /*
@@ -74,8 +75,8 @@ export function startPath(): string | null {
     }
   }
   catch {}
-  const game = /^game_([0-9a-f]{24})$/.exec(launch.param)
-  return game ? `/games/${game[1]}` : null
+  const gameId = gameIdFromStartParam(launch.param)
+  return gameId ? `/games/${gameId}` : null
 }
 
 export function markStartHandled() {
@@ -86,8 +87,4 @@ export function markStartHandled() {
     }
     catch {}
   }
-}
-
-export function gameStartParam(gameId: string) {
-  return `game_${gameId}`
 }
